@@ -280,6 +280,26 @@ export const JA: Record<string, string> = {
   'A quiet week. Everything is where you left it.': '静かな一週間でした。すべてそのままです。',
   Anywhere: 'すべての出どころ',
   'Where from': '出どころ',
+  'Keigo training': '敬語トレーニング',
+  '敬語 Keigo training': '敬語トレーニング',
+  'Short drills on the skill behind keigo: turning plain speech into 尊敬語 and 謙譲語, telling which is which, and spotting common mistakes such as double keigo. Separate from your decks and their daily limits.':
+    '敬語の土台になる力を短いドリルで練習します。普通の言い方を尊敬語・謙譲語に直す、どちらかを見分ける、二重敬語などのよくある間違いを見つける。デッキや1日の上限とは別です。',
+  Drills: 'ドリル数',
+  Practised: '練習済み',
+  Solid: '定着',
+  'Due again': '復習待ち',
+  'Missed drills come back in the next session; correct ones come back after longer and longer gaps.': '間違えたドリルは次回すぐに、正解したものは少しずつ間隔をあけて出てきます。',
+  'All verb forms': '動詞の敬語一覧',
+  'Forms follow the Agency for Cultural Affairs guidelines (敬語の指針, 2007) as summarised by business-manner guides. Written with AI help and not yet checked by a native speaker; checker mode doesn’t cover these.':
+    '文化庁「敬語の指針」（2007年）とビジネスマナーの解説に基づいています。AIの助けを借りて作成したもので、ネイティブによる確認はまだです（チェックモードの対象外）。',
+  'Not quite': '惜しい',
+  Right: '正解',
+  Next: '次へ',
+  Finish: '終わる',
+  Missed: '間違えた',
+  'Got it': 'できた',
+  'Missed ones come back next time.': '間違えたものは次回また出てきます。',
+  'Another round': 'もう1回',
   // ---- Listen
   'Looking for a Japanese voice…': '日本語の音声を探しています…',
 
@@ -509,6 +529,8 @@ export const PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^(\d+) cards? in this round\. You can stop at any time; checked cards are saved\.$/, (m) => `今回は${m[1]}枚です。いつでもやめられます。チェックした分は保存されています。`],
   [/^The last 7 study days\. (\d+) words? of your own\.$/, (m) => `直近7日間（学習日）。自分の単語 ${m[1]}語。`],
   [/^(Dictionary|From example sentences) \((\d+)\)$/, (m) => `${JA[m[1]!]}（${m[2]}）`],
+  [/^Start · (\d+) drills$/, (m) => `始める · ${m[1]}問`],
+  [/^(\d+) of (\d+) right\.$/, (m) => `${m[2]}問中${m[1]}問正解。`],
   // Version line
   [/^Goi (.+) · everything stays on this device · no requests to other sites\.$/, (m) => `Goi ${m[1]} · データはすべてこの端末内 · 外部サイトへの通信なし。`],
 ];

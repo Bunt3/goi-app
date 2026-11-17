@@ -21,6 +21,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
 - [Decks and starter decks](#decks-and-starter-decks)
+- [Keigo training](#keigo-training)
 - [Your week, and where you met a word](#your-week-and-where-you-met-a-word)
 - [Share to Goi](#share-to-goi)
 - [Checker mode](#checker-mode)
@@ -200,6 +201,18 @@ Every card belongs to one deck. Cards you add go to *My cards* unless you pick a
 | 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
 
 All were written with AI help; checker mode (below) lets a native speaker go through them. The slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+
+## Keigo training
+
+Today → *敬語 Keigo training* (`#/keigo`). Rounds of 10 short drills, separate from your decks and daily limits:
+
+- **Convert:** a plain verb, word or phrase and a target (尊敬語, 謙譲語, the formal word, office keigo); recall it, reveal, mark *Got it* or *Missed*. 33 verbs (言う → おっしゃる / 申し上げる・申す), 21 words (今日 → 本日, 自分の会社 → 弊社), 12 situations (ちょっと待って → 少々お待ちください).
+- **Which kind?** a keigo form (参る, ご覧になる, ございます…): tap 尊敬語, 謙譲語 or 丁寧語.
+- **Right or wrong?** an expression (おっしゃられた, ご拝聴ありがとうございました, お召し上がりください…): ○ or ×, with why.
+
+Missed drills come back next round; correct ones come back after 1, 3, 7, 21 and 60 days. Progress is stored in this device's settings (it is in backups but not merged). The intro screen has the full verb table. Forms follow 文化庁「敬語の指針」(2007) as summarised by business-manner guides; where usage is split, the drill answer is the safest office form and the note gives the rest. The data is in `src/data/keigo.ts` and has not been checked by a native speaker.
+
+Why it is a mode and not a deck: the Workplace deck teaches individual phrases; this drills the transformation itself, which flashcards for each form would only scatter across the queue.
 
 ## Your week, and where you met a word
 

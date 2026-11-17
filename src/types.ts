@@ -126,6 +126,8 @@ export interface Settings {
   lastBackupMark: string;
   /** Where the last backup went, for display ("Downloads", a folder name, "manual export"). */
   lastBackupWhere: string;
+  /** Keigo training progress by drill item id (see src/keigo.ts). Per device. */
+  keigo: Record<string, { box: number; due: number }>;
   /** Interface language. Card content is never translated. */
   uiLang: 'en' | 'ja';
   /** Decks included in study (Today, review, listening). Empty means every deck. Per device. */
@@ -153,6 +155,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastBackupWhere: '',
   studyDecks: [],
   uiLang: 'en',
+  keigo: {},
 };
 
 /**

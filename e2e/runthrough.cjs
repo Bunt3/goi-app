@@ -710,6 +710,31 @@ async function main() {
     assert.ok((await page.innerText('#card-list')).includes('書く'), 'the card picked from that source is listed');
     log('weekly look-back counts your own words and where they came from; Browse filters by where you met them');
 
+    // Keigo training: a 10-drill round mixing conversion, "which kind?" and "right or wrong?".
+    await page.goto(URL + '#/home');
+    await page.click('#to-keigo');
+    await page.click('#keigo-start');
+    const kinds = new Set();
+    for (let n = 0; n < 10; n++) {
+      await page.waitForSelector('#keigo-reveal, .keigo-choices button[data-kind], #keigo-yes');
+      if (await page.locator('#keigo-reveal').count()) {
+        kinds.add('convert');
+        await page.click('#keigo-reveal');
+        if (n === 0) await shot('keigo');
+        await page.click(n % 2 ? '#keigo-missed' : '#keigo-got');
+      } else {
+        kinds.add((await page.locator('#keigo-yes').count()) ? 'judge' : 'classify');
+        await page.locator('.keigo-choices button').first().click();
+        await page.waitForSelector('#keigo-verdict');
+        await page.click('#keigo-next');
+      }
+    }
+    await page.waitForSelector('#keigo-done');
+    assert.equal(kinds.size, 3, 'all three drill kinds appear: ' + [...kinds]);
+    const keigoSeen = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('meta').objectStore('meta').get('settings'); q.onsuccess = () => res(Object.keys(q.result.value.keigo).length); }; }));
+    assert.equal(keigoSeen, 10);
+    log(`keigo training: a round of 10 drills (${[...kinds].join(', ')}), progress saved for each`);
+
     // Offline: the dictionary is local.
     await context.setOffline(true);
     await page.reload();

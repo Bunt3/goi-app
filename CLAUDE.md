@@ -53,6 +53,9 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/ui/dictview.ts` | Dictionary screen: search, browse by label, add to a deck |
 | `src/ui/deckpanel.ts`, `src/ui/deckselect.ts` | More → Decks; the deck chooser used by forms |
 | `src/check.ts`, `src/ui/checker.ts` | Checker mode: which cards to check, tallies (pure); the `#/check` screen |
+| `src/data/keigo.ts`, `src/keigo.ts`, `src/ui/keigo.ts` | Keigo training: data, drill items and box schedule (pure), the `#/keigo` screen. Progress lives in `Settings.keigo` |
+| `src/week.ts` | Weekly look-back and where-from groups (pure) |
+| `src/share.ts` | Reading a Web Share Target request (pure); intake in `main.ts`, display in Capture |
 | `src/ui/i18n.ts`, `src/i18n/ja.ts` | Interface language: DOM translation layer and the Japanese catalogue |
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
 | `vite.config.ts` | Base path, version constant, service worker generator |
@@ -81,6 +84,8 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 - **The dictionary never overwrites a field the owner typed.** `AutoFill` only writes empty fields or fields it (or the IME reading) filled. Cards keeping a dictionary reading or meaning get the `auto-filled` tag. No unattended bulk fill: homographs make it wrong too often.
 - **A deploy must survive a failed dictionary download.** Every dictionary step in `deploy.yml` is `continue-on-error`, and `DICT_OPTIONAL=1` makes `build-dict.mjs` warn and build without one. The app then says "Dictionary not available in this build".
 - **Interface language is a translation layer over rendered English** (`src/ui/i18n.ts` + `src/i18n/ja.ts`). New UI text needs a catalogue entry (exact string, or a pattern for text with numbers or names) or it shows in English in Japanese mode. Anything showing the owner's content (meanings, examples, tags, sources, glosses) must carry `data-content` so it is never translated. Don't use `[translate="no"]` for this: `<html>` already carries it to stop browser auto-translation. Never map a string to itself (the observer would loop); a test checks this.
+- **Share target:** the manifest's `share_target` points at `/goi-app/share`; `main.ts` reads it before mounting and replaces the URL with `#/capture`. The service worker serves that path from the cached shell (navigation fallback), so it works offline.
+- **Keigo drill ids are `v:<id>:son|ken`, `w:<casual>`, `p:<casual>`, `f:<form>`, `u:<text>`.** Changing one orphans that item's progress (harmless: it is just practised again).
 - **The deinflection table is the app's own.** Don't paste in Yomitan's or another GPL project's rules.
 
 ## Conventions

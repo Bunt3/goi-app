@@ -1,4 +1,5 @@
 import { migrateDeck, migrateTags, parseCheck } from '../decks';
+import { cleanProgress } from '../keigo';
 import { isoDate } from '../day';
 import { newSrs } from '../srs/fsrs';
 import {
@@ -149,6 +150,7 @@ export function parseSettings(v: unknown): Settings {
     lastBackupMark: str(o.lastBackupMark),
     lastBackupWhere: str(o.lastBackupWhere),
     uiLang: o.uiLang === 'ja' ? 'ja' : 'en',
+    keigo: cleanProgress(o.keigo),
     studyDecks: Array.isArray(o.studyDecks) ? o.studyDecks.filter((t): t is string => typeof t === 'string') : [],
   };
 }

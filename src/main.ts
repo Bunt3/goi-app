@@ -7,6 +7,7 @@ import { reviewView } from './ui/review';
 import { addView, editView } from './ui/add';
 import { dictView } from './ui/dictview';
 import { checkerView } from './ui/checker';
+import { keigoView } from './ui/keigo';
 import { readShare } from './share';
 import { setUiLang } from './ui/i18n';
 import { browseView } from './ui/browse';
@@ -45,6 +46,7 @@ async function start(): Promise<void> {
   register('edit', editView);
   register('dict', dictView);
   register('check', checkerView);
+  register('keigo', keigoView);
   register('browse', browseView);
   register('bulk', bulkView);
   register('capture', captureView);

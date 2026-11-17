@@ -170,7 +170,12 @@ export async function homeView(): Promise<View> {
         ? h('p', { class: 'muted small' }, `${plural(q.counts.newWaiting, 'new card')} queued for later days (${s.maxNewPerDay} per day).`)
         : null,
       doneToday > 0 ? h('p', { class: 'muted small' }, `${plural(doneToday, 'answer')} today.`) : null,
-      h('p', { class: 'small' }, h('a', { href: '#/stats', id: 'to-week' }, 'Your week →')),
+      h(
+        'div',
+        { class: 'row wrap', style: 'gap:8px;margin:4px 0 12px' },
+        h('a', { href: '#/keigo', class: 'chip linkchip', id: 'to-keigo' }, '敬語 Keigo training'),
+        h('a', { href: '#/stats', class: 'chip linkchip', id: 'to-week' }, 'Your week'),
+      ),
       exportLine,
     ),
   };

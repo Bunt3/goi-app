@@ -528,7 +528,7 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     ),
     packRows,
     h('h2', null, 'More'),
-    h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/check', id: 'to-check' }, 'Checker mode (for a native speaker)'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
+    h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/check', id: 'to-check' }, 'Checker mode (for a native speaker)'), h('a', { href: '#/keigo' }, 'Keigo training'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
     h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`),
   );
 

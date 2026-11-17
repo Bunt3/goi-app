@@ -26,7 +26,7 @@ const TABS: { route: string; label: string; icon: string }[] = [
 ];
 
 /** Which tab is lit for routes that aren't tabs themselves. */
-const TAB_FOR: Record<string, string> = { edit: 'browse', bulk: 'add', capture: 'add', dict: 'add', check: 'more', stats: 'more', review: 'home' };
+const TAB_FOR: Record<string, string> = { edit: 'browse', bulk: 'add', capture: 'add', dict: 'add', check: 'more', keigo: 'home', stats: 'more', review: 'home' };
 
 export function register(name: string, route: Route): void {
   routes.set(name, route);
