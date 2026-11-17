@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 const BASE = '/goi-app/';
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
 /**
  * Emits sw.js with the list of built files baked in, so the whole app is
@@ -85,6 +87,7 @@ self.addEventListener('fetch', (event) => {
 export default defineConfig({
   base: BASE,
   plugins: [serviceWorker()],
+  define: { __APP_VERSION__: JSON.stringify(`v${pkg.version} (${new Date().toISOString().slice(0, 10)})`) },
   build: { target: 'es2022', sourcemap: false },
   test: {
     environment: 'node',

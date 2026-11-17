@@ -1,0 +1,128 @@
+import { LEARN_AHEAD_MS, backlogDays, buildQueue } from '../srs/queue';
+import { isInbox } from '../types';
+import { daysAgoText } from '../util';
+import { exportBackup } from './actions';
+import { go, refresh, store, type View } from './app';
+import { h, plural } from './dom';
+
+export const EXPORT_NUDGE_DAYS = 7;
+
+export async function homeView(): Promise<View> {
+  const now = Date.now();
+  await store.refreshToday(now);
+  const live = store.live();
+  const s = store.settings;
+
+  if (live.length === 0) {
+    return {
+      el: h(
+        'div',
+        { class: 'page' },
+        h('h1', null, 'Goi 語彙'),
+        h('p', null, 'No cards yet. Add a word you ran into today, or start from the built-in workplace deck.'),
+        h('div', { class: 'stack' },
+          h('button', { class: 'primary big', onclick: () => go('add') }, 'Add a word'),
+          h('button', { class: 'block', onclick: () => go('more?focus=seed') }, 'Load the seed deck (about 180 business words)'),
+          h('button', { class: 'block', onclick: () => go('more?focus=import') }, 'Restore from a backup file'),
+        ),
+      ),
+    };
+  }
+
+  const q = buildQueue(live, store.todayLogs, s, now);
+  const learningNow = q.learning.filter((i) => i.due <= now + LEARN_AHEAD_MS).length;
+  const learningLater = q.learning.length - learningNow;
+  const available = learningNow + q.main.length;
+  const inbox = live.filter(isInbox).length;
+  const doneToday = store.todayLogs.filter((l) => l.rating !== 0).length;
+
+  const notes: HTMLElement[] = [];
+  if (q.counts.deferred > 0) {
+    const days = backlogDays(live, store.todayLogs, s, now);
+    notes.push(
+      h(
+        'div',
+        { class: 'notice info' },
+        `${plural(q.counts.deferred, 'more review')} ${q.counts.deferred === 1 ? 'is' : 'are'} waiting beyond today’s limit of ${s.maxReviewsPerDay}. ` +
+          `They are spread over the next ${plural(days, 'day')}, weakest first.` +
+          (q.counts.newPaused ? ' New cards resume once that’s cleared.' : ''),
+      ),
+    );
+  }
+  if (inbox > 0) {
+    notes.push(
+      h(
+        'a',
+        { class: 'notice info', href: '#/browse?filter=inbox', style: 'display:block;text-decoration:none;color:inherit' },
+        `Inbox: ${plural(inbox, 'card')} need${inbox === 1 ? 's' : ''} a reading or meaning before ${inbox === 1 ? 'it' : 'they'} can be studied. `,
+        h('span', { style: 'color:var(--accent)' }, 'Open →'),
+      ),
+    );
+  }
+
+  const sinceExport = s.lastExportAt == null ? Infinity : (now - s.lastExportAt) / 86_400_000;
+  const exportLine =
+    sinceExport >= EXPORT_NUDGE_DAYS
+      ? h(
+          'div',
+          { class: 'notice' },
+          h('div', null, s.lastExportAt == null ? 'This deck has never been exported.' : `Last exported ${daysAgoText(s.lastExportAt, now)}.`),
+          h('div', { class: 'muted small', style: 'margin:2px 0 8px' }, 'Browsers can clear site data. An export is your only backup.'),
+          h(
+            'button',
+            {
+              id: 'home-export',
+              onclick: async () => {
+                await exportBackup();
+                refresh();
+              },
+            },
+            'Export backup now',
+          ),
+        )
+      : h('p', { class: 'muted small', id: 'export-status' }, `Last exported ${daysAgoText(s.lastExportAt, now)}.`);
+
+  let status: string;
+  if (available > 0) status = '';
+  else if (learningLater > 0) {
+    const mins = Math.max(1, Math.round((q.learning[0]!.due - now) / 60_000));
+    status = `Nothing due right now. ${plural(learningLater, 'card')} come${learningLater === 1 ? 's' : ''} back in about ${mins} min.`;
+  } else if (doneToday > 0) status = 'Done for today.';
+  else status = 'Nothing is due today.';
+
+  return {
+    el: h(
+      'div',
+      { class: 'page' },
+      h('h1', null, 'Today'),
+      h(
+        'div',
+        { class: 'counts' },
+        h('div', { class: 'count' }, h('b', { id: 'count-review' }, q.counts.review), h('span', null, 'reviews')),
+        h('div', { class: 'count' }, h('b', { id: 'count-new' }, q.counts.new), h('span', null, 'new')),
+        h('div', { class: 'count' }, h('b', { id: 'count-learning' }, q.counts.learning), h('span', null, 'learning')),
+      ),
+      status ? h('p', { id: 'home-status' }, status) : null,
+      h(
+        'div',
+        { class: 'stack', style: 'margin-bottom:16px' },
+        h(
+          'button',
+          { class: 'primary big', id: 'quick-start', disabled: available === 0, onclick: () => go('review?quick=1') },
+          `Quick session · ${s.quickMinutes} min or ${plural(s.quickCards, 'card')}`,
+        ),
+        h(
+          'button',
+          { class: 'block', id: 'full-start', disabled: available === 0, onclick: () => go('review') },
+          available > 0 ? `Everything due now (${available})` : 'Everything due now',
+        ),
+      ),
+      notes,
+      q.counts.newWaiting > 0 && !q.counts.newPaused
+        ? h('p', { class: 'muted small' }, `${plural(q.counts.newWaiting, 'new card')} queued for later days (${s.maxNewPerDay} per day).`)
+        : null,
+      doneToday > 0 ? h('p', { class: 'muted small' }, `${plural(doneToday, 'answer')} today.`) : null,
+      exportLine,
+    ),
+  };
+}

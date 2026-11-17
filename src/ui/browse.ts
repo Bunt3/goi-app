@@ -1,0 +1,143 @@
+import { REGISTERS, SEED_TAG, isInbox, isLeech, type Card } from '../types';
+import { store, type View } from './app';
+import { h, plural } from './dom';
+
+type Special = 'all' | 'inbox' | 'leech';
+const PAGE = 100;
+
+/** Remembered between visits so returning from an edit lands on the same list. */
+const state: { q: string; special: Special; tag: string; register: string } = { q: '', special: 'all', tag: '', register: '' };
+
+function matches(card: Card, needle: string): boolean {
+  if (!needle) return true;
+  const hay = [card.word, card.reading, card.meaning_en, card.meaning_ja, card.example_ja, card.example_en, card.source]
+    .join('\n')
+    .toLowerCase();
+  return needle
+    .toLowerCase()
+    .split(/\s+/)
+    .every((part) => hay.includes(part));
+}
+
+export function browseView(_arg: string, params: URLSearchParams): View {
+  const filter = params.get('filter');
+  if (filter === 'inbox' || filter === 'leech' || filter === 'all') state.special = filter;
+
+  const all = store.live().sort((a, b) => b.created - a.created || a.id.localeCompare(b.id));
+  const tags = [...new Set(all.flatMap((c) => c.tags))].sort((a, b) => a.localeCompare(b, 'ja'));
+  const inboxCount = all.filter(isInbox).length;
+  const leechCount = all.filter(isLeech).length;
+  let limit = PAGE;
+
+  const search = h('input', { type: 'search', id: 'search', placeholder: 'Search word, reading, meaning…', value: state.q, autocomplete: 'off' });
+  const tagSelect = h(
+    'select',
+    { id: 'filter-tag', 'aria-label': 'Tag' },
+    h('option', { value: '' }, 'All tags'),
+    tags.map((t) => h('option', { value: t, selected: state.tag === t }, t)),
+  );
+  const registerSelect = h(
+    'select',
+    { id: 'filter-register', 'aria-label': 'Register' },
+    h('option', { value: '' }, 'All registers'),
+    REGISTERS.map((r) => h('option', { value: r, selected: state.register === r }, r)),
+    h('option', { value: 'none', selected: state.register === 'none' }, '(none set)'),
+  );
+  const chips = h('div', { class: 'chips', style: 'margin:10px 0' });
+  const count = h('p', { class: 'muted small', id: 'browse-count', style: 'margin:8px 0 0' });
+  const list = h('div', { class: 'list', id: 'card-list' });
+
+  const renderChips = () => {
+    const chip = (key: Special, label: string) =>
+      h(
+        'button',
+        {
+          class: 'chip' + (state.special === key ? ' on' : ''),
+          dataset: { filter: key },
+          'aria-pressed': String(state.special === key),
+          onclick: () => {
+            state.special = key;
+            limit = PAGE;
+            renderChips();
+            renderList();
+          },
+        },
+        label,
+      );
+    chips.replaceChildren(chip('all', `All ${all.length}`), chip('inbox', `Inbox ${inboxCount}`), chip('leech', `Leeches ${leechCount}`));
+  };
+
+  const renderList = () => {
+    const found = all.filter(
+      (c) =>
+        (state.special === 'all' || (state.special === 'inbox' ? isInbox(c) : isLeech(c))) &&
+        (!state.tag || c.tags.includes(state.tag)) &&
+        (!state.register || (state.register === 'none' ? c.register == null : c.register === state.register)) &&
+        matches(c, state.q),
+    );
+    count.textContent = found.length === all.length ? plural(all.length, 'card') : `${found.length} of ${plural(all.length, 'card')}`;
+    const rows = found.slice(0, limit).map((c) =>
+      h(
+        'a',
+        { class: 'item', href: '#/edit/' + encodeURIComponent(c.id) },
+        h(
+          'div',
+          { class: 'head' },
+          h('span', { class: 'w', lang: 'ja' }, c.word),
+          h('span', { class: 'r', lang: 'ja' }, c.reading),
+          isInbox(c) ? h('span', { class: 'badge accent' }, 'inbox') : null,
+          isLeech(c) ? h('span', { class: 'badge warn' }, 'leech') : null,
+          c.register ? h('span', { class: 'badge' }, c.register) : null,
+          c.tags.includes(SEED_TAG) ? h('span', { class: 'badge warn' }, 'unverified') : null,
+        ),
+        h('div', { class: 'm' }, c.meaning_en || '—'),
+      ),
+    );
+    list.replaceChildren(
+      ...rows,
+      ...(found.length > limit
+        ? [
+            h(
+              'button',
+              {
+                class: 'block',
+                style: 'margin-top:12px',
+                onclick: () => {
+                  limit += PAGE;
+                  renderList();
+                },
+              },
+              `Show more (${found.length - limit} hidden)`,
+            ),
+          ]
+        : []),
+      ...(found.length === 0
+        ? [h('p', { class: 'muted', style: 'margin-top:16px' }, all.length === 0 ? 'No cards yet.' : 'No cards match.')]
+        : []),
+    );
+  };
+
+  search.addEventListener('input', () => {
+    state.q = search.value.trim();
+    limit = PAGE;
+    renderList();
+  });
+  tagSelect.addEventListener('change', () => {
+    state.tag = tagSelect.value;
+    limit = PAGE;
+    renderList();
+  });
+  registerSelect.addEventListener('change', () => {
+    state.register = registerSelect.value;
+    limit = PAGE;
+    renderList();
+  });
+  if (state.tag && !tags.includes(state.tag)) state.tag = '';
+
+  renderChips();
+  renderList();
+
+  return {
+    el: h('div', { class: 'page' }, h('h1', null, 'Cards'), search, chips, h('div', { class: 'row' }, tagSelect, registerSelect), count, list),
+  };
+}
