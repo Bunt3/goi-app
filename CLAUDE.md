@@ -2,6 +2,8 @@
 
 Personal Japanese vocabulary PWA for one user. Read `HANDOFF.md` for current status and open work, and `README.md` for user-facing behaviour and the JSON schema.
 
+**Start with the "NEXT TASK" section at the top of `HANDOFF.md`.** It is the active assignment, with the design, the order of work and the facts already checked.
+
 ## Hard constraints (from the owner; do not relax without asking)
 
 - Installable, offline-first PWA. One codebase for Android (Brave/Chrome) and Windows desktop (Firefox, Brave).
