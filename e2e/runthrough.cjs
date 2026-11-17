@@ -3,7 +3,9 @@
  *   add card → review → export → clear storage → import → verify restored,
  * plus offline reload and the "replace everything" path.
  *
- *   npm run build && npm run e2e
+ *   npm run build:e2e && npm run e2e
+ *
+ * build:e2e builds with the small test dictionary (tests/fixtures/dict-sample.json).
  *
  * Playwright is not a project dependency; it must be resolvable by Node
  * (e.g. `npm i -g playwright` with NODE_PATH set, or `npm i --no-save playwright`).
@@ -38,6 +40,10 @@ function startServer() {
 }
 
 async function main() {
+  if (!fs.existsSync(path.join(ROOT, 'dist/dict/manifest.json'))) {
+    console.error('dist/ has no dictionary. Build with the test fixture first: npm run build:e2e');
+    process.exit(1);
+  }
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
   const server = await startServer();
@@ -476,6 +482,125 @@ async function main() {
     await context.setOffline(false);
     assert.ok(accuracy(offline.text) > 0.8, 'offline read: ' + offline.text);
     log(`on-device OCR works offline after first use (${offline.ms} ms including reloading the engine)`);
+
+    // ---- 9c. Offline dictionary (built from the test fixture) -------------
+    const cardByWord = (w) => page.evaluate((w) => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('cards').objectStore('cards').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.find((c) => c.word === w && !c.deleted)); }; }; }), w);
+    // A build without dictionary data says so instead of failing.
+    const noDict = await context.newPage();
+    await noDict.route('**/dict/manifest.json', (r) => r.fulfill({ status: 404, body: 'not found' }));
+    await noDict.goto(URL + '#/more?focus=dict');
+    await noDict.waitForSelector('#dict-status:has-text("not available in this build")');
+    await noDict.close();
+    log('a build without dictionary data says “not available in this build”');
+
+    // Nothing is downloaded until asked; the picker points to the download.
+    await page.goto(URL + '#/capture');
+    await page.fill('#capture-text', '担当の者に取り次ぎますので、少々お待ちください。');
+    await page.waitForSelector('#capture-pick .tok');
+    await page.locator('#capture-pick .tok').first().click();
+    await page.waitForSelector('#pick-dict a[href="#/more?focus=dict"]');
+    await page.goto(URL + '#/more?focus=dict');
+    await page.waitForSelector('#dict-install');
+    assert.match(await page.innerText('#dict-status'), /Not downloaded\. About .* MB to download, 49 entries/);
+    await shot('dict-offer');
+    await page.click('#dict-install');
+    await page.waitForSelector('#dict-status:has-text("Installed: 49 entries")', { timeout: 30000 });
+    assert.equal(await page.locator('#dict-panel .notice:has-text("test dictionary")').count(), 1, 'the fixture build says it is not the real dictionary');
+    await shot('dict-installed');
+    log('dictionary downloads only when asked, installs in a worker, and the fixture build is labelled as such');
+
+    // Pick a conjugated verb out of a sentence: dictionary form, reading and meaning are filled; the sentence stays the example.
+    const pickConjugated = async (label) => {
+      await page.goto(URL + '#/capture');
+      await page.fill('#capture-text', '昨日、お客様にメールを書きました。');
+      await page.fill('#capture-source', 'e2e dictionary');
+      await page.locator('#capture-source').blur();
+      await page.click('#capture-pick .picker .link'); // pick by character
+      await page.locator('#capture-pick .tok', { hasText: '書' }).first().click();
+      await page.locator('#capture-pick .tok', { hasText: 'た' }).first().click();
+      await page.waitForSelector('#pick-status:has-text("書きました")');
+      await page.waitForSelector('#pick-dict .dict-cand.on');
+      assert.equal(await page.inputValue('#pick-word'), '書く', label + ': dictionary form');
+      assert.equal(await page.inputValue('#pick-reading'), 'かく', label + ': reading');
+      assert.match(await page.inputValue('#pick-meaning'), /to write/, label + ': meaning');
+      assert.equal(await page.innerText('#pick-add'), 'Add to deck');
+      if (label === 'offline') assert.equal(await page.locator('#pick-dict:has-text("書く is already in your deck")').count(), 1);
+    };
+    await pickConjugated('online');
+    await shot('dict-pick');
+    await page.click('#pick-add');
+    await page.waitForSelector('#pick-status:has-text("Added")');
+    const kaku = await cardByWord('書く');
+    assert.equal(kaku.reading, 'かく');
+    assert.equal(kaku.example_ja, '昨日、お客様にメールを書きました。', 'the picked sentence is the example, not a corpus one');
+    assert.ok(kaku.tags.includes('auto-filled'), 'auto-filled tag: ' + kaku.tags);
+    assert.equal(kaku.source, 'e2e dictionary');
+    log('picking 書きました from a sentence fills 書く, かく and its meaning, keeps the sentence, tags it auto-filled');
+
+    // Type slang on the Add screen: found as typed, so it fills at once, with its tags, register and a corpus example.
+    await page.goto(URL + '#/add');
+    await page.fill('#f-word', 'ヤバい');
+    await page.waitForSelector('#f-dict .dict-cand.on');
+    assert.equal(await page.inputValue('#f-reading'), 'ヤバい');
+    await shot('dict-add-slang');
+    await page.click('#save-card');
+    await page.waitForSelector('#toast.show:has-text("Saved ヤバい.")');
+    const yabai = await cardByWord('ヤバい');
+    assert.deepEqual([...yabai.tags].sort(), ['auto-filled', 'colloquial', 'slang']);
+    assert.equal(yabai.register, 'casual');
+    assert.match(yabai.meaning_en, /dangerous/);
+    assert.equal(yabai.example_ja, 'このラーメン、ヤバい！', 'a dictionary example fills an empty example');
+    // A conjugated form is offered, not filled, until tapped.
+    await page.fill('#f-word', 'ググった');
+    await page.waitForSelector('#f-dict .dict-cand');
+    assert.equal(await page.inputValue('#f-reading'), '', 'nothing filled before a choice');
+    await page.click('#f-dict .dict-cand');
+    assert.equal(await page.inputValue('#f-word'), 'ググる');
+    assert.equal(await page.inputValue('#f-reading'), 'ググる');
+    // A reading typed by hand is never replaced.
+    await page.fill('#f-word', '');
+    await page.fill('#f-reading', 'てがき');
+    await page.fill('#f-word', '確認');
+    await page.waitForSelector('#f-dict .dict-cand.on');
+    assert.equal(await page.inputValue('#f-reading'), 'てがき', 'typed reading kept');
+    await page.fill('#f-word', '');
+    await page.fill('#f-reading', '');
+    log('Add screen: slang fills with slang/colloquial tags and casual register; conjugated forms wait for a tap; typed fields are kept');
+
+    // Work through the Inbox one card at a time.
+    await page.goto(URL + '#/browse?filter=inbox');
+    await page.click('#inbox-walk');
+    await page.waitForSelector('#f-dict .dict-cand');
+    assert.equal(await page.inputValue('#f-word'), '按分');
+    assert.equal(await page.inputValue('#f-reading'), 'あんぶん', 'the reading already on the card is kept');
+    assert.match(await page.inputValue('#f-meaning-en'), /proportional division/);
+    await shot('dict-inbox');
+    await page.click('#save-card');
+    await page.waitForSelector('#toast.show:has-text("Saved.")');
+    // The seed deck has its own 按分 card; the Inbox one is the one without the seed tag.
+    const anbun = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('cards').objectStore('cards').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.find((c) => c.word === '按分' && !c.deleted && !c.tags.includes('seed-unverified'))); }; }; }));
+    assert.match(anbun.meaning_en, /proportional division/);
+    assert.ok(anbun.tags.includes('auto-filled'));
+    log('Inbox: “Fill in one at a time” shows the dictionary’s candidate for each card and moves on after Save');
+
+    // Offline: the dictionary is local.
+    await context.setOffline(true);
+    await page.reload();
+    await pickConjugated('offline');
+    await page.goto(URL + '#/more?focus=dict');
+    await page.waitForSelector('#dict-status:has-text("Installed")');
+    await context.setOffline(false);
+    log('dictionary lookups work offline');
+
+    // Removing it leaves the deck alone.
+    const cardsBefore = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('cards').objectStore('cards').count(); q.onsuccess = () => { r.result.close(); res(q.result); }; }; }));
+    await page.click('#dict-remove');
+    await page.waitForSelector('#dict-install');
+    const cardsAfter = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('cards').objectStore('cards').count(); q.onsuccess = () => { r.result.close(); res(q.result); }; }; }));
+    assert.equal(cardsAfter, cardsBefore);
+    const left = await page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-dict'); r.onsuccess = () => { const db = r.result; if (!db.objectStoreNames.contains('entries')) { db.close(); res(0); return; } const q = db.transaction('entries').objectStore('entries').count(); q.onsuccess = () => { db.close(); res(q.result); }; }; }));
+    assert.equal(left, 0, 'dictionary entries deleted');
+    log('removing the dictionary deletes its database and leaves the cards alone');
 
     // ---- 10. Next day: production direction unlocks ---------------------
     const tomorrow = await context.newPage();

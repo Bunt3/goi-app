@@ -19,6 +19,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Installing as an app](#installing-as-an-app)
 - [Picking words from sentences](#picking-words-from-sentences)
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
+- [Offline dictionary](#offline-dictionary)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
 - [How scheduling behaves](#how-scheduling-behaves)
@@ -52,10 +53,12 @@ npm run build
 
 ### Browser run-through
 
-`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste, the next-day production card, automatic backup in both download and folder modes, the word picker, and capture (pasted text, reading rendered light and dark images, a dragged region, a video frame, and reading offline).
+`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste, the next-day production card, automatic backup in both download and folder modes, the word picker, capture (pasted text, reading rendered light and dark images, a dragged region, a video frame, and reading offline), and the dictionary (install, picking a conjugated verb, slang on the Add screen, the Inbox walk-through, offline lookup, removal, and a build without one).
+
+It needs a build carrying the small test dictionary:
 
 ```bash
-npm run build
+npm run build:e2e
 ```
 
 ```bash
@@ -107,9 +110,10 @@ On the answer side of any card with an example (in review and in listening mode)
   - **already in your deck**, with the card (tap it to open);
   - **not in your deck**, with any *related* cards (the same word in another form, such as 承り for 承る, or a phrase that starts the same way), and a short form to add it.
 - Adding needs only the word. With no reading or meaning it goes to the Inbox. The sentence it came from becomes its example; the parent card's tags carry over.
-- The word field is editable, so a conjugated form can be changed to its dictionary form before adding.
+- With the [offline dictionary](#offline-dictionary) installed, the selection is looked up: a conjugated form becomes its dictionary form (書きました → 書く), and the reading and meaning are filled in. Other candidates are listed; tap one to use it instead. The sentence stays the example.
+- The word field is editable either way.
 
-The split into words comes from the browser's built-in Japanese word breaker ([`Intl.Segmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter)). It has no dictionary of the app's behind it and sometimes splits in the wrong place; *Pick by character* switches to one piece per character for those cases. The app does not look up readings or meanings: there is no dictionary in it.
+The split into words comes from the browser's built-in Japanese word breaker ([`Intl.Segmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter)), which sometimes splits in the wrong place; *Pick by character* switches to one piece per character for those cases. The dictionary does not change the split.
 
 ## Capture: photos, screenshots, video, text
 
@@ -138,6 +142,42 @@ What to expect from it, plainly:
 - The phone's own recognition (the “T” button in the camera or gallery) and Windows Snipping Tool's *Text actions* are stronger. For a hard image, copy the text there and paste it here.
 
 Speech is deliberately left to the keyboard: the browser speech-recognition API sends audio to a server by default ([MDN](https://developer.mozilla.org/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API)), which this app's no-network rule excludes, and it is not usable in Firefox or Brave.
+
+## Offline dictionary
+
+An English–Japanese dictionary the app looks words up in, on the device, with no network after it is downloaded. It fills cards; it never adds cards on its own.
+
+**Installing.** More → Dictionary → *Download dictionary*. Nothing is downloaded until you press it. The size is shown on the button (the build log records it; see `HANDOFF.md`). It is installed into its own browser database in the background with a progress bar, and works offline from then on. *Remove dictionary* deletes it; cards are unaffected. If a newer version is published with the app, More offers it.
+
+**What it does.**
+
+- **Word picker and Capture:** the selection is looked up, including conjugated forms (承りました → 承る, 高くなかった → 高い, 食べちゃった → 食べる, 説明しました → 説明, お待ちください → 待つ). The dictionary form, reading and meaning are filled into the form; the sentence the word came from stays the example.
+- **Add screen:** as you type, matches are listed under the word. A word found exactly as typed fills the reading, meaning and, if the example is empty, an example sentence from the dictionary. A conjugated form or a homograph (かう: 買う or 飼う) waits for you to tap the right candidate.
+- **Inbox:** Cards → Inbox → *Fill in one at a time* opens each incomplete card with the dictionary's candidate filled into its empty fields. Nothing is saved until you press *Save, next*; *Skip* leaves a card as it is. There is no bulk fill: homographs make unattended filling wrong too often.
+- **A field you typed is never overwritten.** Only empty fields, or fields the app filled itself, are changed.
+- **Tags.** Every card filled from the dictionary gets the `auto-filled` tag, so they can be found in Browse and checked. JMdict's own labels become tags and a register:
+
+| JMdict label | Tag | Register |
+| --- | --- | --- |
+| `sl` slang, `m-sl` manga slang | `slang` | casual |
+| `net-sl` internet slang | `slang`, `internet slang` | casual |
+| `col` colloquial, `fam` familiar | `colloquial` | casual |
+| `vulg` vulgar | `vulgar` | casual |
+| `derog` derogatory | `derogatory` | |
+| `arch`, `obs` (first sense only) | `archaic` | |
+| any dialect | `dialect` (plus `関西弁` for Kansai, Osaka, Kyoto) | |
+| field `bus` / `comp` / `law` / `finc`, `econ` | `ビジネス` / `IT` / `法律` / `経済` | |
+| `hon` / `hum` / `pol` / `form` | | 尊敬語 / 謙譲語 / polite / written-only |
+
+**Where it comes from.** [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html), the Electronic Dictionary Research and Development Group's dictionary, in the JSON conversion published by [jmdict-simplified](https://github.com/scriptin/jmdict-simplified) (the English file with example sentences). JMdict is used under the [EDRDG licence](https://www.edrdg.org/edrdg/licence.html), which requires attribution; jmdict-simplified distributes its converted files under the same licence. The terms apply to the data file, not to the app's own code. Example sentences are from the Tanaka Corpus, maintained by the [Tatoeba project](https://tatoeba.org/). The data is downloaded and compacted when the site is built (`scripts/build-dict.mjs`, run by `.github/workflows/deploy.yml`) and served from this site. Attribution is shown in More.
+
+**Limits.**
+
+- Coverage of slang is good for established slang and behind on current usage. JMdict labels slang reliably but has no frequency information for it.
+- Example sentences are of mixed quality, some unnatural, and missing for many business and slang terms. They are only used when a card has no example of its own.
+- The first candidate is a best guess. For homographs it is sometimes the wrong word; that is what the `auto-filled` tag is for.
+- Deinflection is a rule table written for this app (`src/dict/deinflect.ts`), covering standard verb and adjective forms, polite and humble endings, te-form auxiliaries and common casual contractions (ちゃう, てる, とく, ねえ, ん, ら抜き). Rare classical forms are not covered.
+- If the data download failed when the site was built, More says *Dictionary not available in this build*.
 
 ## Where your data lives, and automatic backup
 
@@ -316,21 +356,29 @@ src/
   data/seed.ts        seed deck (lazy-loaded)
   furigana.ts         target-word furigana and blanking
   textpick.ts         split text into tappable pieces; check a selection against the deck (pure)
+  dict/entry.ts       compact dictionary entry and manifest types
+  dict/deinflect.ts   conjugated form → dictionary form candidates (pure)
+  dict/lookup.ts      ranking, tag/register mapping, card fields (pure)
+  dictdb.ts           the separate 'goi-dict' database: install, query
+  dict-install.worker.ts  downloads and installs the dictionary off the main thread
   ocr.ts              tesseract.js wrapper, lazy-loaded
   tts.ts              speechSynthesis wrapper
   backupfs.ts         File System Access API: folder handle, write, verify, prune
   ui/                 views (vanilla TS, no framework); ui/autobackup.ts runs the backups;
-                      ui/picker.ts is the word picker, ui/capture.ts the capture screen
-tests/                Vitest: scheduling, round trip, merge, auto-backup, text picking, TSV, furigana, seed
+                      ui/picker.ts is the word picker, ui/capture.ts the capture screen,
+                      ui/dict.ts the dictionary service and auto-fill, ui/dictpanel.ts its More section
+scripts/build-dict.mjs  jmdict-simplified JSON → public/dict/ (manifest + gzipped NDJSON)
+tests/                Vitest: scheduling, round trip, merge, auto-backup, text picking, TSV, furigana, seed, dictionary
+tests/fixtures/       dict-sample.json (49 hand-written entries in jmdict-simplified's shape) and its generator
 e2e/runthrough.cjs    headless browser run-through
 vite.config.ts        base path, service worker generation
 ```
 
-Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when an image is read). `scripts/copy-ocr.cjs` copies the OCR engine and Japanese model from `node_modules` into `public/ocr/` before `dev` and `build`; that folder is generated and not committed.
+Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when an image is read). `scripts/copy-ocr.cjs` copies the OCR engine and Japanese model from `node_modules` into `public/ocr/` before `dev` and `build`; that folder is generated and not committed. The dictionary is data, not a dependency: `scripts/build-dict.mjs` writes `public/dict/` (also generated) when `DICT_SOURCE` points at a jmdict-simplified file, plain or zipped; without it the build has no dictionary.
 
 ## Known limits
 
-- **No dictionary.** Picking a word tells you whether it is in the deck; it cannot supply the reading or meaning. You type those, or leave the card in the Inbox.
+- **The dictionary is unverified on real text.** It was tested against a 49-entry hand-written sample. The real data is fetched only when the site is built and was first seen in CI; lookup quality on real sentences has not been checked by anyone. Auto-filled cards are tagged `auto-filled`.
 - **Text recognition is the weak link in Capture.** It was tested only on text rendered by a browser (light and dark backgrounds, one font), never on a real photo, a real screenshot from another app, or a phone camera. Expect worse results on those. Vertical text is not supported.
 - **The first image read needs a connection** to fetch about 5 MB from this site. Offline before that, it says so.
 - **Video is one frame at a time, chosen by you.** There is no automatic scan of a whole clip, and the browser must be able to play the file's format.

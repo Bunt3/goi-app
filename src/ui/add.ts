@@ -3,6 +3,7 @@ import { toHiragana } from '../furigana';
 import { formatInterval } from '../srs/fsrs';
 import { DEFAULT_TAGS, DIRECTIONS, REGISTERS, SEED_TAG, SrsPhase, isInbox, isLeech, type Card, type Register } from '../types';
 import { ensurePersistence, go, store, type View } from './app';
+import { AutoFill, candidateList, dictLookup, dictStatus } from './dict';
 import { h, toast } from './dom';
 
 /** Source and tags usually repeat while adding several words from one place, so they stick for the session. */
@@ -22,7 +23,12 @@ function field(label: string, control: HTMLElement): HTMLElement {
   return h('label', { class: 'field' }, h('span', null, label), control);
 }
 
-function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): FormHandle {
+/**
+ * dict: 'add' looks the word up as it is typed and fills the reading, meaning
+ * and example when the word is found as typed; 'edit' does the same once for
+ * the card's word. Fields the owner typed are never overwritten.
+ */
+function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dict?: 'add' | 'edit' }): FormHandle {
   const word = h('input', {
     type: 'text',
     class: 'jp-big',
@@ -75,6 +81,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
     if (pendingKana && !readingTouched) {
       autoReading += toHiragana(pendingKana);
       reading.value = autoReading;
+      fill.markAuto(reading, autoReading);
     }
     pendingKana = '';
   });
@@ -84,6 +91,51 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
       reading.value = '';
     }
   });
+
+  // --- Dictionary ----------------------------------------------------------
+  const fill = new AutoFill({ word, reading, meaning_en: meaningEn, example_ja: exampleJa, example_en: exampleEn });
+  const dictBox = h('div', { id: 'f-dict' });
+  let lookupToken = 0;
+  let lookupTimer: ReturnType<typeof setTimeout> | undefined;
+  let looked = '';
+  async function lookUp(): Promise<void> {
+    const text = word.value.trim();
+    if (text === looked) return;
+    looked = text;
+    const token = ++lookupToken;
+    if (fill.chosen && fill.chosen.term !== text) fill.undo();
+    if (!text) {
+      dictBox.replaceChildren();
+      return;
+    }
+    const found = await dictLookup(text);
+    if (token !== lookupToken) return;
+    const show = () =>
+      dictBox.replaceChildren(
+        found.length
+          ? candidateList(found, fill.chosen, (m) => {
+              fill.apply(m, { word: true });
+              looked = word.value.trim();
+              show();
+            })
+          : dictStatus().state === 'installed'
+            ? h('p', { class: 'muted small', style: 'margin-top:-8px' }, 'Not found in the dictionary.')
+            : '',
+      );
+    // Fill straight away only when the word was found as typed; a conjugated
+    // form or another spelling waits for a tap.
+    const best = found[0];
+    if (best && best.reasons.length === 0 && best.term === text) fill.apply(best, { word: false });
+    show();
+  }
+  if (opts.dict) {
+    word.addEventListener('input', () => {
+      clearTimeout(lookupTimer);
+      lookupTimer = setTimeout(() => void lookUp(), 300);
+    });
+    word.addEventListener('blur', () => void lookUp());
+    if (opts.dict === 'edit' && (initial.word ?? '') !== '') void lookUp();
+  }
 
   // --- Tags --------------------------------------------------------------
   const selected = new Set(initial.tags ?? []);
@@ -141,7 +193,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
     field('Source (where you saw it)', source),
   );
 
-  const el = h('div', null, field('Word', word), field('Reading (kana)', reading), details);
+  const el = h('div', null, field('Word', word), dictBox, field('Reading (kana)', reading), details);
 
   return {
     el,
@@ -149,6 +201,8 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
     reading,
     read: () => {
       addCustom();
+      // Dictionary values still in the form bring their tags (auto-filled, slang, …) and register.
+      const extra = fill.extras();
       return {
         word: word.value.trim(),
         reading: reading.value.trim(),
@@ -156,8 +210,8 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
         meaning_ja: meaningJa.value.trim(),
         example_ja: exampleJa.value.trim(),
         example_en: exampleEn.value.trim(),
-        tags: [...selected],
-        register: (register.value || null) as Register | null,
+        tags: [...new Set([...selected, ...extra.tags])],
+        register: ((register.value || null) as Register | null) ?? extra.register,
         source: source.value.trim(),
       };
     },
@@ -167,12 +221,17 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean }): 
       readingTouched = false;
       autoReading = '';
       pendingKana = '';
+      fill.reset();
+      clearTimeout(lookupTimer);
+      lookupToken++;
+      looked = '';
+      dictBox.replaceChildren();
     },
   };
 }
 
 export function addView(): View {
-  const form = cardForm({ source: sticky.source, tags: sticky.tags }, { detailsOpen: false });
+  const form = cardForm({ source: sticky.source, tags: sticky.tags }, { detailsOpen: false, dict: 'add' });
   const message = h('div', { id: 'add-message', class: 'small', style: 'min-height:22px;margin-bottom:6px' });
   let added = 0;
 
@@ -263,12 +322,20 @@ function scheduleSummary(card: Card): HTMLElement {
   );
 }
 
-export function editView(arg: string): View {
+/** The next Inbox card after this one, for working through the Inbox one card at a time. */
+function nextInbox(afterId: string): Card | undefined {
+  const inbox = store.live().filter(isInbox).sort((a, b) => a.created - b.created);
+  return inbox.find((c) => c.id !== afterId);
+}
+
+export function editView(arg: string, params?: URLSearchParams): View {
   const card = store.cards.get(arg);
   if (!card || card.deleted) {
     return { el: h('div', { class: 'page' }, h('h1', null, 'Card not found'), h('a', { href: '#/browse' }, 'Back to cards')) };
   }
-  const form = cardForm(card, { detailsOpen: true });
+  // Working through the Inbox: after saving, go straight to the next card.
+  const walking = params?.get('next') === 'inbox';
+  const form = cardForm(card, { detailsOpen: true, dict: isInbox(card) ? 'edit' : undefined });
   const message = h('div', { class: 'small', style: 'min-height:22px;margin-bottom:6px;color:var(--warn)' });
   const confirmBox = h('div');
 
@@ -279,6 +346,12 @@ export function editView(arg: string): View {
       return;
     }
     await store.editCard(card!.id, draft);
+    if (walking) {
+      const next = nextInbox(card!.id);
+      toast(next ? 'Saved. Next Inbox card.' : 'Saved. The Inbox is empty.');
+      go(next ? `edit/${encodeURIComponent(next.id)}?next=inbox` : 'browse?filter=inbox');
+      return;
+    }
     toast('Saved.');
     history.length > 1 ? history.back() : go('browse');
   }
@@ -353,7 +426,29 @@ export function editView(arg: string): View {
     scheduleSummary(card),
     h('div', { class: 'row', style: 'margin-top:14px' }, h('button', { onclick: askReset }, 'Reset progress…'), h('button', { class: 'danger', id: 'delete-card', onclick: askDelete }, 'Delete…')),
     confirmBox,
-    h('div', { class: 'sticky-bottom' }, message, h('button', { class: 'primary big', id: 'save-card', onclick: () => void save() }, 'Save changes')),
+    h(
+      'div',
+      { class: 'sticky-bottom' },
+      message,
+      walking
+        ? h(
+            'div',
+            { class: 'row' },
+            h('button', { class: 'primary big grow', id: 'save-card', onclick: () => void save() }, 'Save, next'),
+            h(
+              'button',
+              {
+                id: 'skip-card',
+                onclick: () => {
+                  const next = nextInbox(card!.id);
+                  go(next && next.id !== card!.id ? `edit/${encodeURIComponent(next.id)}?next=inbox` : 'browse?filter=inbox');
+                },
+              },
+              'Skip',
+            ),
+          )
+        : h('button', { class: 'primary big', id: 'save-card', onclick: () => void save() }, 'Save changes'),
+    ),
   );
   return { el };
 }

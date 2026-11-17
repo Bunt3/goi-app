@@ -1,0 +1,3276 @@
+{
+ "version": "fixture",
+ "languages": [
+  "eng"
+ ],
+ "dictDate": "2026-11-17",
+ "commonOnly": false,
+ "dictRevisions": [],
+ "tags": {
+  "v5r": "Godan verb with ru ending",
+  "v5g": "Godan verb with gu ending",
+  "v5t": "Godan verb with tsu ending",
+  "v5u": "Godan verb with u ending",
+  "v5k": "Godan verb with ku ending",
+  "v5k-s": "Godan verb - Iku/Yuku special class",
+  "v5s": "Godan verb with su ending",
+  "v5aru": "Godan verb - -aru special class",
+  "v1": "Ichidan verb",
+  "vk": "Kuru verb - special class",
+  "vs-i": "suru verb - included",
+  "vs": "noun or participle which takes the aux. verb suru",
+  "vt": "transitive verb",
+  "vi": "intransitive verb",
+  "n": "noun (common) (futsuumeishi)",
+  "adv": "adverb (fukushi)",
+  "int": "interjection (kandoushi)",
+  "adj-i": "adjective (keiyoushi)",
+  "adj-ix": "adjective (keiyoushi) - yoi/ii class",
+  "adj-na": "adjectival nouns or quasi-adjectives (keiyodoshi)",
+  "hum": "humble (kenjougo) language",
+  "hon": "honorific or respectful (sonkeigo) language",
+  "pol": "polite (teineigo) language",
+  "form": "formal or literary term",
+  "col": "colloquial",
+  "sl": "slang",
+  "net-sl": "Internet slang",
+  "uk": "word usually written using kana alone",
+  "bus": "business",
+  "ksb": "Kansai-ben"
+ },
+ "words": [
+  {
+   "id": "9000001",
+   "kanji": [
+    {
+     "common": true,
+     "text": "承る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "うけたまわる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to hear"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to be told"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to know"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to receive (an order)"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to undertake"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to take (a booking)"
+      }
+     ],
+     "examples": [
+      {
+       "source": {
+        "type": "tatoeba",
+        "value": "1"
+       },
+       "text": "承る",
+       "sentences": [
+        {
+         "land": "jpn",
+         "text": "ご注文を承りました。"
+        },
+        {
+         "land": "eng",
+         "text": "We have received your order."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000002",
+   "kanji": [
+    {
+     "common": false,
+     "text": "稟議",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "りんぎ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [
+      "bus"
+     ],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "circulating a proposal for approval"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "decision by circular"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000003",
+   "kanji": [
+    {
+     "common": false,
+     "text": "稟議書",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "りんぎしょ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [
+      "bus"
+     ],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "written proposal circulated for approval"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000004",
+   "kanji": [
+    {
+     "common": true,
+     "text": "取り次ぐ",
+     "tags": []
+    },
+    {
+     "common": false,
+     "text": "取次ぐ",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "とりつぐ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5g",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to pass on (a message)"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to put (a call) through"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to act as agent"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000005",
+   "kanji": [
+    {
+     "common": true,
+     "text": "待つ",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "まつ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5t",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to wait"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to await"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000006",
+   "kanji": [
+    {
+     "common": true,
+     "text": "確認",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "かくにん",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "confirmation"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "checking"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "verification"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000007",
+   "kanji": [
+    {
+     "common": true,
+     "text": "食べる",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "たべる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v1",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to eat"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000008",
+   "kanji": [
+    {
+     "common": true,
+     "text": "着る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "きる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v1",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to wear"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to put on (clothes)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000009",
+   "kanji": [
+    {
+     "common": true,
+     "text": "切る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "きる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to cut"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to slice"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000010",
+   "kanji": [
+    {
+     "common": true,
+     "text": "買う",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "かう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to buy"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to purchase"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000011",
+   "kanji": [
+    {
+     "common": true,
+     "text": "飼う",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "かう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to keep (a pet)"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to raise (animals)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000012",
+   "kanji": [
+    {
+     "common": true,
+     "text": "行く",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "いく",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ゆく",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5k-s",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to go"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to head for"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000013",
+   "kanji": [
+    {
+     "common": true,
+     "text": "来る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "くる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "vk",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to come"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to arrive"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000014",
+   "kanji": [
+    {
+     "common": true,
+     "text": "為る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "する",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "vs-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to do"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to carry out"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000015",
+   "kanji": [
+    {
+     "common": true,
+     "text": "高い",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "たかい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "high"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "tall"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "expensive"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000016",
+   "kanji": [
+    {
+     "common": true,
+     "text": "良い",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "よい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "いい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-ix"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "good"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "fine"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "nice"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000017",
+   "kanji": [
+    {
+     "common": true,
+     "text": "説明",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "せつめい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "explanation"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "description"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000018",
+   "kanji": [
+    {
+     "common": false,
+     "text": "齟齬",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "そご",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "discrepancy"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "inconsistency"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "mismatch"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000019",
+   "kanji": [
+    {
+     "common": true,
+     "text": "お世話",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "おせわ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "pol"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "help"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "assistance"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "care"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000020",
+   "kanji": [
+    {
+     "common": false,
+     "text": "平素",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "へいそ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "adv"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "form"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "ordinarily"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "usually"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000021",
+   "kanji": [
+    {
+     "common": true,
+     "text": "矢場い",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "やばい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ヤバい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "col",
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "dangerous"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "risky"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "col",
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "awful"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "terrible"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "not good"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "sl",
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "amazing"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "awesome"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "incredible"
+      }
+     ],
+     "examples": [
+      {
+       "source": {
+        "type": "tatoeba",
+        "value": "2"
+       },
+       "text": "矢場い",
+       "sentences": [
+        {
+         "land": "jpn",
+         "text": "このラーメン、ヤバい！"
+        },
+        {
+         "land": "eng",
+         "text": "This ramen is amazing!"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000022",
+   "kanji": [],
+   "kana": [
+    {
+     "common": true,
+     "text": "マジ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "まじ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-na",
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "col"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "serious"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "not joking"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "for real"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000023",
+   "kanji": [
+    {
+     "common": true,
+     "text": "受ける",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "うける",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ウケる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v1",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to receive"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to get"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "v1",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to go over well"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to be popular"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "v1",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "col",
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to find funny"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to be amused"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000024",
+   "kanji": [],
+   "kana": [
+    {
+     "common": true,
+     "text": "めっちゃ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "メッチャ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adv"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [
+      "ksb"
+     ],
+     "misc": [
+      "col"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "very"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "really"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "super"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000025",
+   "kanji": [],
+   "kana": [
+    {
+     "common": false,
+     "text": "ガチ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "がち",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-na",
+      "adv",
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "sl"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "serious"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "for real"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "hardcore"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000026",
+   "kanji": [],
+   "kana": [
+    {
+     "common": false,
+     "text": "キモい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "きもい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "sl"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "gross"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "creepy"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "disgusting"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000027",
+   "kanji": [],
+   "kana": [
+    {
+     "common": false,
+     "text": "ググる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "net-sl"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to google (something)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000028",
+   "kanji": [
+    {
+     "common": true,
+     "text": "草",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "くさ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "grass"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "weeds"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "n",
+      "int"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "net-sl"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "lol"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "LOL"
+      }
+     ],
+     "examples": [
+      {
+       "source": {
+        "type": "tatoeba",
+        "value": "3"
+       },
+       "text": "草",
+       "sentences": [
+        {
+         "land": "jpn",
+         "text": "それは草。"
+        },
+        {
+         "land": "eng",
+         "text": "That is hilarious."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000029",
+   "kanji": [
+    {
+     "common": true,
+     "text": "知る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "しる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to know"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to find out"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000030",
+   "kanji": [
+    {
+     "common": true,
+     "text": "分かる",
+     "tags": []
+    },
+    {
+     "common": false,
+     "text": "解る",
+     "tags": []
+    },
+    {
+     "common": false,
+     "text": "判る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "わかる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5r",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to understand"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to grasp"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000031",
+   "kanji": [
+    {
+     "common": true,
+     "text": "見る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "みる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v1",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to see"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to look at"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000032",
+   "kanji": [],
+   "kana": [
+    {
+     "common": true,
+     "text": "いらっしゃる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5aru",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hon"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to come"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to go"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to be (somewhere)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000033",
+   "kanji": [
+    {
+     "common": true,
+     "text": "申す",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "もうす",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5s",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to say"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to be called"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000034",
+   "kanji": [
+    {
+     "common": true,
+     "text": "拝見",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "はいけん",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "seeing"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "looking at"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000035",
+   "kanji": [
+    {
+     "common": true,
+     "text": "伺う",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "うかがう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to ask"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to inquire"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "hum"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to visit"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to call on"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000036",
+   "kanji": [
+    {
+     "common": true,
+     "text": "案件",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "あんけん",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [
+      "bus"
+     ],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "matter"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "item of business"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "case"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000037",
+   "kanji": [
+    {
+     "common": false,
+     "text": "根回し",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "ねまわし",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [
+      "bus"
+     ],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "laying the groundwork"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "informal consensus-building"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000038",
+   "kanji": [
+    {
+     "common": true,
+     "text": "了解",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "りょうかい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "understanding"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "consent"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "roger"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000039",
+   "kanji": [
+    {
+     "common": true,
+     "text": "合う",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "あう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to fit"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to match"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to agree"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000040",
+   "kanji": [
+    {
+     "common": true,
+     "text": "会う",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "あう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5u",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to meet"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to see (someone)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000041",
+   "kanji": [
+    {
+     "common": true,
+     "text": "書く",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "かく",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v5k",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to write"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000042",
+   "kanji": [
+    {
+     "common": true,
+     "text": "寝る",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "ねる",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "v1",
+      "vi"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to sleep"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "to go to bed"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000043",
+   "kanji": [
+    {
+     "common": true,
+     "text": "無い",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "ない",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "nonexistent"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "not being (there)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000044",
+   "kanji": [
+    {
+     "common": true,
+     "text": "美味しい",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "おいしい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "uk"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "delicious"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "tasty"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000045",
+   "kanji": [
+    {
+     "common": false,
+     "text": "按分",
+     "tags": []
+    },
+    {
+     "common": false,
+     "text": "案分",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": false,
+     "text": "あんぶん",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "proportional division"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "apportionment"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000046",
+   "kanji": [
+    {
+     "common": true,
+     "text": "担当",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "たんとう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "n",
+      "vs",
+      "vt"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "being in charge (of)"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "responsibility"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000047",
+   "kanji": [
+    {
+     "common": true,
+     "text": "少々",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "しょうしょう",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adv",
+      "n"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "just a minute"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "a little"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "a few"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000048",
+   "kanji": [
+    {
+     "common": true,
+     "text": "大変",
+     "tags": []
+    }
+   ],
+   "kana": [
+    {
+     "common": true,
+     "text": "たいへん",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adv"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "very"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "greatly"
+      }
+     ]
+    },
+    {
+     "partOfSpeech": [
+      "adj-na"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "serious"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "hard"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "terrible"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000049",
+   "kanji": [],
+   "kana": [
+    {
+     "common": false,
+     "text": "うざい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ウザい",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adj-i"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "col"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "annoying"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "irritating"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

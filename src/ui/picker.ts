@@ -1,6 +1,8 @@
 import { SEED_TAG, isInbox, type Card } from '../types';
 import { lookup, segment, sentenceAround, type Token } from '../textpick';
+import type { DictMatch } from '../dict/lookup';
 import { ensurePersistence, store } from './app';
+import { AutoFill, candidateList, dictLookup, dictStatus } from './dict';
 import { h, toast } from './dom';
 
 export interface PickerOptions {
@@ -27,6 +29,7 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
   let tokens: Token[] = [];
   let from = -1;
   let to = -1;
+  let lookupToken = 0;
 
   const flow = h('div', { class: 'pick-text', lang: 'ja' });
   const result = h('div', { class: 'pick-result', 'aria-live': 'polite' });
@@ -122,6 +125,40 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
     meaning.addEventListener('input', label);
     label();
 
+    // Dictionary: fill the word's dictionary form, reading and meaning. The
+    // example stays the sentence it was picked from.
+    const fill = new AutoFill({ word, reading, meaning_en: meaning });
+    fill.markAuto(word, sel);
+    const dictBox = h('div', { id: 'pick-dict' });
+    const token = ++lookupToken;
+    let matches: DictMatch[] = [];
+    const showMatches = () => {
+      const inDeck = fill.chosen ? store.live().find((c) => c.word === fill.chosen!.term) : undefined;
+      dictBox.replaceChildren(
+        candidateList(matches, fill.chosen, (m) => {
+          fill.apply(m, { word: true });
+          label();
+          showMatches();
+        }),
+        inDeck ? h('div', null, h('p', { class: 'small', style: 'margin:6px 0 2px' }, h('b', { lang: 'ja' }, inDeck.word), ' is already in your deck.'), cardLine(inDeck, 'in deck')) : '',
+      );
+    };
+    void dictLookup(sel).then((found) => {
+      if (token !== lookupToken) return;
+      matches = found;
+      if (found.length > 0) {
+        fill.apply(found[0]!, { word: true });
+        label();
+        showMatches();
+      } else if (dictStatus().state === 'installed') {
+        dictBox.replaceChildren(h('p', { class: 'muted small' }, 'Not found in the dictionary.'));
+      } else if (dictStatus().state === 'available') {
+        dictBox.replaceChildren(
+          h('p', { class: 'muted small' }, h('a', { href: '#/more?focus=dict' }, 'Download the dictionary'), ' to fill in readings and meanings.'),
+        );
+      }
+    });
+
     const start = tokens[from]!.start;
     const end = tokens[to]!.end;
     add.addEventListener('click', async () => {
@@ -141,7 +178,8 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
         example_ja: example,
         // A translation only carries over if the example is the very sentence it translated.
         example_en: example === text.trim() ? (opts.exampleEn ?? '') : '',
-        tags: (opts.tags ?? []).filter((t) => t !== SEED_TAG),
+        tags: [...new Set([...(opts.tags ?? []).filter((t) => t !== SEED_TAG), ...fill.extras().tags])],
+        register: fill.extras().register,
         source: typeof opts.source === 'function' ? opts.source() : (opts.source ?? ''),
       });
       void ensurePersistence();
@@ -166,6 +204,7 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
     result.replaceChildren(
       h('p', { id: 'pick-status' }, h('b', { lang: 'ja' }, sel), ' is not in your deck.'),
       ...found.related.slice(0, 3).map((c) => cardLine(c, 'related')),
+      dictBox,
       h(
         'div',
         { class: 'stack', style: 'margin-top:8px' },

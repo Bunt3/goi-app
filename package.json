@@ -7,8 +7,9 @@
   "scripts": {
     "predev": "node scripts/copy-ocr.cjs",
     "dev": "vite",
-    "prebuild": "node scripts/copy-ocr.cjs",
+    "prebuild": "node scripts/copy-ocr.cjs && node scripts/build-dict.mjs",
     "build": "tsc --noEmit && vite build",
+    "build:e2e": "DICT_SOURCE=tests/fixtures/dict-sample.json npm run build",
     "preview": "vite preview --port 4173 --strictPort",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

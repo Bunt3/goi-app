@@ -6,6 +6,8 @@ export type Register = (typeof REGISTERS)[number];
 
 export const DEFAULT_TAGS = ['電話応対', 'メール', '会議', '人事・契約', 'IT', '接客', '日常'] as const;
 export const SEED_TAG = 'seed-unverified';
+/** Given to cards whose reading or meaning came from the offline dictionary, so they can be found and checked. */
+export const AUTO_TAG = 'auto-filled';
 
 /** FSRS states, numerically identical to ts-fsrs `State`. */
 export const SrsPhase = { New: 0, Learning: 1, Review: 2, Relearning: 3 } as const;

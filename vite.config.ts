@@ -71,6 +71,9 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || !url.pathname.startsWith(BASE)) return;
+  // The dictionary download goes straight to the network: it is stored in its
+  // own database once installed, so a cached copy would only double the space.
+  if (url.pathname.startsWith(BASE + 'dict/')) return;
   if (url.pathname.startsWith(BASE + 'ocr/')) {
     event.respondWith(
       caches.open(OCR_CACHE).then(async (cache) => {

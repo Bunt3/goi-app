@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-17 (after the third work block; next task defined)
+# Handoff — state as of 2026-11-17 (after the fourth work block: offline dictionary)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -8,110 +8,49 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 - **Built so far, in order:**
   1. The original brief: FSRS-6 scheduling with caps and overdue spreading, two review directions, quick sessions, JSON export and merge import, Anki TSV, quick add, bulk paste, listening mode, furigana, seed deck, browse, stats.
   2. Automatic backup to a real file (download mode everywhere, folder mode in Chromium).
-  3. This block: picking words out of example sentences, and a Capture screen that reads text from photos, screenshots and video frames on the device.
-- **Checks:** 96 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
+  3. Picking words out of example sentences, and a Capture screen that reads text from photos, screenshots and video frames on the device.
+  4. This block: an offline dictionary (JMdict) that fills readings, meanings, tags and examples. See below.
+- **Checks:** 168 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
-## NEXT TASK: offline dictionary (requested, not started)
+## NEXT TASK
 
-**Read this section first. It is the active assignment.** Nothing below has been implemented. The previous session stopped here on purpose: too little usage budget remained to finish, and the dictionary data turned out to be unreachable from the build container.
+The offline dictionary (previous NEXT TASK) is built: phases A to D are done and shipped; phase E (dictionary-based word splitting) was not done. What remains, in order:
 
-### What the owner asked for (their words, condensed)
+1. **Owner tries it on the phone.** Install the dictionary from More on Wi-Fi, then: pick words from real example sentences, type slang into Add, walk the Inbox. Report wrong first candidates and misses with the exact text. Nothing has been checked against real JMdict data on a real sentence.
+2. **Check the CI-built file.** See "Dictionary: real data" below for what the first CI run showed. If the example-sentence count is 0 there, the key names in the examples file differ from what `examplePair` in `scripts/build-dict.mjs` accepts (`sentences[].land` or `.lang`, values `jpn`/`eng`); inspect one entry and adjust.
+3. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html and add the version if wanted.
+4. **Phase E, optional:** split picker text by longest dictionary match instead of `Intl.Segmenter`. Needs a batched lookup of all prefixes at each position (one IndexedDB query per position), so test speed on the phone first.
 
-- The app gets "its own dictionary to pull from", offline. The deck stays what it is: only cards the owner has made.
-- When a card is created — typed by hand, picked from a sentence, or picked from a screenshot/photo/video capture — the app "finds the definitions and adds sentences".
-- Coverage must go beyond the original brief. N1+ and workplace vocabulary remain the core, but **casual, colloquial and slang vocabulary is "equally important"**.
-- "If this is possible, make it happen." The owner has said they cannot review things as they go, and prefers decisions made and justified afterwards.
+## Offline dictionary: what was built (this block)
 
-### Answers already given to the owner
+The owner asked for an offline dictionary that fills definitions and example sentences when a card is created, with casual, colloquial and slang vocabulary as important as N1 and business vocabulary, decisions made and justified afterwards. Design and order of work followed the plan written in the previous block.
 
-- A dictionary is feasible and fits the app. It was not built for lack of budget.
-- **Example sentences can only be retrieved from a corpus, not written.** There is no generation without an AI model, and AI features and network calls are excluded by the hard constraints. Coverage will be patchy exactly where the owner cares most (business set phrases, slang). Say this again when delivering.
+- **Data:** JMdict via jmdict-simplified's English file with examples (`jmdict-examples-eng-*.json.zip`; falls back to `jmdict-eng-*`). Verified on 2026-11-17 from GitHub's release page: tag `3.6.2+20261116213322`, examples file 13.5 MB zipped, plain English 11 MB; word JSON shape confirmed from the project's TypeScript types (`kanji`, `kana[].appliesToKanji` with `"*"`, `sense[].partOfSpeech/misc/field/dialect/gloss`). The examples variant's keys are not in those types; the parser accepts both `land` and `lang`.
+- **Build:** `scripts/build-dict.mjs` compacts each word to short keys (`src/dict/entry.ts`), one JSON per line, gzipped, plus `manifest.json`, into `public/dict/`. Budget 15 MB gzip (`DICT_MAX_MB`); over budget it drops examples to one per sense, then none, never words. CI (`deploy.yml`) asks the GitHub API for the latest release, caches the zip with `actions/cache` keyed on the asset name, and builds with `DICT_OPTIONAL=1`; every dictionary step is `continue-on-error`.
+- **Device:** separate Dexie database `goi-dict` (`src/dictdb.ts`), indexes `*k` and `*r`. Installed only from More → Dictionary, by a module worker that streams, un-gzips (`DecompressionStream`, or not if the server already did) and bulk-inserts 2000 at a time. Marked complete only at the end; an interrupted install is detected and offered again. Not cached by the service worker (the database is the copy). Remove deletes the database.
+- **Lookup:** `src/dict/deinflect.ts` is a suffix-rule table written for this app (about 330 rules, generated from per-class rows: godan, ichidan, する, 来る, i-adjectives, te-form auxiliaries, casual contractions ちゃう/てる/とく/ねえ/ん/ら抜き, お〜ください, honorific prefix stripping). Each rule has an input and output word class, so 〜ない chains like an adjective and 〜ている like an ichidan verb. A deinflected candidate counts only if the entry's part of speech fits, which separates homographs (きった → 切る, never 着る). Ranking: exact before deinflected, common before rare, kana-usual entries for kana input, shorter chains first.
+- **Where it plugs in:** picker (and so Capture), Add, and the Inbox walk-through (Cards → Inbox → "Fill in one at a time", Save, next / Skip). `AutoFill` in `src/ui/dict.ts` writes only empty fields or fields it filled itself; the IME reading counts as automatic, so the dictionary replaces it. The picker keeps the picked sentence as the example; Add and Inbox use a dictionary example only when the example is empty. Cards keeping dictionary values get `auto-filled` plus mapped tags (`slang`, `internet slang`, `colloquial`, `vulgar`, `derogatory`, `archaic`, `dialect`, `関西弁`, `ビジネス`, `IT`, `法律`, `経済`) and a register (hon/hum/pol/casual/form). `Register` was not extended, so no schema change.
+- **Decisions made without asking:**
+  - Add fills automatically only when the typed word is found exactly; a conjugated form or other spelling waits for a tap. Typing 買った should not silently become 買う with a meaning the owner didn't choose.
+  - The picker auto-applies the first candidate (the selection is from text, so replacing it with the dictionary form is the point), with the others one tap away.
+  - The word keeps the script it was written in (ヤバい stays katakana; its reading is ヤバい). Changing the owner's spelling to JMdict's headword would lose information.
+  - `bus` maps to a new `ビジネス` tag, not `会議`. `comp` maps to the existing `IT` tag.
+  - `archaic` only from the first sense; a common word with one old sense further down is not archaic.
+  - The Edit screen looks up only Inbox cards. A complete card's fields are all the owner's, so a lookup could fill nothing.
 
-### Facts verified in the last session
+### Dictionary: real data
 
-Checked from the build container on 2026-11-17:
+Not yet seen. The first CI run with this code fetches and builds it; record here the asset name, entry and example counts, raw and gzip size printed by `build-dict.mjs` in the "npm run build" step of the Actions log.
 
-| Source | Result |
-| --- | --- |
-| `http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz` | unreachable (blocked by the environment's network policy) |
-| `https://www.edrdg.org/pub/Nihongo/JMdict_e_examp.gz` | unreachable |
-| `https://github.com/scriptin/jmdict-simplified/releases/latest` | 403 |
-| `https://downloads.tatoeba.org/...` | unreachable |
-| npm registry | reachable, but **no package contains the JMdict data**. `jmdict-simplified-node`, `@scriptin/jmdict-simplified-types`, `jmdict-util`, `japanese-db` are tools or types only. `kuromoji` / `@sglkc/kuromoji` ship IPADIC (readings and parts of speech, no English). |
+Scale check done here with a synthetic 210,000-entry file (fixture entries repeated, so shorter than real ones): build 4 s; in headless Chromium with the CPU slowed 4×, install 18 s, 77 MB of storage, first lookup well under a second. Real entries are longer, so expect roughly 2–3× the install time and storage. Unmeasured on a phone.
 
-So the real data cannot be fetched here. GitHub Actions runners have open network access. Plan around that (below).
+### Dictionary limits to tell the owner
 
-### Not verified — check before relying on them
-
-These are from memory. Confirm each against the source before writing code or licence text.
-
-- **JMdict** is published by EDRDG under CC BY-SA 4.0. Attribution is required and the data stays share-alike. The app's own code is unaffected, but the data file served from Pages must carry the attribution and licence, and the app needs a visible notice (More screen and README).
-- **`jmdict-simplified`** (GitHub, scriptin) publishes JSON conversions as release assets, including an English file and a variant with example sentences (`jmdict-eng-*.json.zip`, `jmdict-examples-eng-*.json.zip`). Exact names and whether the examples variant still exists need checking. If not, EDRDG's own `JMdict_e_examp.gz` (XML) carries examples.
-- **Example sentences** in those files come from Tatoeba / the Tanaka corpus (CC BY 2.0 FR). Quality is uneven; some are unnatural.
-- **Sizes.** Full English JMdict is roughly 200,000 entries; about 10 MB zipped as JSON, over 100 MB unzipped. A common-words-only file exists but must not be used: slang and N1+ business terms are mostly outside it.
-- **Register tags in JMdict** (`misc`): `col` colloquial, `sl` slang, `net-sl` internet slang, `m-sl` manga slang, `fam` familiar, `vulg`, `derog`, `hon` honorific, `hum` humble, `pol` polite, `form` formal/literary, `arch`, `obs`, plus dialect tags (`ksb` Kansai, etc.). Field tags include `bus`, `law`, `comp`, `finc`, `econ`. This is what makes the slang/colloquial request achievable: the data is labelled.
-
-### Design to build
-
-**Hard constraints still apply** (`CLAUDE.md`): no requests to other origins at runtime, no new runtime dependency unless unavoidable, offline after first use. The dictionary is data, not a dependency, and is served from the app's own origin exactly like the OCR files.
-
-1. **Build-time pipeline** — `scripts/build-dict.mjs`
-   - Input: the JMdict JSON (or XML) file. Download it if absent, into a git-ignored cache directory.
-   - Output: `public/dict/` (git-ignored, like `public/ocr/`): a `manifest.json` (version, entry count, byte size, source, licence text) and one or more gzipped data files.
-   - Compact each entry to what the app uses: kanji forms, readings, senses (English glosses, parts of speech, `misc` and `field` tags), up to 2 example pairs per sense, and a commonness flag. Drop other languages. **Measure the result.** Target at most about 15 MB over the wire; if it is larger, cut examples first, never slang or rare words.
-   - **In the container the download will fail.** Make the script accept a local path, and add a small hand-written fixture (`tests/fixtures/dict-sample.json`, about 40 entries) used by unit tests and by the run-through. The fixture must include: 承る, 稟議, a few conjugatable verbs and i-adjectives, and slang/colloquial entries (for example ヤバい, マジ, ウケる, めっちゃ, ガチ) with their tags.
-   - In `.github/workflows/deploy.yml`, download the real file before `npm run build`, with `actions/cache` keyed on the data version. **If the download fails, the deploy must still succeed** with no `dict/manifest.json`; the app then reports "dictionary not available in this build".
-
-2. **On-device storage** — new file `src/dictdb.ts`
-   - A **separate** Dexie database (`goi-dict`). It must never appear in backups or merges and must not touch `deckMark`.
-   - Installed by an explicit button in More ("Download dictionary, about N MB"), never automatically: it is large and the owner is often on mobile data. Show progress. Parse and bulk-insert in a Web Worker so the UI stays responsive.
-   - Indexes: kanji forms and readings as multi-entry keys. Lookup must work offline with no further fetches.
-   - The download can be repeated at any time, so losing it is harmless. Offer "Remove dictionary" too.
-
-3. **Lookup** — new pure module `src/dict/lookup.ts` (DOM-free, tested in Node)
-   - Exact match on a kanji form or reading.
-   - **Deinflection**: map a conjugated form to candidate dictionary forms (承りました → 承る, 高くなかった → 高い). Write your own suffix-rule table, around 60 rules. Do not copy Yomitan's or another GPL project's table.
-   - Rank: exact before deinflected, common before rare, and prefer entries whose part of speech fits the inflection.
-   - Map JMdict tags to the app's fields: `hon` → 尊敬語, `hum` → 謙譲語, `pol` → polite, `col`/`sl`/`fam`/`vulg`/`net-sl`/`m-sl` → casual, `form` → written-only. Add tags such as `slang`, `colloquial`, `vulgar`, `dialect` so they can be filtered in Browse. `bus` → the existing `会議` tag is wrong; add a neutral `ビジネス` tag instead. The `Register` type has five fixed values; adding more means a schema change (see `CLAUDE.md`), so prefer tags.
-
-4. **Where it plugs in**
-   - `src/ui/picker.ts`: when a selection is not in the deck, look it up. Show candidates (word, reading, first glosses, tags). Choosing one fills word (dictionary form), reading and meaning. **Keep the sentence the word was picked from as the example**; it is the owner's own context and beats a corpus sentence. Offer the dictionary's examples only when there is no source sentence.
-   - `src/ui/add.ts`: after the word is entered, offer the same candidates. This replaces the best-effort IME reading autofill when a match exists.
-   - `src/ui/capture.ts`: gets it for free through the picker.
-   - Inbox: a "Fill from dictionary" action for cards missing a reading or meaning, one card at a time with the candidate shown. No silent bulk fill: homographs (same spelling, different word) make unattended filling wrong often enough to matter.
-   - **Never overwrite a field the owner has typed.** Tag every auto-filled card `auto-filled` so it can be reviewed, the same way seed cards carry `seed-unverified`.
-   - With the dictionary installed, the picker can also split text by longest dictionary match instead of `Intl.Segmenter`. Do this last; it is an improvement, not a requirement.
-
-5. **Tests and run-through**
-   - Vitest: deinflection table, ranking, tag mapping, homograph handling, and that backups and `deckMark` are unaffected by installing the dictionary.
-   - `e2e/runthrough.cjs`: build with the fixture (for example `DICT_SOURCE=tests/fixtures/dict-sample.json npm run build`), install it through the UI, pick a conjugated word from a sentence and assert the reading and meaning are filled, add a slang word and assert its tags, then repeat offline.
-
-6. **Documentation and notices**
-   - README: what the dictionary is, its size, where it comes from, licence and attribution, and its limits.
-   - More screen: attribution line and licence link text (no external request; a plain link is fine).
-   - `CLAUDE.md`: add the invariants (separate database, never in backups, never overwrite typed fields, deploy must survive a failed data download). Remove the "no dictionary" statements in `README.md` and here.
-
-### Order of work, with safe stopping points
-
-Each phase leaves `main` deployable. Stop at the end of a phase if budget runs short, and update this file.
-
-- **Phase A** — `src/dict/lookup.ts` with deinflection and tag mapping, the fixture, and unit tests. No UI. Nothing user-visible changes.
-- **Phase B** — `scripts/build-dict.mjs`, `src/dictdb.ts`, the install button and progress, picker and Add screen integration, run-through with the fixture. Ship. Real data arrives when CI can download it.
-- **Phase C** — the CI download step with caching and soft failure; confirm from the Actions log that the real file was fetched and what size it came to. Record the size here.
-- **Phase D** — dictionary examples where no source sentence exists; Inbox "Fill from dictionary".
-- **Phase E** — dictionary-based text splitting in the picker.
-
-### Things to tell the owner when delivering
-
-- The real dictionary has not been seen by anyone until Phase C runs in CI. Until the owner installs it on a device and tries it, lookup quality on real text is unverified.
-- Slang coverage in JMdict is good for established slang and lags behind current usage. Entries are labelled, but there is no reliable frequency information for slang.
-- Auto-filled readings and meanings are the dictionary's first candidate unless the owner picks another. Homographs will sometimes be wrong. The `auto-filled` tag exists so these can be found.
-- Corpus example sentences are of mixed quality and are missing for many business and slang terms.
-
-### Getting the data into the build container (optional)
-
-Only needed to test against real data locally. It requires the owner to approve a change to the environment's network settings, so ask at the start of a session when they are present: allow `ftp.edrdg.org` and `www.edrdg.org`, or the GitHub release hosts for `jmdict-simplified`. Without that, develop against the fixture and let CI fetch the real file.
+- Slang coverage is good for established slang and lags current usage. Entries are labelled, but there is no frequency information for slang.
+- The first candidate is a guess for homographs; `auto-filled` marks every card to check.
+- Corpus example sentences are of mixed quality and missing for many business and slang terms; examples cannot be generated without an AI model, which the constraints exclude.
+- Deinflection covers standard and common casual forms, not classical or rare ones.
 
 ## The owner
 
@@ -119,7 +58,7 @@ Sole user. American, long-term resident of Japan, moving into Japanese-language 
 
 Standing instruction for this repo: when a build is finished and tests pass, merge into `main` so Pages deploys.
 
-## This block: what was asked and what was built
+## Third block: what was asked and what was built
 
 The owner asked for three things in priority order, describing the second and third as ideas to "toy with".
 
@@ -129,7 +68,7 @@ The owner asked for three things in priority order, describing the second and th
 - `src/ui/picker.ts`: `pickerPanel` (tappable text plus a result panel) and `openPickerSheet` (bottom sheet). Used from `cardBack` in `ui/cardview.ts`, so it appears on the answer side in review and in listening mode, and inline on the Capture screen.
 - "Related" means the same kanji stem with different okurigana (承り ↔ 承る) or one string being a prefix of the other (稟議 ↔ 稟議書). A single shared kanji inside a different word is deliberately not a match; there are tests for this.
 - A new card needs only the word. No reading or meaning sends it to the Inbox, which already existed. Tags come from the parent card minus `seed-unverified`.
-- **There is no dictionary yet**, so the app cannot fill in readings or meanings. The owner has since asked for one; see "NEXT TASK" at the top.
+- The dictionary added in the fourth block fills readings and meanings here when installed.
 
 ### 2. Image input (done, with real limits)
 
@@ -182,6 +121,7 @@ The owner mentioned audio alongside visuals. In-app speech recognition was not a
 
 Ordered by how likely they are to bite.
 
+0. **The dictionary on real data and real text.** Only the 49-entry fixture and a synthetic 210,000-entry file were run here. Ranking, deinflection coverage, example-sentence parsing, install time and storage on the phone are all unverified. See "NEXT TASK".
 1. **Text recognition on real input.** Tested only on text rendered by headless Chromium in one font, on plain light and dark backgrounds. Not tested: any real photograph, a phone camera, a screenshot from another application, mixed Japanese and Latin layouts, small text. One stray extra kana appeared even in the clean test. Expect materially worse results on photos. Vertical text is unsupported (no `jpn_vert` model shipped).
 2. **Recognition speed and memory on the phone.** Sub-second in the build container. A phone will be slower and the engine holds tens of MB; `disposeOcr` runs when leaving the Capture screen.
 3. **Word splitting quality.** `Intl.Segmenter` output depends on the browser's ICU version. Tests assert only properties that should hold everywhere. The user-facing escape hatch is *Pick by character*.
@@ -200,7 +140,7 @@ Ordered by how likely they are to bite.
    - Add `jpn_vert` and a vertical toggle (about 2 MB more, same engine).
    - Add contrast normalisation or thresholding in `prepareForOcr`, and try page-segmentation mode 6 for hand-drawn boxes. Plain tests showed no difference between modes 3, 6 and 7 on clean text.
    - Replace the engine with a detection-plus-recognition model run through ONNX Runtime Web (for example PaddleOCR's Japanese models). Noticeably better on photos, but roughly 10–25 MB of model and runtime and a larger integration. Only worth it if the owner uses photo capture often.
-3. **The offline dictionary.** Now the active task; see "NEXT TASK" at the top.
+3. **The offline dictionary's follow-ups.** See "NEXT TASK" at the top.
 4. **Automatic video scanning**, if wanted after trying the frame-grab flow: sample a frame every second or two, skip frames that barely differ from the last, recognise, de-duplicate lines.
 5. Confirm two earlier behaviours the owner has not explicitly accepted: each direction counting against the new-card cap, and a sub-cap backlog arriving in one day.
 6. Seed deck review. Editing meanings or examples in `src/data/seed.ts` is safe; changing a `word` or `reading` changes the card id (see `CLAUDE.md`).

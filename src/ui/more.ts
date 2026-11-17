@@ -7,6 +7,7 @@ import { canShareFiles, exportAnki, exportBackup, shareBackup } from './actions'
 import { chooseFolder, folderAccess, folderSupported, forgetFolder, newestBackup, savedFolder } from '../backupfs';
 import { applyTheme, ensurePersistence, refresh, store, type View } from './app';
 import { runAutoBackup } from './autobackup';
+import { dictSection } from './dictpanel';
 import { h, plural, toast } from './dom';
 
 async function loadSeedDeck(): Promise<{ added: number; skipped: number }> {
@@ -517,17 +518,18 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     seedResult,
     h('h2', null, 'More'),
     h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
-    h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no network calls after install.`),
+    h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`),
   );
 
-  const el = h('div', { class: 'page' }, h('h1', null, 'More'), backup, settings, tools);
+  const dict = dictSection();
+  const el = h('div', { class: 'page' }, h('h1', null, 'More'), backup, settings, dict.el, tools);
 
   const focus = params.get('focus');
   if (focus) {
     setTimeout(() => {
-      const target = focus === 'seed' ? tools : focus === 'import' ? backup : null;
+      const target = focus === 'seed' ? tools : focus === 'import' ? backup : focus === 'dict' ? dict.el : null;
       target?.scrollIntoView({ block: 'start' });
     }, 30);
   }
-  return { el };
+  return { el, destroy: dict.destroy };
 }

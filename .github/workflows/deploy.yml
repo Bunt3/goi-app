@@ -26,7 +26,59 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+
+      # Offline dictionary data: JMdict (EDRDG) as converted by jmdict-simplified.
+      # Every dictionary step may fail without failing the deploy; the app then
+      # says "Dictionary not available in this build".
+      - name: Find the latest JMdict release
+        id: dictsrc
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          json=$(curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest)
+          pick() { echo "$json" | jq -r --arg re "$1" '[.assets[] | select(.name | test($re))][0] | if . then "\(.name)\t\(.browser_download_url)" else empty end'; }
+          found=$(pick '^jmdict-examples-eng-[0-9].*[.]json[.]zip$')
+          [ -n "$found" ] || found=$(pick '^jmdict-eng-[0-9].*[.]json[.]zip$')
+          [ -n "$found" ] || { echo "::warning::no English JMdict asset in the latest jmdict-simplified release"; exit 1; }
+          name=$(printf '%s' "$found" | cut -f1)
+          url=$(printf '%s' "$found" | cut -f2)
+          case "$name" in *[!A-Za-z0-9.+_-]*) echo "::warning::unexpected asset name"; exit 1;; esac
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Dictionary source: $name"
+
+      - name: Restore cached JMdict file
+        if: steps.dictsrc.outputs.name != ''
+        uses: actions/cache@v4
+        with:
+          path: .dict-cache
+          key: jmdict-${{ steps.dictsrc.outputs.name }}
+
+      - name: Download JMdict
+        id: dictdl
+        if: steps.dictsrc.outputs.name != ''
+        continue-on-error: true
+        env:
+          NAME: ${{ steps.dictsrc.outputs.name }}
+          URL: ${{ steps.dictsrc.outputs.url }}
+        run: |
+          set -euo pipefail
+          mkdir -p .dict-cache
+          f=".dict-cache/$NAME"
+          if [ ! -s "$f" ]; then
+            curl -fsSL --retry 3 -o "$f.part" "$URL"
+            mv "$f.part" "$f"
+          fi
+          ls -l "$f"
+          echo "file=$f" >> "$GITHUB_OUTPUT"
+
       - run: npm run build
+        env:
+          DICT_SOURCE: ${{ steps.dictdl.outputs.file }}
+          DICT_OPTIONAL: '1'
+          NODE_OPTIONS: --max-old-space-size=8192
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

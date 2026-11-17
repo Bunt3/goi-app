@@ -1,5 +1,5 @@
-import { REGISTERS, SEED_TAG, isInbox, isLeech, type Card } from '../types';
-import { store, type View } from './app';
+import { AUTO_TAG, REGISTERS, SEED_TAG, isInbox, isLeech, type Card } from '../types';
+import { go, store, type View } from './app';
 import { h, plural } from './dom';
 
 type Special = 'all' | 'inbox' | 'leech';
@@ -89,11 +89,21 @@ export function browseView(_arg: string, params: URLSearchParams): View {
           isLeech(c) ? h('span', { class: 'badge warn' }, 'leech') : null,
           c.register ? h('span', { class: 'badge' }, c.register) : null,
           c.tags.includes(SEED_TAG) ? h('span', { class: 'badge warn' }, 'unverified') : null,
+          c.tags.includes(AUTO_TAG) ? h('span', { class: 'badge' }, 'from dictionary') : null,
         ),
         h('div', { class: 'm' }, c.meaning_en || '—'),
       ),
     );
+    const inboxFirst = state.special === 'inbox' ? [...found].sort((a, b) => a.created - b.created)[0] : undefined;
     list.replaceChildren(
+      inboxFirst
+        ? h(
+            'button',
+            { class: 'block', id: 'inbox-walk', style: 'margin-bottom:10px', onclick: () => go(`edit/${encodeURIComponent(inboxFirst.id)}?next=inbox`) },
+            'Fill in one at a time',
+            h('span', { class: 'muted small', style: 'display:block' }, 'With the dictionary installed, each card shows what it found. Nothing is saved until you press Save.'),
+          )
+        : '',
       ...rows,
       ...(found.length > limit
         ? [
