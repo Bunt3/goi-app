@@ -52,6 +52,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/data/packs/` | Starter decks (`office.ts`, `slang.ts`, `onomatopoeia.ts`) and `packCards`; the Workplace deck is `data/seed.ts` |
 | `src/ui/dictview.ts` | Dictionary screen: search, browse by label, add to a deck |
 | `src/ui/deckpanel.ts`, `src/ui/deckselect.ts` | More → Decks; the deck chooser used by forms |
+| `src/ui/i18n.ts`, `src/i18n/ja.ts` | Interface language: DOM translation layer and the Japanese catalogue |
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
 | `vite.config.ts` | Base path, version constant, service worker generator |
 
@@ -77,6 +78,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 - **The dictionary lives in its own database (`goi-dict`).** Never read it from backups, merges, `deckMark` or the `Store`. Removing it must never touch cards. Its files under `dict/` are not cached by the service worker (the database is the copy).
 - **The dictionary never overwrites a field the owner typed.** `AutoFill` only writes empty fields or fields it (or the IME reading) filled. Cards keeping a dictionary reading or meaning get the `auto-filled` tag. No unattended bulk fill: homographs make it wrong too often.
 - **A deploy must survive a failed dictionary download.** Every dictionary step in `deploy.yml` is `continue-on-error`, and `DICT_OPTIONAL=1` makes `build-dict.mjs` warn and build without one. The app then says "Dictionary not available in this build".
+- **Interface language is a translation layer over rendered English** (`src/ui/i18n.ts` + `src/i18n/ja.ts`). New UI text needs a catalogue entry (exact string, or a pattern for text with numbers or names) or it shows in English in Japanese mode. Anything showing the owner's content (meanings, examples, tags, sources, glosses) must carry `data-content` so it is never translated. Don't use `[translate="no"]` for this: `<html>` already carries it to stop browser auto-translation. Never map a string to itself (the observer would loop); a test checks this.
 - **The deinflection table is the app's own.** Don't paste in Yomitan's or another GPL project's rules.
 
 ## Conventions

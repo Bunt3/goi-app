@@ -110,6 +110,8 @@ export interface Settings {
   lastBackupMark: string;
   /** Where the last backup went, for display ("Downloads", a folder name, "manual export"). */
   lastBackupWhere: string;
+  /** Interface language. Card content is never translated. */
+  uiLang: 'en' | 'ja';
   /** Decks included in study (Today, review, listening). Empty means every deck. Per device. */
   studyDecks: string[];
 }
@@ -134,6 +136,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lastBackupMark: '',
   lastBackupWhere: '',
   studyDecks: [],
+  uiLang: 'en',
 };
 
 /** 2: Card.deck added (schema 1 cards get '' or, for seed cards, SEED_DECK). */

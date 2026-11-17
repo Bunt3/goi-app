@@ -97,7 +97,7 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
       h('span', { class: 'badge accent' }, label),
       h('b', { lang: 'ja' }, card.word),
       h('span', { class: 'muted', lang: 'ja' }, card.reading),
-      h('span', { class: 'muted small' }, card.meaning_en || (isInbox(card) ? 'in the Inbox, no meaning yet' : '')),
+      card.meaning_en ? h('span', { class: 'muted small', 'data-content': '' }, card.meaning_en) : h('span', { class: 'muted small' }, isInbox(card) ? 'in the Inbox, no meaning yet' : ''),
     );
   }
 

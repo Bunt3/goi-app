@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-17 (after the fifth work block: decks, dictionary browser, starter decks)
+# Handoff — state as of 2026-11-17 (after the sixth work block: Japanese interface)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -10,8 +10,9 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   2. Automatic backup to a real file (download mode everywhere, folder mode in Chromium).
   3. Picking words out of example sentences, and a Capture screen that reads text from photos, screenshots and video frames on the device.
   4. An offline dictionary (JMdict) that fills readings, meanings, tags and examples.
-  5. This block: decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
-- **Checks:** 200 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
+  5. Decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
+  6. This block: an English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
+- **Checks:** 220 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK
@@ -22,6 +23,15 @@ No new feature is assigned. What remains, in order:
 2. **Starter-deck review.** Slang, office and onomatopoeia cards were machine-written. Sources for slang were checked only from search-result summaries (full pages were blocked by the container's network policy). Native-speaker review of the examples and nuance notes is the highest-value check.
 3. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html.
 4. **Optional:** per-deck daily limits (today the limits are shared across decks); dictionary-based word splitting in the picker (needs speed testing on the phone).
+
+## Sixth block: Japanese interface
+
+The owner wants to show the app to a Japanese friend for a native read of the content. More → Display → *Interface language*.
+
+- **Design:** a translation layer over the rendered DOM (`src/ui/i18n.ts`, MutationObserver) with a catalogue in `src/i18n/ja.ts` (~330 exact strings, ~50 patterns). Chosen over wrapping ~350 strings in `t()` across 20 files: one place to change, nothing in the view code, and a missing entry degrades to English instead of breaking. Owner content is excluded by `data-content` markers.
+- **Coverage** was measured by a headless walk with the Japanese UI on (every main screen, review, picker, dictionary, decks, bulk paste, import summary); everything it surfaced is translated except proper nouns. Not walked: listening mode with a voice, folder-backup prompts, OCR progress and errors. Those may still show English.
+- **Known quirk:** an owner-made deck whose name equals a catalogue key (e.g. "Slang") is shown translated in Today's deck chips.
+- **Japanese wording was written by the model.** Have the friend check it too.
 
 ## Fifth block: decks, dictionary browser, starter decks
 

@@ -632,6 +632,25 @@ async function main() {
     assert.equal(await page.locator('#card-list .item').count(), 1);
     log(`decks: Today studies only the chosen decks (Slang: 1 new vs ${allNew} for all); Browse filters by deck`);
 
+    // Interface language: Japanese for menus and messages, card content untouched, and back.
+    await page.goto(URL + '#/more');
+    await page.selectOption('#set-uiLang', 'ja');
+    await page.waitForSelector('#tabs a[data-route="home"]:has-text("今日")');
+    await page.goto(URL + '#/home');
+    await page.waitForSelector('h1:has-text("今日")');
+    await shot('ja-home');
+    await page.goto(URL + '#/browse?filter=all&deck=*');
+    await page.fill('#search', 'proportional');
+    await page.waitForSelector('#card-list .item .m:has-text("proportional division")');
+    assert.match(await page.innerText('#browse-count'), /枚/, 'counts are in Japanese');
+    await page.reload();
+    await page.waitForSelector('#tabs a[data-route="more"]:has-text("その他")');
+    await page.goto(URL + '#/more');
+    await page.selectOption('#set-uiLang', 'en');
+    await page.waitForSelector('#tabs a[data-route="home"]:has-text("Today")');
+    await page.waitForSelector('h1:has-text("More")');
+    log('interface language: Japanese menus survive a reload, card text stays as written, English comes back');
+
     // Offline: the dictionary is local.
     await context.setOffline(true);
     await page.reload();

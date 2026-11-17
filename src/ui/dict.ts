@@ -181,7 +181,7 @@ export function candidateList(matches: DictMatch[], chosen: DictMatch | null, on
           f.reading !== f.word ? h('span', { class: 'muted', lang: 'ja' }, f.reading) : null,
           ...labelsFor(m).map((l) => h('span', { class: 'badge' }, l)),
         ),
-        h('span', { class: 'small dict-gloss' }, f.meaning_en),
+        h('span', { class: 'small dict-gloss', 'data-content': '' }, f.meaning_en),
         m.reasons.length ? h('span', { class: 'muted small' }, m.reasons.join(' · ')) : null,
       );
     }),

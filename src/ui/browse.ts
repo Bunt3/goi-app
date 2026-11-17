@@ -38,7 +38,7 @@ export function browseView(_arg: string, params: URLSearchParams): View {
     'select',
     { id: 'filter-tag', 'aria-label': 'Tag' },
     h('option', { value: '' }, 'All tags'),
-    tags.map((t) => h('option', { value: t, selected: state.tag === t }, t)),
+    tags.map((t) => h('option', { value: t, selected: state.tag === t, 'data-content': '' }, t)),
   );
   const registerSelect = h(
     'select',
@@ -96,7 +96,7 @@ export function browseView(_arg: string, params: URLSearchParams): View {
         h(
           'div',
           { class: 'head' },
-          h('span', { class: 'w', lang: 'ja' }, c.word),
+          h('span', { class: 'w', lang: 'ja', 'data-content': '' }, c.word),
           h('span', { class: 'r', lang: 'ja' }, c.reading),
           isInbox(c) ? h('span', { class: 'badge accent' }, 'inbox') : null,
           isLeech(c) ? h('span', { class: 'badge warn' }, 'leech') : null,
@@ -105,7 +105,7 @@ export function browseView(_arg: string, params: URLSearchParams): View {
           c.tags.includes(SEED_TAG) ? h('span', { class: 'badge warn' }, 'unverified') : null,
           c.tags.includes(AUTO_TAG) ? h('span', { class: 'badge' }, 'from dictionary') : null,
         ),
-        h('div', { class: 'm' }, c.meaning_en || '—'),
+        h('div', { class: 'm', 'data-content': '' }, c.meaning_en || '—'),
       ),
     );
     const inboxFirst = state.special === 'inbox' ? [...found].sort((a, b) => a.created - b.created)[0] : undefined;

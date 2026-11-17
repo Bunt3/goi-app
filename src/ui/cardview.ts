@@ -22,10 +22,10 @@ export function productionFront(card: Card): HTMLElement[] {
   const blanked = card.example_ja ? exampleNode(card.example_ja, card.word, card.reading, 'blank', false) : null;
   const parts: (HTMLElement | null)[] = [
     h('div', { class: 'prompt-kind' }, 'Say it in Japanese'),
-    h('div', { class: 'prompt-en' }, card.meaning_en),
+    h('div', { class: 'prompt-en', 'data-content': '' }, card.meaning_en),
     card.register ? h('div', { class: 'meta-line' }, h('span', { class: 'badge accent' }, card.register)) : null,
     blanked ? h('div', { class: 'example', lang: 'ja' }, blanked) : null,
-    blanked && card.example_en ? h('div', { class: 'example-en' }, card.example_en) : null,
+    blanked && card.example_en ? h('div', { class: 'example-en', 'data-content': '' }, card.example_en) : null,
   ];
   return parts.filter((x): x is HTMLElement => x !== null);
 }
@@ -41,17 +41,17 @@ export function cardBack(card: Card, furigana: boolean, opts: { audio?: boolean;
     // no sentence does it go on the headword (the reading line follows either way).
     h('div', { class: wordClass(card.word), lang: 'ja' }, example ? card.word : wordNode(card.word, card.reading, furigana)),
     h('div', { class: 'reading', lang: 'ja' }, card.reading),
-    h('div', { class: 'meaning' }, card.meaning_en),
+    h('div', { class: 'meaning', 'data-content': '' }, card.meaning_en),
     card.meaning_ja ? h('div', { class: 'meaning-ja', lang: 'ja' }, card.meaning_ja) : null,
     example ? h('div', { class: 'example', lang: 'ja' }, example) : null,
-    card.example_en ? h('div', { class: 'example-en' }, card.example_en) : null,
+    card.example_en ? h('div', { class: 'example-en', 'data-content': '' }, card.example_en) : null,
     h(
       'div',
       { class: 'meta-line' },
       card.register ? h('span', { class: 'badge accent' }, card.register) : null,
-      card.tags.map((t) => h('span', { class: t === SEED_TAG ? 'badge warn' : 'badge' }, t)),
+      card.tags.map((t) => h('span', { class: t === SEED_TAG ? 'badge warn' : 'badge', 'data-content': '' }, t)),
       isLeech(card) ? h('span', { class: 'badge warn' }, 'leech — consider rewriting') : null,
-      card.source ? h('span', { class: 'badge' }, card.source) : null,
+      card.source ? h('span', { class: 'badge', 'data-content': '' }, card.source) : null,
     ),
     h(
       'div',

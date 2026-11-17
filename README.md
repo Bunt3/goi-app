@@ -21,6 +21,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
 - [Decks and starter decks](#decks-and-starter-decks)
+- [Interface language](#interface-language)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
 - [How scheduling behaves](#how-scheduling-behaves)
@@ -196,6 +197,12 @@ Every card belongs to one deck. Cards you add go to *My cards* unless you pick a
 | 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
 
 All were machine-written and are tagged `seed-unverified`; the slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+
+## Interface language
+
+More → Display → *Interface language* switches menus, buttons and messages between English and 日本語 (per device; it survives restarts). Card content is never translated: words, meanings, examples, tags, sources, dictionary glosses and deck names you created stay as written. It exists so a Japanese speaker can look the app and its cards over.
+
+How it works: the code writes English; `src/ui/i18n.ts` translates the rendered text as it appears, using the catalogue in `src/i18n/ja.ts` (exact strings plus patterns for sentences with numbers). Elements marked `data-content` are skipped. A string missing from the catalogue simply stays English.
 
 ## Where your data lives, and automatic backup
 

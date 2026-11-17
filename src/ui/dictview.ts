@@ -92,7 +92,7 @@ export async function dictView(_arg: string, params: URLSearchParams): Promise<V
       m.entry.k.length > 1 || m.entry.r.length > 1
         ? h('p', { class: 'small', lang: 'ja' }, 'Also written: ', [...m.entry.k, ...m.entry.r].filter((x) => x !== f.word).join('、'))
         : null,
-      h('ol', { class: 'senses small' }, m.entry.s.map(senseView)),
+      h('ol', { class: 'senses small', 'data-content': '' }, m.entry.s.map(senseView)),
       exampleList.length
         ? h(
             'div',
@@ -111,7 +111,7 @@ export async function dictView(_arg: string, params: URLSearchParams): Promise<V
                     chosenExample = i;
                   },
                 }),
-                h('span', null, h('span', { lang: 'ja' }, ja), h('br'), h('span', { class: 'muted' }, en)),
+                h('span', null, h('span', { lang: 'ja' }, ja), h('br'), h('span', { class: 'muted', 'data-content': '' }, en)),
               ),
             ),
             h(
@@ -172,7 +172,7 @@ export async function dictView(_arg: string, params: URLSearchParams): Promise<V
               owned ? h('span', { class: 'badge accent' }, 'in deck') : null,
               ...labelsFor(m).map((l) => h('span', { class: 'badge' }, l)),
             ),
-            h('span', { class: 'small dict-gloss' }, f.meaning_en),
+            h('span', { class: 'small dict-gloss', 'data-content': '' }, f.meaning_en),
             m.reasons.length ? h('span', { class: 'muted small' }, m.reasons.join(' · ')) : null,
           ),
           isOpen ? detail(m) : null,

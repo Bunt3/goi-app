@@ -9,6 +9,7 @@ import { applyTheme, ensurePersistence, refresh, store, type View } from './app'
 import { runAutoBackup } from './autobackup';
 import { deckSection } from './deckpanel';
 import { dictSection } from './dictpanel';
+import { setUiLang } from './i18n';
 import { h, plural, toast } from './dom';
 
 async function loadPack(pack: PackInfo): Promise<{ added: number; skipped: number }> {
@@ -450,6 +451,19 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     applyTheme();
   });
 
+  const uiLangSelect = h(
+    'select',
+    { id: 'set-uiLang', 'data-content': '' },
+    h('option', { value: 'en', selected: s.uiLang !== 'ja' }, 'English'),
+    h('option', { value: 'ja', selected: s.uiLang === 'ja' }, '日本語'),
+  );
+  uiLangSelect.addEventListener('change', async () => {
+    const next = uiLangSelect.value === 'ja' ? 'ja' : 'en';
+    await store.setSettings({ uiLang: next });
+    setUiLang(next);
+    refresh();
+  });
+
   const settings = h(
     'section',
     { id: 'sec-settings' },
@@ -465,6 +479,13 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     h('h2', null, 'Display'),
     toggle('Furigana on the target word (answer side)', 'furigana', 'set-furigana'),
     h('label', { class: 'field', style: 'margin-top:8px' }, h('span', null, 'Theme'), theme),
+    h(
+      'label',
+      { class: 'field' },
+      h('span', null, 'Interface language'),
+      uiLangSelect,
+      h('span', { class: 'small', style: 'margin-top:4px' }, 'Menus, buttons and messages. Your cards and the dictionary stay as they are.'),
+    ),
   );
 
   // ---------------- Starter decks & tools ----------------

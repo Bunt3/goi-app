@@ -6,6 +6,7 @@ import { homeView } from './ui/home';
 import { reviewView } from './ui/review';
 import { addView, editView } from './ui/add';
 import { dictView } from './ui/dictview';
+import { setUiLang } from './ui/i18n';
 import { browseView } from './ui/browse';
 import { bulkView } from './ui/bulk';
 import { captureView } from './ui/capture';
@@ -48,6 +49,7 @@ async function start(): Promise<void> {
   register('stats', statsView);
   register('more', moreView);
   mountShell(root);
+  if (store.settings.uiLang === 'ja') setUiLang('ja');
   if (store.cards.size > 0) void ensurePersistence();
   installBackupHooks();
 

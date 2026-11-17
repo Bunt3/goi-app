@@ -141,7 +141,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
 
   // --- Tags --------------------------------------------------------------
   const selected = new Set(initial.tags ?? []);
-  const tagBox = h('div', { class: 'chips', id: 'f-tags' });
+  const tagBox = h('div', { class: 'chips', id: 'f-tags', 'data-content': '' });
   const customTag = h('input', { type: 'text', placeholder: 'custom tag', autocomplete: 'off', style: 'flex:1' });
   const renderTags = () => {
     const known = [...new Set<string>([...DEFAULT_TAGS, ...store.live().flatMap((c) => c.tags), ...selected])].filter(

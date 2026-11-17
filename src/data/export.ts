@@ -147,6 +147,7 @@ export function parseSettings(v: unknown): Settings {
     autoBackupKeep: clampInt(o.autoBackupKeep, d.autoBackupKeep, 1, 365),
     lastBackupMark: str(o.lastBackupMark),
     lastBackupWhere: str(o.lastBackupWhere),
+    uiLang: o.uiLang === 'ja' ? 'ja' : 'en',
     studyDecks: Array.isArray(o.studyDecks) ? o.studyDecks.filter((t): t is string => typeof t === 'string') : [],
   };
 }
