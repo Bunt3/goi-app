@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-17 (after the sixth work block: Japanese interface)
+# Handoff — state as of 2026-11-18 (after the seventh work block: checker mode, sharing, keigo, weekly look-back, new look)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -11,18 +11,31 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   3. Picking words out of example sentences, and a Capture screen that reads text from photos, screenshots and video frames on the device.
   4. An offline dictionary (JMdict) that fills readings, meanings, tags and examples.
   5. Decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
-  6. This block: an English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
-- **Checks:** 220 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
+  6. An English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
+  7. This block: checker mode (replacing the unverified tag), Share to Goi, the weekly look-back and where-from filter, keigo training, and a visual refresh. See "Seventh block" below.
+- **Checks:** 242 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK
 
 No new feature is assigned. What remains, in order:
 
-1. **Owner tries it on the phone.** Dictionary: install on Wi-Fi, pick words from real sentences, type slang into Add, walk the Inbox, browse by label. Decks: choose decks on Today, load the starter decks. Report wrong first candidates, misses, and any starter-deck card that sounds unnatural, with the exact text.
-2. **Starter-deck review.** Slang, office and onomatopoeia cards were machine-written. Sources for slang were checked only from search-result summaries (full pages were blocked by the container's network policy). Native-speaker review of the examples and nuance notes is the highest-value check.
-3. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html.
-4. **Optional:** per-deck daily limits (today the limits are shared across decks); dictionary-based word splitting in the picker (needs speed testing on the phone).
+1. **Owner uses it on the phone** (they reload the installed app in Brave and get the update prompt; that path works). Try: Share to Goi from another app (needs the home-screen app re-added once; Brave support for share targets is unverified), a keigo round, Your week, the new look in both themes. Collect anything that reads wrong with the exact text.
+2. **A native check, if it happens:** checker mode is ready; the owner may never use it, and that's fine.
+3. **Licence wording** for JMdict/Tatoeba still unverified (see the dictionary section).
+4. **Optional:** per-deck daily limits; dictionary-based word splitting.
+
+## Seventh block (2026-11-18, overnight)
+
+The owner asked, while asleep, for: removing the visible "unverified" marking but keeping a checker mode that privately knows what was checked; Share to Goi; review by where a word was met *only if* it needs no manual work; keigo practice as its own mode if it isn't redundant with the decks; a weekly look-back; and research then a visual refresh. Subagents were left to the session's judgement: two ran research in parallel (visual design brief; keigo table against 敬語の指針). Both could read search results only, not full pages; the brief's sources and the keigo draft's confidence notes are summarised in README and `src/data/keigo.ts`. Coding stayed in the main session because every phase touched the same files.
+
+- **Checker mode** (`#/check`): `Card.check` (schema 3) holds `{verdict, note, by, at}`. The schema-3 migration strips the old `seed-unverified` tag. Nothing outside checker mode shows check status, except a flagged card's note on its edit screen (to act on it). The intro has a one-tap 日本語 switch for the checker.
+- **Share to Goi:** `share_target` (GET) → `/goi-app/share` → `main.ts` → Capture. No permissions. Requires the installed app; Android caches the manifest, so re-adding the home-screen app once may be needed.
+- **Where from:** no manual entry; groups come from the Source field that capture, sharing, the picker and the dictionary already fill (`src/week.ts`). Browse filter + links from Your week. Starter-deck cards excluded.
+- **Your week** on Stats (linked from Today): own words added and where from, answers, recall, cards graduated, cards answered Again twice or more. No streaks, no missed-day counts.
+- **Keigo training** (`#/keigo`): 33 verbs, 21 words, 12 situations (convert), 30 forms (which kind), 12 expressions (right or wrong). Box schedule in `Settings.keigo`. Not covered by checker mode.
+- **Visual refresh:** tokens and a design layer at the end of `styles.css` ("sumi and washi" brief: warm charcoal / paper, matcha accent, indigo secondary, tonal surfaces, sentence-case headings, active-tab pill, tinted rating buttons, larger lighter flashcard word, reveal animation that respects reduced motion). Contrast ratios for all text pairs were computed by the research agent (AA everywhere). Colour transitions were removed so theme switches are instant.
+- **E2E timing note:** the run-through simulates Tokyo; between 03:40 and 04:00 JST the first review step fails because a 10-minute learning step crosses the 04:00 day rollover. Not an app bug; rerun after 04:00 JST.
 
 ## Sixth block: Japanese interface
 

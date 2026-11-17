@@ -233,6 +233,10 @@ Select Japanese text in any app (LINE, Slack, a browser, a news app), tap **Shar
 
 More → *Checker mode* (`#/check`) is for a native speaker going through your cards. Pick decks, optionally a name, and *Start checking*: one card at a time with ✓ Natural, ✎ Needs a fix, ✗ Wrong (the last two ask for a note: how they would say it). *日本語で表示* switches the interface to Japanese for them. Verdicts are stored on the card and never shown while studying; cards marked fix or wrong are listed under *Notes from checkers* with a link to edit, and the note also appears on that card's edit screen. *Clear note* returns a card to unchecked. Checks travel with backups and merges.
 
+## Look and feel
+
+Dark by default, light in More → Display. The palette is "sumi and washi": warm charcoal ink in dark mode, off-white paper in light mode, one matcha-green accent for the next thing to do and an indigo secondary, with depth from tonal surfaces rather than borders. System fonts only (no downloads). All text meets WCAG AA contrast; animations are short and turn into a plain fade when the device asks for reduced motion. Tokens are at the top of `src/styles.css`; the component look is in the "Design layer" at its end.
+
 ## Interface language
 
 More → Display → *Interface language* switches menus, buttons and messages between English and 日本語 (per device; it survives restarts). Card content is never translated: words, meanings, examples, tags, sources, dictionary glosses and deck names you created stay as written. It exists so a Japanese speaker can look the app and its cards over.

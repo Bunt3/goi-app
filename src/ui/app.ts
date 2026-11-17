@@ -76,7 +76,7 @@ export function refresh(): void {
 export function applyTheme(): void {
   const theme = store.settings.theme;
   document.documentElement.dataset.theme = theme;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f6f4ef' : '#111417');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f4f1ea' : '#121416');
 }
 
 export function mountShell(root: HTMLElement): void {

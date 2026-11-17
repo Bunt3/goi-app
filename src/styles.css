@@ -1,42 +1,65 @@
+/*
+ * Design tokens. "Sumi and washi": warm charcoal ink in dark mode, off-white
+ * paper in light mode, one matcha accent for the next action, indigo for
+ * information. Depth from tonal surfaces (bg → surface → raised), not borders.
+ * Every text pair meets WCAG AA; control outlines meet 3:1.
+ */
 :root {
-  --bg: #111417;
-  --surface: #1a1f25;
-  --surface-2: #242b33;
-  --line: #313a44;
-  --text: #e9ecef;
-  --muted: #98a3af;
-  --accent: #7fc8a9;
-  --accent-ink: #0d1f18;
-  --warn: #e0b66a;
-  --danger: #e58a7e;
-  --again: #e58a7e;
-  --hard: #e0b66a;
-  --good: #7fc8a9;
-  --easy: #7fb2e5;
-  --mark: rgba(127, 200, 169, 0.2);
-  --radius: 14px;
-  --tabs-h: 62px;
-  --font: 'Noto Sans JP', 'Noto Sans CJK JP', 'Yu Gothic UI', 'Yu Gothic', 'Meiryo', system-ui, -apple-system,
-    'Segoe UI', Roboto, sans-serif;
+  --bg: #121416;
+  --surface: #1b1e22;
+  --surface-2: #25292e; /* raised: buttons, sheets, toasts */
+  --line: #2e3339; /* decorative dividers only */
+  --outline: #6b747f; /* edges of inputs and other controls */
+  --text: #e8e6e1;
+  --muted: #a3a9b1;
+  --accent: #86cfae;
+  --accent-ink: #0b1f17;
+  --accent-soft: #1d3a2f;
+  --accent-2: #a9b8f0;
+  --warn: #e6bb6a;
+  --danger: #f0998e;
+  --again: #f0998e;
+  --hard: #e6bb6a;
+  --good: #86cfae;
+  --easy: #a9b8f0;
+  --again-soft: #3a2422;
+  --hard-soft: #352c1b;
+  --easy-soft: #252b40;
+  --mark: rgba(134, 207, 174, 0.22);
+  --radius: 20px;
+  --radius-btn: 14px;
+  --radius-small: 8px;
+  --raise: none;
+  --tabs-h: 64px;
+  --ease: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --font: system-ui, -apple-system, 'Segoe UI', 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans CJK JP', 'Noto Sans JP', Meiryo,
+    Roboto, sans-serif;
   color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-  --bg: #f6f4ef;
-  --surface: #ffffff;
-  --surface-2: #ece9e2;
-  --line: #d9d5cb;
-  --text: #1d2126;
-  --muted: #626b75;
-  --accent: #1f7a57;
+  --bg: #f4f1ea;
+  --surface: #fbf9f4;
+  --surface-2: #ffffff;
+  --line: #e0dbd0;
+  --outline: #8b867b;
+  --text: #1c1f23;
+  --muted: #565c64;
+  --accent: #1d6f4f;
   --accent-ink: #ffffff;
-  --warn: #8a6100;
-  --danger: #b3382b;
-  --again: #b3382b;
-  --hard: #8a6100;
-  --good: #1f7a57;
-  --easy: #205f9e;
-  --mark: rgba(31, 122, 87, 0.16);
+  --accent-soft: #dcefe5;
+  --accent-2: #3a55a6;
+  --warn: #855a00;
+  --danger: #ad382c;
+  --again: #ad382c;
+  --hard: #855a00;
+  --good: #1d6f4f;
+  --easy: #3a55a6;
+  --again-soft: #f6e1dd;
+  --hard-soft: #f3e8d2;
+  --easy-soft: #e2e7f6;
+  --mark: rgba(29, 111, 79, 0.16);
+  --raise: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.06);
   color-scheme: light;
 }
 
@@ -1100,4 +1123,256 @@ label.dict-ex {
 .keigo-done {
   font-size: 20px;
   margin: 24px 0 4px;
+}
+
+
+/* ==========================================================================
+   Design layer: overrides that give the components the sumi-and-washi look.
+   Kept together so the look can be changed in one place.
+   ========================================================================== */
+
+/* Headings: sentence case, quiet. */
+h1 {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+h2 {
+  font-size: 15px;
+  text-transform: none;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  margin: 30px 0 10px;
+}
+
+/* Surfaces: tonal in dark mode, a soft shadow on paper. */
+.card,
+.count {
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--raise);
+}
+
+.card {
+  padding: 16px;
+}
+
+.notice {
+  border-radius: 14px;
+}
+
+/* Controls. */
+button {
+  border-radius: var(--radius-btn);
+  border-color: transparent;
+  background: var(--surface-2);
+  box-shadow: var(--raise);
+  transition: transform 0.12s var(--ease);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button.primary {
+  box-shadow: none;
+}
+
+button.danger,
+button.link {
+  box-shadow: none;
+}
+
+input[type='text'],
+input[type='search'],
+input[type='number'],
+select,
+textarea {
+  border-color: var(--outline);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+/* Chips: state shown by fill, colour and a check mark, not colour alone. */
+.chip {
+  border-radius: 999px;
+  border-color: var(--outline);
+  box-shadow: none;
+  background: transparent;
+}
+
+.chip.on {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+.chip.on::before {
+  content: '✓ ';
+}
+
+.chip.linkchip {
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+.badge {
+  border-radius: 999px;
+}
+
+/* Today: quiet, tabular counts. */
+.count b {
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.count span {
+  font-size: 13px;
+}
+
+/* Bottom navigation: an accent pill behind the active icon. */
+#tabs {
+  background: var(--surface);
+  border-top: none;
+  box-shadow: 0 -1px 0 var(--line);
+}
+
+#tabs a .tab-icon {
+  font-size: 20px;
+  min-width: 56px;
+  text-align: center;
+  padding: 2px 0;
+  border-radius: 999px;
+}
+
+#tabs a.active .tab-icon {
+  background: var(--accent-soft);
+}
+
+#tabs a .tab-label {
+  font-size: 12px;
+}
+
+/* Review: the Japanese word is the one loud thing. */
+.word {
+  font-size: clamp(2.75rem, 13vw, 4.5rem);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  font-synthesis: none;
+}
+
+.word.long {
+  font-size: clamp(1.75rem, 8vw, 2.5rem);
+}
+
+.prompt-kind {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 13px;
+}
+
+.reading {
+  font-size: 1.125rem;
+  color: var(--muted);
+}
+
+.meaning {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.example {
+  font-size: 1.0625rem;
+  line-height: 2.1;
+}
+
+.answer.divided {
+  border-top: none;
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 22px;
+  box-shadow: var(--raise);
+  animation: goi-reveal 0.22s var(--ease);
+}
+
+.ratings button {
+  min-height: 64px;
+  border: none;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.ratings .r1 {
+  background: var(--again-soft);
+}
+
+.ratings .r2 {
+  background: var(--hard-soft);
+}
+
+.ratings .r3 {
+  background: var(--accent-soft);
+}
+
+.ratings .r4 {
+  background: var(--easy-soft);
+}
+
+.ratings button small {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* Toasts sit on the raised surface. */
+#toast {
+  border: none;
+  background: var(--surface-2);
+  border-radius: 14px;
+}
+
+/* Sheets. */
+.sheet {
+  border: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* Checker and keigo prompts read like an index card. */
+.check-word,
+.keigo-big {
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+@keyframes goi-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  #tabs a .tab-icon {
+    transition: none;
+  }
+  button:active:not(:disabled) {
+    transform: none;
+  }
+  .answer.divided {
+    animation: goi-fade 0.1s linear;
+  }
+}
+
+@keyframes goi-fade {
+  from {
+    opacity: 0;
+  }
 }

@@ -8,8 +8,8 @@
   "scope": "/goi-app/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#111417",
-  "theme_color": "#111417",
+  "background_color": "#121416",
+  "theme_color": "#121416",
   "icons": [
     {
       "src": "icons/icon-192.png",
