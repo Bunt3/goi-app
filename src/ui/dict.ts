@@ -30,6 +30,11 @@ function dictDb(): DictDB {
   return db;
 }
 
+/** The dictionary database, for browsing. Check dictReady() first. */
+export function dictDatabase(): DictDB {
+  return dictDb();
+}
+
 function set(next: DictStatus): void {
   status = next;
   for (const fn of listeners) fn(status);

@@ -37,6 +37,8 @@ export interface DictEntry {
   rx?: string[];
   /** 1 when JMdict marks any form as common. */
   c?: 1;
+  /** Every misc, field and dialect code on any sense, for browsing by label (format 2 and later). */
+  t?: string[];
   s: DictSense[];
 }
 
@@ -53,6 +55,8 @@ export interface DictManifest {
   examples: number;
   /** Where the data came from, e.g. "jmdict-simplified 3.6.2+20261116213322 (JMdict 2026-11-16)". */
   source: string;
+  /** Data format. 2 adds `t` (labels) to each entry. Absent means 1. */
+  format?: number;
   /** True for the small hand-written test fixture. */
   fixture?: boolean;
 }

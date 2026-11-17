@@ -1,4 +1,5 @@
 import { createCard } from './cards';
+import { inDecks } from './decks';
 import { deckMark } from './data/autobackup';
 import { buildExport } from './data/export';
 import { planMerge, type MergePlan } from './data/merge';
@@ -43,6 +44,18 @@ export class Store {
     this.todayLogs = await logsSince(start, this.db);
   }
 
+  /** Live cards in the decks chosen for study on this device. */
+  studying(): Card[] {
+    const live = this.live();
+    return live.filter((c) => inDecks(c, this.chosenDecks(live)));
+  }
+
+  /** The chosen study decks that still exist; none left means every deck. */
+  chosenDecks(live: Card[] = this.live()): string[] {
+    const names = new Set(live.map((c) => c.deck));
+    return this.settings.studyDecks.filter((d) => names.has(d));
+  }
+
   /** Cards that have not been deleted. */
   live(): Card[] {
     const out: Card[] = [];
@@ -78,6 +91,35 @@ export class Store {
     this.cards.set(id, next);
     this.onChange?.();
     return next;
+  }
+
+  /** Move cards to another deck. A content edit: bumps `updated` so the move wins a later merge. */
+  async setDeck(ids: string[], deck: string, now = Date.now()): Promise<number> {
+    const next: Card[] = [];
+    for (const id of ids) {
+      const c = this.cards.get(id);
+      if (!c || c.deleted || c.deck === deck) continue;
+      next.push({ ...c, deck, updated: Math.max(now, c.updated + 1) });
+    }
+    if (next.length === 0) return 0;
+    await this.db.cards.bulkPut(next);
+    for (const c of next) this.cards.set(c.id, c);
+    this.onChange?.();
+    return next.length;
+  }
+
+  /** Soft-delete several cards at once. */
+  async deleteCards(ids: string[], now = Date.now()): Promise<number> {
+    const next: Card[] = [];
+    for (const id of ids) {
+      const c = this.cards.get(id);
+      if (c && !c.deleted) next.push({ ...c, deleted: true, updated: Math.max(now, c.updated + 1) });
+    }
+    if (next.length === 0) return 0;
+    await this.db.cards.bulkPut(next);
+    for (const c of next) this.cards.set(c.id, c);
+    this.onChange?.();
+    return next.length;
   }
 
   /** Soft-delete: the card becomes a tombstone so the deletion propagates on merge. */

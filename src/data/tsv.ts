@@ -131,7 +131,7 @@ export function guessMapping(rows: string[][], hasHeader: boolean): ColumnMappin
 export type CardDraft = Pick<
   Card,
   'word' | 'reading' | 'meaning_en' | 'meaning_ja' | 'example_ja' | 'example_en' | 'tags' | 'register' | 'source'
->;
+> & { deck?: string };
 
 export function parseRegister(s: string): Register | null {
   const v = s.trim().toLowerCase();

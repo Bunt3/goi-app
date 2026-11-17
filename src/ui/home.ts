@@ -4,6 +4,7 @@ import { daysAgoText } from '../util';
 import { exportBackup } from './actions';
 import { go, refresh, store, type View } from './app';
 import { folderNeedsAttention, runAutoBackup } from './autobackup';
+import { deckLabel, deckNames } from '../decks';
 import { h, plural } from './dom';
 
 export const EXPORT_NUDGE_DAYS = 7;
@@ -30,7 +31,33 @@ export async function homeView(): Promise<View> {
     };
   }
 
-  const q = buildQueue(live, store.todayLogs, s, now);
+  // Which decks to study. The daily limits are shared across decks.
+  const decks = deckNames(live);
+  const chosen = store.chosenDecks(live);
+  const setDecks = async (next: string[]) => {
+    await store.setSettings({ studyDecks: next.length === decks.length ? [] : next });
+    refresh();
+  };
+  const deckChip = (label: string, on: boolean, run: () => void, d?: string) =>
+    h('button', { class: 'chip' + (on ? ' on' : ''), 'aria-pressed': String(on), dataset: d === undefined ? { deck: '*' } : { deck: d }, onclick: run }, label);
+  const deckBar =
+    decks.length > 1
+      ? h(
+          'div',
+          { class: 'chips', id: 'deck-bar', style: 'margin-bottom:12px' },
+          deckChip('All decks', chosen.length === 0, () => void setDecks([])),
+          decks.map((d) =>
+            deckChip(
+              `${deckLabel(d)} · ${live.filter((c) => c.deck === d).length}`,
+              chosen.includes(d),
+              () => void setDecks(chosen.includes(d) ? chosen.filter((x) => x !== d) : [...chosen, d]),
+              d,
+            ),
+          ),
+        )
+      : null;
+  const studying = store.studying();
+  const q = buildQueue(studying, store.todayLogs, s, now);
   const learningNow = q.learning.filter((i) => i.due <= now + LEARN_AHEAD_MS).length;
   const learningLater = q.learning.length - learningNow;
   const available = learningNow + q.main.length;
@@ -39,7 +66,7 @@ export async function homeView(): Promise<View> {
 
   const notes: HTMLElement[] = [];
   if (q.counts.deferred > 0) {
-    const days = backlogDays(live, store.todayLogs, s, now);
+    const days = backlogDays(studying, store.todayLogs, s, now);
     notes.push(
       h(
         'div',
@@ -115,6 +142,7 @@ export async function homeView(): Promise<View> {
       'div',
       { class: 'page' },
       h('h1', null, 'Today'),
+      deckBar,
       h(
         'div',
         { class: 'counts' },

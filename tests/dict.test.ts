@@ -21,7 +21,7 @@ const first = async (text: string) => (await look(text))[0];
 describe('building the dictionary file', () => {
   it('keeps every entry with English and the examples', () => {
     expect(built.entries).toBe(sample.words.length);
-    expect(built.examples).toBe(3);
+    expect(built.examples).toBe(4);
     const uke = ENTRIES.find((e) => e.k[0] === '承る')!;
     expect(uke.c).toBe(1);
     expect(uke.s[1]!.x).toEqual([['ご注文を承りました。', 'We have received your order.']]);

@@ -71,6 +71,7 @@ export function cardBack(card: Card, furigana: boolean, opts: { audio?: boolean;
                   tags: card.tags,
                   source: `example sentence for ${card.word}`,
                   ownWord: card.word,
+                  deck: card.deck,
                 }),
             },
             '＋ Word from sentence',

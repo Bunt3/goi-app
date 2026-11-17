@@ -966,3 +966,39 @@ button.dict-cand.on {
   height: 8px;
   accent-color: var(--accent);
 }
+
+button.dict-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  font-weight: 400;
+}
+
+.dict-item.open {
+  background: var(--surface);
+}
+
+.dict-detail {
+  padding: 8px 0 4px;
+}
+
+ol.senses {
+  padding-left: 22px;
+  margin: 6px 0 10px;
+}
+
+ol.senses li {
+  margin-bottom: 4px;
+}
+
+label.dict-ex {
+  align-items: flex-start;
+  margin: 6px 0;
+}

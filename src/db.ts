@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie';
+import { migrateDeck } from './decks';
 import { DEFAULT_SETTINGS, type Card, type ReviewLog, type Settings } from './types';
 
 interface MetaRow {
@@ -18,6 +19,17 @@ export class GoiDB extends Dexie {
       logs: 'id, cardId, reviewedAt',
       meta: 'key',
     });
+    // Schema 2: every card has a deck.
+    this.version(2)
+      .stores({})
+      .upgrade((tx) =>
+        tx
+          .table('cards')
+          .toCollection()
+          .modify((c: Card) => {
+            c.deck = migrateDeck((c as Partial<Card>).deck, c.source ?? '');
+          }),
+      );
   }
 }
 

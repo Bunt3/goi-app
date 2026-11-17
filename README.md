@@ -378,7 +378,7 @@ Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when a
 
 ## Known limits
 
-- **The dictionary is unverified on real text.** It was tested against a 49-entry hand-written sample. The real data is fetched only when the site is built and was first seen in CI; lookup quality on real sentences has not been checked by anyone. Auto-filled cards are tagged `auto-filled`.
+- **The dictionary is unverified on real text.** It was tested against a 51-entry hand-written sample. The real data is fetched only when the site is built and was first seen in CI; lookup quality on real sentences has not been checked by anyone. Auto-filled cards are tagged `auto-filled`.
 - **Text recognition is the weak link in Capture.** It was tested only on text rendered by a browser (light and dark backgrounds, one font), never on a real photo, a real screenshot from another app, or a phone camera. Expect worse results on those. Vertical text is not supported.
 - **The first image read needs a connection** to fetch about 5 MB from this site. Offline before that, it says so.
 - **Video is one frame at a time, chosen by you.** There is no automatic scan of a whole clip, and the browser must be able to play the file's format.

@@ -5,6 +5,7 @@ import { h, toast } from './ui/dom';
 import { homeView } from './ui/home';
 import { reviewView } from './ui/review';
 import { addView, editView } from './ui/add';
+import { dictView } from './ui/dictview';
 import { browseView } from './ui/browse';
 import { bulkView } from './ui/bulk';
 import { captureView } from './ui/capture';
@@ -39,6 +40,7 @@ async function start(): Promise<void> {
   register('review', reviewView);
   register('add', addView);
   register('edit', editView);
+  register('dict', dictView);
   register('browse', browseView);
   register('bulk', bulkView);
   register('capture', captureView);

@@ -4,6 +4,11 @@ export const DIRECTIONS: Direction[] = ['recognition', 'production'];
 export const REGISTERS = ['casual', 'polite', '尊敬語', '謙譲語', 'written-only'] as const;
 export type Register = (typeof REGISTERS)[number];
 
+/** Display name of the default deck, whose stored name is ''. */
+export const DEFAULT_DECK_LABEL = 'My cards';
+/** Deck the built-in workplace seed cards go into. */
+export const SEED_DECK = 'Workplace';
+
 export const DEFAULT_TAGS = ['電話応対', 'メール', '会議', '人事・契約', 'IT', '接客', '日常'] as const;
 export const SEED_TAG = 'seed-unverified';
 /** Given to cards whose reading or meaning came from the offline dictionary, so they can be found and checked. */
@@ -38,6 +43,8 @@ export interface Card {
   example_ja: string;
   example_en: string;
   tags: string[];
+  /** Deck name; '' is the default deck ("My cards"). Text field: merges like the word and tags. */
+  deck: string;
   register: Register | null;
   /** Free text: where the word was seen. */
   source: string;
@@ -103,6 +110,8 @@ export interface Settings {
   lastBackupMark: string;
   /** Where the last backup went, for display ("Downloads", a folder name, "manual export"). */
   lastBackupWhere: string;
+  /** Decks included in study (Today, review, listening). Empty means every deck. Per device. */
+  studyDecks: string[];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -124,9 +133,11 @@ export const DEFAULT_SETTINGS: Settings = {
   autoBackupKeep: 14,
   lastBackupMark: '',
   lastBackupWhere: '',
+  studyDecks: [],
 };
 
-export const SCHEMA_VERSION = 1;
+/** 2: Card.deck added (schema 1 cards get '' or, for seed cards, SEED_DECK). */
+export const SCHEMA_VERSION = 2;
 export const APP_ID = 'goi-app';
 
 export interface ExportFile {

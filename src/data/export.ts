@@ -1,3 +1,4 @@
+import { migrateDeck } from '../decks';
 import { isoDate } from '../day';
 import { newSrs } from '../srs/fsrs';
 import {
@@ -84,6 +85,7 @@ function parseCard(v: unknown, index: number): Card {
     example_ja: str(o.example_ja),
     example_en: str(o.example_en),
     tags: Array.isArray(o.tags) ? o.tags.filter((t): t is string => typeof t === 'string') : [],
+    deck: migrateDeck(o.deck, str(o.source)),
     register,
     source: str(o.source),
     created,
@@ -145,6 +147,7 @@ export function parseSettings(v: unknown): Settings {
     autoBackupKeep: clampInt(o.autoBackupKeep, d.autoBackupKeep, 1, 365),
     lastBackupMark: str(o.lastBackupMark),
     lastBackupWhere: str(o.lastBackupWhere),
+    studyDecks: Array.isArray(o.studyDecks) ? o.studyDecks.filter((t): t is string => typeof t === 'string') : [],
   };
 }
 

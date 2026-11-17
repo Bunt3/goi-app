@@ -7,6 +7,7 @@ import { parseDelimited } from '../src/data/tsv';
 import { GoiDB } from '../src/db';
 import { Store } from '../src/store';
 import { DAY, T0 } from './helpers';
+import { SCHEMA_VERSION } from '../src/types';
 
 let counter = 0;
 async function freshStore(): Promise<Store> {
@@ -99,7 +100,7 @@ describe('export → import round trip', () => {
   it('writes a versioned file with a dated, device-labelled name', async () => {
     const file = await source.export(T0);
     expect(file.app).toBe('goi-app');
-    expect(file.schemaVersion).toBe(1);
+    expect(file.schemaVersion).toBe(SCHEMA_VERSION);
     expect(file.deviceLabel).toBe('My Phone');
     expect(exportFilename('backup', file.deviceLabel, T0)).toBe('goi-backup_2026-11-17_My-Phone.json');
     expect(exportFilename('anki', '', T0)).toBe('goi-anki_2026-11-17_device.tsv');

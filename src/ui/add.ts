@@ -4,10 +4,11 @@ import { formatInterval } from '../srs/fsrs';
 import { DEFAULT_TAGS, DIRECTIONS, REGISTERS, SEED_TAG, SrsPhase, isInbox, isLeech, type Card, type Register } from '../types';
 import { ensurePersistence, go, store, type View } from './app';
 import { AutoFill, candidateList, dictLookup, dictStatus } from './dict';
+import { deckSelect } from './deckselect';
 import { h, toast } from './dom';
 
 /** Source and tags usually repeat while adding several words from one place, so they stick for the session. */
-const sticky: { source: string; tags: string[] } = { source: '', tags: [] };
+const sticky: { source: string; tags: string[]; deck: string } = { source: '', tags: [], deck: '' };
 
 const KANA_ONLY = /^[぀-ヿー]+$/;
 
@@ -55,6 +56,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
   const exampleJa = h('textarea', { id: 'f-example-ja', lang: 'ja', rows: 2, value: initial.example_ja ?? '' });
   const exampleEn = h('textarea', { id: 'f-example-en', rows: 2, value: initial.example_en ?? '' });
   const source = h('input', { type: 'text', id: 'f-source', autocomplete: 'off', value: initial.source ?? '' });
+  const deck = deckSelect(initial.deck ?? '', 'f-deck');
   const register = h(
     'select',
     { id: 'f-register' },
@@ -193,7 +195,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
     field('Source (where you saw it)', source),
   );
 
-  const el = h('div', null, field('Word', word), dictBox, field('Reading (kana)', reading), details);
+  const el = h('div', null, field('Word', word), dictBox, field('Reading (kana)', reading), h('div', { class: 'field' }, h('span', { class: 'muted small', style: 'display:block;margin-bottom:4px' }, 'Deck'), deck.el), details);
 
   return {
     el,
@@ -213,6 +215,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
         tags: [...new Set([...selected, ...extra.tags])],
         register: ((register.value || null) as Register | null) ?? extra.register,
         source: source.value.trim(),
+        deck: deck.value(),
       };
     },
     reset: () => {
@@ -231,7 +234,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
 }
 
 export function addView(): View {
-  const form = cardForm({ source: sticky.source, tags: sticky.tags }, { detailsOpen: false, dict: 'add' });
+  const form = cardForm({ source: sticky.source, tags: sticky.tags, deck: sticky.deck }, { detailsOpen: false, dict: 'add' });
   const message = h('div', { id: 'add-message', class: 'small', style: 'min-height:22px;margin-bottom:6px' });
   let added = 0;
 
@@ -255,6 +258,7 @@ export function addView(): View {
     void ensurePersistence();
     sticky.source = draft.source;
     sticky.tags = draft.tags;
+    sticky.deck = draft.deck ?? '';
     added++;
     form.reset();
     form.word.focus();
@@ -287,6 +291,7 @@ export function addView(): View {
       'div',
       { class: 'chips', style: 'margin-bottom:14px' },
       h('a', { href: '#/capture', class: 'chip linkchip', id: 'to-capture' }, '📷 From a photo, screenshot or text'),
+      h('a', { href: '#/dict', class: 'chip linkchip', id: 'to-dict' }, '📖 Dictionary'),
       h('a', { href: '#/bulk', class: 'chip linkchip' }, 'Paste a list'),
     ),
     form.el,

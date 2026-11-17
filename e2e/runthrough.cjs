@@ -181,7 +181,8 @@ async function main() {
     const first = await exportBackup();
     assert.match(first.name, /^goi-backup_\d{4}-\d{2}-\d{2}_e2e-phone\.json$/);
     assert.equal(first.data.app, 'goi-app');
-    assert.equal(first.data.schemaVersion, 1);
+    assert.equal(first.data.schemaVersion, 2);
+    assert.ok(first.data.cards.every((c) => c.deck === ''), 'cards added by hand are in the default deck');
     assert.equal(first.data.cards.length, 2);
     assert.equal(first.data.reviewLogs.length, 2, 'undone answer left no log behind');
     const reviewed = first.data.cards.find((c) => c.word === '承る');
@@ -501,10 +502,10 @@ async function main() {
     await page.waitForSelector('#pick-dict a[href="#/more?focus=dict"]');
     await page.goto(URL + '#/more?focus=dict');
     await page.waitForSelector('#dict-install');
-    assert.match(await page.innerText('#dict-status'), /Not downloaded\. About .* MB to download, 49 entries/);
+    assert.match(await page.innerText('#dict-status'), /Not downloaded\. About .* MB to download, 51 entries/);
     await shot('dict-offer');
     await page.click('#dict-install');
-    await page.waitForSelector('#dict-status:has-text("Installed: 49 entries")', { timeout: 30000 });
+    await page.waitForSelector('#dict-status:has-text("Installed: 51 entries")', { timeout: 30000 });
     assert.equal(await page.locator('#dict-panel .notice:has-text("test dictionary")').count(), 1, 'the fixture build says it is not the real dictionary');
     await shot('dict-installed');
     log('dictionary downloads only when asked, installs in a worker, and the fixture build is labelled as such');
@@ -582,6 +583,42 @@ async function main() {
     assert.match(anbun.meaning_en, /proportional division/);
     assert.ok(anbun.tags.includes('auto-filled'));
     log('Inbox: “Fill in one at a time” shows the dictionary’s candidate for each card and moves on after Save');
+
+    // Browse the dictionary by label, add a word to a new deck, and study that deck alone.
+    await page.goto(URL + '#/dict');
+    await page.click('#dict-labels [data-label="sl"]');
+    await page.waitForSelector('#dict-count:has-text("3 entries labelled Slang")');
+    await page.locator('#dict-results .dict-row', { hasText: 'ガチ' }).click();
+    await page.waitForSelector('#dict-detail #dict-add');
+    await page.selectOption('#dict-deck', { label: 'New deck…' });
+    await page.fill('#dict-deck-new', 'Slang');
+    await shot('dict-browse');
+    await page.click('#dict-add');
+    await page.waitForSelector('#toast.show:has-text("Added ガチ to Slang.")');
+    await page.waitForSelector('#dict-results .dict-item:has-text("ガチ") .badge.accent');
+    const gachi = await cardByWord('ガチ');
+    assert.equal(gachi.deck, 'Slang');
+    assert.ok(gachi.tags.includes('slang') && gachi.tags.includes('auto-filled'), 'tags: ' + gachi.tags);
+    await page.fill('#dict-q', 'proportional');
+    await page.waitForSelector('#dict-results .dict-item:has-text("按分")');
+    await page.fill('#dict-q', '書きました');
+    await page.waitForSelector('#dict-results .dict-item:has-text("書く")');
+    log('dictionary screen: browse by label, search by English or a conjugated form, add an entry into a new deck');
+
+    await page.goto(URL + '#/home');
+    await page.waitForSelector('#deck-bar [data-deck="Slang"]');
+    const allNew = Number(await page.innerText('#count-new'));
+    await page.click('#deck-bar [data-deck="Slang"]');
+    await page.waitForSelector('#deck-bar [data-deck="Slang"].on');
+    assert.equal(await page.innerText('#count-new'), '1', 'only the Slang deck is queued');
+    await shot('home-decks');
+    await page.click('#deck-bar [data-deck="*"]');
+    await page.waitForSelector('#deck-bar [data-deck="*"].on');
+    assert.equal(Number(await page.innerText('#count-new')), allNew);
+    await page.goto(URL + '#/browse?filter=all&deck=Slang');
+    await page.waitForSelector('#card-list .item');
+    assert.equal(await page.locator('#card-list .item').count(), 1);
+    log(`decks: Today studies only the chosen decks (Slang: 1 new vs ${allNew} for all); Browse filters by deck`);
 
     // Offline: the dictionary is local.
     await context.setOffline(true);

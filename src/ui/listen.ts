@@ -70,9 +70,9 @@ export function listenView(): View {
 
   function player(voices: SpeechSynthesisVoice[]): void {
     const s = store.settings;
-    const studied = store.live().filter((c) => !isInbox(c) && c.srs.recognition.state !== SrsPhase.New);
+    const studied = store.studying().filter((c) => !isInbox(c) && c.srs.recognition.state !== SrsPhase.New);
     // Prefer words already met in review; fall back to the whole deck while it is young.
-    const pool = studied.length >= 5 ? studied : store.live().filter((c) => !isInbox(c));
+    const pool = studied.length >= 5 ? studied : store.studying().filter((c) => !isInbox(c));
     if (pool.length === 0) {
       host.replaceChildren(h('p', null, 'Listening mode plays your cards aloud. Add a few cards with meanings first.'));
       return;

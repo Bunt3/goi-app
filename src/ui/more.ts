@@ -1,12 +1,13 @@
 import { createCard } from '../cards';
 import { ImportError, parseExport } from '../data/export';
 import { isNoop, type MergePlan } from '../data/merge';
-import { SEED_TAG, type Card, type ExportFile, type Settings } from '../types';
+import { SEED_DECK, SEED_TAG, type Card, type ExportFile, type Settings } from '../types';
 import { daysAgoText, uuidFromName } from '../util';
 import { canShareFiles, exportAnki, exportBackup, shareBackup } from './actions';
 import { chooseFolder, folderAccess, folderSupported, forgetFolder, newestBackup, savedFolder } from '../backupfs';
 import { applyTheme, ensurePersistence, refresh, store, type View } from './app';
 import { runAutoBackup } from './autobackup';
+import { deckSection } from './deckpanel';
 import { dictSection } from './dictpanel';
 import { h, plural, toast } from './dom';
 
@@ -22,7 +23,7 @@ async function loadSeedDeck(): Promise<{ added: number; skipped: number }> {
       skipped++; // already loaded, or loaded and deliberately deleted
       continue;
     }
-    fresh.push(createCard({ ...entry, tags: [...entry.tags, SEED_TAG], source: 'seed deck' }, now + i, id));
+    fresh.push(createCard({ ...entry, tags: [...entry.tags, SEED_TAG], source: 'seed deck', deck: SEED_DECK }, now + i, id));
   }
   await store.addCards(fresh);
   return { added: fresh.length, skipped };
@@ -522,12 +523,13 @@ export function moreView(_arg: string, params: URLSearchParams): View {
   );
 
   const dict = dictSection();
-  const el = h('div', { class: 'page' }, h('h1', null, 'More'), backup, settings, dict.el, tools);
+  const decks = deckSection();
+  const el = h('div', { class: 'page' }, h('h1', null, 'More'), backup, settings, decks, dict.el, tools);
 
   const focus = params.get('focus');
   if (focus) {
     setTimeout(() => {
-      const target = focus === 'seed' ? tools : focus === 'import' ? backup : focus === 'dict' ? dict.el : null;
+      const target = focus === 'seed' ? tools : focus === 'import' ? backup : focus === 'dict' ? dict.el : focus === 'decks' ? decks : null;
       target?.scrollIntoView({ block: 'start' });
     }, 30);
   }

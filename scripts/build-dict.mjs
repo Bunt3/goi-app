@@ -75,6 +75,8 @@ export function compactWord(word, maxExamples = 2) {
     }
     return out;
   });
+  const labels = new Set(entry.s.flatMap((s) => [...(s.m ?? []), ...(s.f ?? []), ...(s.d ?? [])]));
+  if (labels.size) entry.t = [...labels];
   return entry;
 }
 
@@ -134,6 +136,7 @@ function main() {
       rawBytes: Buffer.byteLength(built.text),
       entries: built.entries,
       examples: built.examples,
+      format: 2,
       source: fixture
         ? 'test fixture (not real JMdict data)'
         : `JMdict ${json.dictDate ?? ''} via jmdict-simplified ${json.version ?? ''}`.replace(/\s+/g, ' ').trim(),

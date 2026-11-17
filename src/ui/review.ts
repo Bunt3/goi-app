@@ -74,7 +74,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
     const now = Date.now();
     await store.refreshToday(now);
     if (quick && (now - startedAt >= limitMs || answered >= limitCards)) return finish('limit', null);
-    const queue = buildQueue(store.live(), store.todayLogs, s, now);
+    const queue = buildQueue(store.studying(), store.todayLogs, s, now);
     const pick = pickNext(queue, now, shown?.item);
     remaining = queue.main.length + queue.learning.filter((i) => i.due <= now + LEARN_AHEAD_MS).length;
     if (!pick.item) return finish('empty', pick.waitMs);
@@ -185,7 +185,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
         '.';
     }
     const now = Date.now();
-    const queue = buildQueue(store.live(), store.todayLogs, s, now);
+    const queue = buildQueue(store.studying(), store.todayLogs, s, now);
     const more = queue.main.length + queue.learning.filter((i) => i.due <= now + LEARN_AHEAD_MS).length;
     let detail = '';
     if (reason === 'limit' && more > 0) detail = `${plural(more, 'card')} still available today if you want more.`;

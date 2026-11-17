@@ -13,6 +13,7 @@ export function createCard(draft: Partial<CardDraft> & { word: string }, now: nu
     example_ja: (draft.example_ja ?? '').trim(),
     example_en: (draft.example_en ?? '').trim(),
     tags: [...new Set(draft.tags ?? [])],
+    deck: (draft.deck ?? '').trim(),
     register: draft.register ?? null,
     source: (draft.source ?? '').trim(),
     created: now,

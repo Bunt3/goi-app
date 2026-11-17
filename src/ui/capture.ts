@@ -2,6 +2,7 @@ import { disposeOcr, recognize } from '../ocr';
 import { cleanCapturedText } from '../textpick';
 import type { View } from './app';
 import { h, toast } from './dom';
+import { deckSelect } from './deckselect';
 import { closePicker, pickerPanel } from './picker';
 
 interface Rect {
@@ -16,6 +17,7 @@ const MAX_EDGE = 2600;
 
 /** Remembered while the app is open: several captures usually share a source. */
 let stickySource = '';
+let stickyDeck = '';
 
 async function toCanvas(source: Blob | HTMLVideoElement): Promise<HTMLCanvasElement> {
   let width: number;
@@ -115,6 +117,10 @@ export function captureView(): View {
   source.addEventListener('change', () => {
     stickySource = source.value.trim();
   });
+  const deck = deckSelect(stickyDeck, 'capture-deck');
+  deck.el.addEventListener('change', () => {
+    stickyDeck = deck.value();
+  });
   const pickHost = h('div', { id: 'capture-pick' });
 
   function renderPicker(): void {
@@ -126,7 +132,7 @@ export function captureView(): View {
     }
     pickHost.replaceChildren(
       h('h2', null, 'Pick words'),
-      h('div', { class: 'card' }, pickerPanel({ text: value, source: () => source.value.trim(), tags: [] })),
+      h('div', { class: 'card' }, pickerPanel({ text: value, source: () => source.value.trim(), deck: () => (stickyDeck = deck.value()), tags: [] })),
     );
   }
   text.addEventListener('input', () => {
@@ -347,6 +353,7 @@ export function captureView(): View {
     status,
     h('label', { class: 'field' }, h('span', null, 'Text'), text),
     h('label', { class: 'field' }, h('span', null, 'Source for cards added from this (optional)'), source),
+    h('div', { class: 'field' }, h('span', { class: 'muted small', style: 'display:block;margin-bottom:4px' }, 'Deck for cards added from this'), deck.el),
     pickHost,
     h(
       'details',

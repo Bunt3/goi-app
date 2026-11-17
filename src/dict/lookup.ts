@@ -104,6 +104,31 @@ export async function lookupWord(text: string, fetch: (terms: string[]) => Promi
   return matchEntries(text, await fetch(terms));
 }
 
+/** A match for an entry reached by browsing rather than by looking text up: its usual written form. */
+export function matchForEntry(entry: DictEntry): DictMatch {
+  const kana = entry.k.length === 0 || entry.s[0]?.m?.includes('uk');
+  return kana ? { entry, term: entry.r[0] ?? '', reasons: [], byKanji: false } : { entry, term: entry.k[0]!, reasons: [], byKanji: true };
+}
+
+/** Labels offered for browsing the dictionary, in display order. Codes are JMdict's. */
+export const BROWSE_LABELS: { code: string; title: string }[] = [
+  { code: 'sl', title: 'Slang' },
+  { code: 'net-sl', title: 'Internet slang' },
+  { code: 'col', title: 'Colloquial' },
+  { code: 'on-mim', title: 'Onomatopoeia (擬音語・擬態語)' },
+  { code: 'bus', title: 'Business' },
+  { code: 'hon', title: '尊敬語' },
+  { code: 'hum', title: '謙譲語' },
+  { code: 'yoji', title: '四字熟語' },
+  { code: 'id', title: 'Idioms' },
+  { code: 'ksb', title: 'Kansai-ben' },
+];
+
+/** Browsing order: common words first, then by reading. */
+export function browseOrder(a: DictEntry, b: DictEntry): number {
+  return (b.c ?? 0) - (a.c ?? 0) || (a.r[0] ?? '').localeCompare(b.r[0] ?? '', 'ja');
+}
+
 // ---- Tags and register ---------------------------------------------------------
 
 const MISC_TAGS: Record<string, string[]> = {
@@ -116,6 +141,7 @@ const MISC_TAGS: Record<string, string[]> = {
   derog: ['derogatory'],
   arch: ['archaic'],
   obs: ['archaic'],
+  'on-mim': ['擬音語・擬態語'],
 };
 const FIELD_TAGS: Record<string, string> = { bus: 'ビジネス', comp: 'IT', law: '法律', finc: '経済', econ: '経済' };
 const DIALECTS: Record<string, string> = { ksb: '関西弁', osb: '関西弁', kyb: '関西弁' };

@@ -69,6 +69,8 @@ const W = [
   [['担当'], ['たんとう'], true, [[['n', 'vs', 'vt'], ['being in charge (of)', 'responsibility']]]],
   [['少々'], ['しょうしょう'], true, [[['adv', 'n'], ['just a minute', 'a little', 'a few']]]],
   [['大変'], ['たいへん'], true, [[['adv'], ['very', 'greatly']], [['adj-na'], ['serious', 'hard', 'terrible']]]],
+  [[], ['どきどき', 'ドキドキ'], true, [[['adv', 'adv-to', 'vs'], ['thump-thump (heartbeat)', 'nervous', 'excited'], { m: ['on-mim'], x: [['面接の前はいつもドキドキする。', 'I always get nervous before an interview.']] }]]],
+  [[], ['にこにこ', 'ニコニコ'], true, [[['adv', 'adv-to', 'vs'], ['with a smile', 'smiling'], { m: ['on-mim'] }]]],
   [[], ['うざい', 'ウザい'], false, [[['adj-i'], ['annoying', 'irritating'], { m: ['col'] }]]],
 ];
 
@@ -79,7 +81,7 @@ const TAGS = {
   vt: 'transitive verb', vi: 'intransitive verb', n: 'noun (common) (futsuumeishi)', adv: 'adverb (fukushi)', int: 'interjection (kandoushi)',
   'adj-i': 'adjective (keiyoushi)', 'adj-ix': 'adjective (keiyoushi) - yoi/ii class', 'adj-na': 'adjectival nouns or quasi-adjectives (keiyodoshi)',
   hum: 'humble (kenjougo) language', hon: 'honorific or respectful (sonkeigo) language', pol: 'polite (teineigo) language', form: 'formal or literary term',
-  col: 'colloquial', sl: 'slang', 'net-sl': 'Internet slang', uk: 'word usually written using kana alone', bus: 'business', ksb: 'Kansai-ben',
+  col: 'colloquial', 'on-mim': 'onomatopoeic or mimetic word', 'adv-to': 'adverb taking the to particle', sl: 'slang', 'net-sl': 'Internet slang', uk: 'word usually written using kana alone', bus: 'business', ksb: 'Kansai-ben',
 };
 
 let id = 9000000;

@@ -4,13 +4,14 @@ import { buildDict } from '../scripts/build-dict.mjs';
 import type { DictManifest } from '../src/dict/entry';
 import { cardFields, lookupWord } from '../src/dict/lookup';
 import { GoiDB } from '../src/db';
-import { DictDB, findEntries, installLines, installState, streamLines } from '../src/dictdb';
+import { DictDB, findByEnglish, findByLabel, findByPrefix, findEntries, installLines, installState, streamLines } from '../src/dictdb';
+import { matchForEntry } from '../src/dict/lookup';
 import { Store } from '../src/store';
 import sample from './fixtures/dict-sample.json';
 import { T0 } from './helpers';
 
 const { text, entries, examples } = buildDict(sample);
-const manifest: DictManifest = { version: 'test-1', file: 'x.ndjson.gz', bytes: 0, rawBytes: text.length, entries, examples, source: 'fixture', fixture: true };
+const manifest: DictManifest = { format: 2, version: 'test-1', file: 'x.ndjson.gz', bytes: 0, rawBytes: text.length, entries, examples, source: 'fixture', fixture: true };
 let n = 0;
 
 function bytes(gzip: boolean): ReadableStream<Uint8Array> {
@@ -65,5 +66,28 @@ describe('the on-device dictionary', () => {
     expect(JSON.stringify(exportAfter)).toBe(JSON.stringify(exportBefore));
     expect(JSON.stringify(exportAfter)).not.toContain('うけたまわる');
     expect(store.cards.size).toBe(1);
+  });
+});
+
+describe('browsing the dictionary', () => {
+  it('finds entries by label, by prefix and by English', async () => {
+    const db = new DictDB(`dict-${++n}`);
+    await installLines(db, manifest, streamLines(bytes(true)), undefined, T0);
+    expect((await installState(db))?.format).toBe(2);
+    const slang = await findByLabel(db, 'sl');
+    expect(slang.map((e) => e.r[0]).sort()).toEqual(['ガチ', 'キモい', 'やばい'].sort());
+    expect((await findByLabel(db, 'on-mim')).map((e) => e.r[0]).sort()).toEqual(['どきどき', 'にこにこ']);
+    expect((await findByLabel(db, 'bus')).length).toBe(4);
+    expect((await findByPrefix(db, '稟議')).map((e) => e.k[0]).sort()).toEqual(['稟議', '稟議書']);
+    expect((await findByEnglish(db, 'proportional')).map((e) => e.k[0])).toEqual(['按分']);
+    expect((await findByEnglish(db, 'to go')).map((e) => e.k[0])).toContain('行く');
+    expect(await findByEnglish(db, '   ')).toEqual([]);
+  });
+
+  it('shows a usually-kana word in kana and others in kanji', () => {
+    const entries = buildDict(sample).text.trim().split('\n').map((l) => JSON.parse(l));
+    expect(matchForEntry(entries.find((e: { k: string[] }) => e.k[0] === '承る')).term).toBe('承る');
+    expect(matchForEntry(entries.find((e: { k: string[] }) => e.k[0] === '矢場い')).term).toBe('やばい');
+    expect(matchForEntry(entries.find((e: { r: string[] }) => e.r[0] === 'マジ')).term).toBe('マジ');
   });
 });

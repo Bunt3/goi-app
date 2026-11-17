@@ -10,6 +10,8 @@ export interface PickerOptions {
   text: string;
   /** Tags given to cards added from here. */
   tags?: string[];
+  /** Deck for cards added from here ('' is the default deck). */
+  deck?: string | (() => string);
   /** Source note given to cards added from here. */
   source?: string | (() => string);
   /** Translation to carry over, used only when the new card's example is the whole text. */
@@ -180,6 +182,7 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
         example_en: example === text.trim() ? (opts.exampleEn ?? '') : '',
         tags: [...new Set([...(opts.tags ?? []).filter((t) => t !== SEED_TAG), ...fill.extras().tags])],
         register: fill.extras().register,
+        deck: typeof opts.deck === 'function' ? opts.deck() : (opts.deck ?? ''),
         source: typeof opts.source === 'function' ? opts.source() : (opts.source ?? ''),
       });
       void ensurePersistence();

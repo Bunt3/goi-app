@@ -45,6 +45,7 @@ export function dictSection(): { el: HTMLElement; destroy: () => void } {
             { class: 'small', id: 'dict-status' },
             `Installed: ${plural(s.info.entries, 'entry', 'entries')}, ${new Date(s.info.installedAt).toLocaleDateString()}. Works offline.`,
           ),
+          h('a', { href: '#/dict', class: 'chip linkchip', id: 'dict-browse', style: 'margin-bottom:8px' }, '📖 Browse and search the dictionary'),
           s.info.fixture ? h('p', { class: 'notice small' }, 'This build carries a small test dictionary, not the real one.') : '',
           s.update
             ? h('button', { class: 'block', id: 'dict-update', onclick: () => installDict(s.update!) }, `Download the newer version (about ${mb(s.update.bytes)})`)

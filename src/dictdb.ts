@@ -13,6 +13,8 @@ export interface InstalledDict {
   entries: number;
   examples: number;
   fixture: boolean;
+  /** Data format of the installed file (see DictManifest.format). */
+  format: number;
   /** Epoch ms. */
   installedAt: number;
   /** False while an install is running or after one was interrupted. */
@@ -33,6 +35,8 @@ export class DictDB extends Dexie {
   constructor(name = DICT_DB_NAME) {
     super(name);
     this.version(1).stores({ entries: 'i, *k, *r', meta: 'key' });
+    // Labels index; entries installed from a format-1 file simply lack it until downloaded again.
+    this.version(2).stores({ entries: 'i, *k, *r, *t' });
   }
 }
 
@@ -60,6 +64,7 @@ export async function installLines(
     entries: 0,
     examples: manifest.examples,
     fixture: manifest.fixture === true,
+    format: manifest.format ?? 1,
     installedAt: now,
     complete: false,
   };
@@ -94,6 +99,37 @@ export async function findEntries(db: DictDB, terms: string[]): Promise<DictEntr
   const out = new Map<number, DictEntry>();
   for (const e of [...byKanji, ...byReading]) out.set(e.i, e);
   return [...out.values()];
+}
+
+/** Entries whose kanji form or reading starts with the text, for search-as-you-type. */
+export async function findByPrefix(db: DictDB, prefix: string, limit = 40): Promise<DictEntry[]> {
+  if (!prefix) return [];
+  const [a, b] = await Promise.all([
+    db.entries.where('k').startsWith(prefix).limit(limit).toArray(),
+    db.entries.where('r').startsWith(prefix).limit(limit).toArray(),
+  ]);
+  const out = new Map<number, DictEntry>();
+  for (const e of [...a, ...b]) out.set(e.i, e);
+  return [...out.values()];
+}
+
+/** Entries carrying a JMdict label (sl, on-mim, bus, …). */
+export async function findByLabel(db: DictDB, label: string, limit = 5000): Promise<DictEntry[]> {
+  return db.entries.where('t').equals(label).limit(limit).toArray();
+}
+
+/**
+ * Entries with an English gloss containing every word of the query. A full
+ * scan (there is no index on English), stopped once `limit` are found.
+ */
+export async function findByEnglish(db: DictDB, query: string, limit = 60): Promise<DictEntry[]> {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [];
+  const re = words.map((w) => new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  return db.entries
+    .filter((e) => e.s.some((s) => s.g.some((g) => re.every((r) => r.test(g.toLowerCase())))))
+    .limit(limit)
+    .toArray();
 }
 
 /** Split a byte stream into text lines. Gzip is undone here unless the server already did it. */

@@ -18,7 +18,7 @@ Personal Japanese vocabulary PWA for one user. Read `HANDOFF.md` for current sta
 ```bash
 npm test            # Vitest, runs in Node with TZ=Asia/Tokyo
 npm run build       # copies OCR assets to public/ocr, builds public/dict if DICT_SOURCE is set, tsc --noEmit, vite build (also emits dist/sw.js)
-npm run build:e2e   # the same, with the 49-entry test dictionary (tests/fixtures/dict-sample.json)
+npm run build:e2e   # the same, with the 51-entry test dictionary (tests/fixtures/dict-sample.json)
 npm run e2e         # headless run-through of dist/; needs build:e2e first
 npm run dev         # no service worker in dev
 ```

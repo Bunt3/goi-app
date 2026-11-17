@@ -32,6 +32,8 @@
   "pol": "polite (teineigo) language",
   "form": "formal or literary term",
   "col": "colloquial",
+  "on-mim": "onomatopoeic or mimetic word",
+  "adv-to": "adverb taking the to particle",
   "sl": "slang",
   "net-sl": "Internet slang",
   "uk": "word usually written using kana alone",
@@ -3216,6 +3218,151 @@
   },
   {
    "id": "9000049",
+   "kanji": [],
+   "kana": [
+    {
+     "common": true,
+     "text": "どきどき",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ドキドキ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adv",
+      "adv-to",
+      "vs"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "on-mim"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "thump-thump (heartbeat)"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "nervous"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "excited"
+      }
+     ],
+     "examples": [
+      {
+       "source": {
+        "type": "tatoeba",
+        "value": "4"
+       },
+       "text": "どきどき",
+       "sentences": [
+        {
+         "land": "jpn",
+         "text": "面接の前はいつもドキドキする。"
+        },
+        {
+         "land": "eng",
+         "text": "I always get nervous before an interview."
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000050",
+   "kanji": [],
+   "kana": [
+    {
+     "common": true,
+     "text": "にこにこ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    },
+    {
+     "common": false,
+     "text": "ニコニコ",
+     "tags": [],
+     "appliesToKanji": [
+      "*"
+     ]
+    }
+   ],
+   "sense": [
+    {
+     "partOfSpeech": [
+      "adv",
+      "adv-to",
+      "vs"
+     ],
+     "appliesToKanji": [
+      "*"
+     ],
+     "appliesToKana": [
+      "*"
+     ],
+     "related": [],
+     "antonym": [],
+     "field": [],
+     "dialect": [],
+     "misc": [
+      "on-mim"
+     ],
+     "info": [],
+     "languageSource": [],
+     "gloss": [
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "with a smile"
+      },
+      {
+       "lang": "eng",
+       "gender": null,
+       "type": null,
+       "text": "smiling"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "9000051",
    "kanji": [],
    "kana": [
     {
