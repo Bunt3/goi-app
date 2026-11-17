@@ -136,6 +136,7 @@ export function planMerge(
         example_en: remote.example_en,
         tags: remote.tags,
         deck: remote.deck,
+        check: remote.check,
         register: remote.register,
         source: remote.source,
         updated: remote.updated,

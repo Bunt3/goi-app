@@ -7,7 +7,7 @@ import type { CardDraft } from './data/tsv';
 import { startOfDay } from './day';
 import { db as defaultDb, loadSettings, logsSince, replaceAll, saveSettings, type GoiDB } from './db';
 import { applyReview, resetProgress, type Rating } from './srs/fsrs';
-import { DEFAULT_SETTINGS, type Card, type Direction, type ExportFile, type ReviewLog, type Settings } from './types';
+import { DEFAULT_SETTINGS, type Card, type CardCheck, type Direction, type ExportFile, type ReviewLog, type Settings } from './types';
 
 export interface AnswerUndo {
   previous: Card;
@@ -106,6 +106,17 @@ export class Store {
     for (const c of next) this.cards.set(c.id, c);
     this.onChange?.();
     return next.length;
+  }
+
+  /** Record (or with null, clear) a checker's verdict. A content edit: bumps `updated`. */
+  async setCheck(id: string, check: CardCheck | null, now = Date.now()): Promise<Card> {
+    const current = this.cards.get(id);
+    if (!current) throw new Error('Card not found');
+    const next: Card = { ...current, check, updated: Math.max(now, current.updated + 1) };
+    await this.db.cards.put(next);
+    this.cards.set(id, next);
+    this.onChange?.();
+    return next;
   }
 
   /** Soft-delete several cards at once. */

@@ -10,7 +10,21 @@ export const DEFAULT_DECK_LABEL = 'My cards';
 export const SEED_DECK = 'Workplace';
 
 export const DEFAULT_TAGS = ['電話応対', 'メール', '会議', '人事・契約', 'IT', '接客', '日常'] as const;
-export const SEED_TAG = 'seed-unverified';
+/** Tag that schema 1–2 put on starter-deck cards. Removed by the schema-3 migration; never shown. */
+export const LEGACY_UNVERIFIED_TAG = 'seed-unverified';
+
+export type CheckVerdict = 'ok' | 'fix' | 'wrong';
+
+/** A native speaker's verdict on a card, recorded in checker mode. Not shown anywhere else. */
+export interface CardCheck {
+  verdict: CheckVerdict;
+  /** What to change, in the checker's words. */
+  note: string;
+  /** Who checked (optional). */
+  by: string;
+  /** Epoch ms. */
+  at: number;
+}
 /** Given to cards whose reading or meaning came from the offline dictionary, so they can be found and checked. */
 export const AUTO_TAG = 'auto-filled';
 
@@ -54,6 +68,8 @@ export interface Card {
   updated: number;
   /** Tombstone, kept so a deletion survives merging with another device. */
   deleted: boolean;
+  /** Checker-mode verdict, or null if not checked. Text field: merges like the word and tags. */
+  check: CardCheck | null;
   /** One independent FSRS state per review direction. */
   srs: Record<Direction, SrsState>;
   /** Epoch ms of the first successful recognition review; production is locked while null. */
@@ -139,8 +155,11 @@ export const DEFAULT_SETTINGS: Settings = {
   uiLang: 'en',
 };
 
-/** 2: Card.deck added (schema 1 cards get '' or, for seed cards, SEED_DECK). */
-export const SCHEMA_VERSION = 2;
+/**
+ * 2: Card.deck added (schema 1 cards get '' or, for seed cards, SEED_DECK).
+ * 3: Card.check added (older cards get null); the seed-unverified tag is dropped.
+ */
+export const SCHEMA_VERSION = 3;
 export const APP_ID = 'goi-app';
 
 export interface ExportFile {

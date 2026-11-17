@@ -1002,3 +1002,30 @@ label.dict-ex {
   align-items: flex-start;
   margin: 6px 0;
 }
+
+/* ---------- Checker mode ---------- */
+
+.check-sheet {
+  margin: 8px 0 12px;
+}
+
+.check-word {
+  font-size: 30px;
+  font-weight: 600;
+  margin: 4px 0 10px;
+}
+
+.check-field {
+  margin-bottom: 8px;
+}
+
+.check-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.check-actions .link {
+  grid-column: 1 / -1;
+}

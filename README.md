@@ -21,6 +21,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
 - [Decks and starter decks](#decks-and-starter-decks)
+- [Checker mode](#checker-mode)
 - [Interface language](#interface-language)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
@@ -196,7 +197,11 @@ Every card belongs to one deck. Cards you add go to *My cards* unless you pick a
 | Office slang | ~85 | What office workers say that textbooks skip: なるはや, リスケ, アサイン, 握る, 温度感, chat and remote-work terms, recent buzzwords, a few older managers' phrases. Words already in Workplace are left out. |
 | 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
 
-All were machine-written and are tagged `seed-unverified`; the slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+All were written with AI help; checker mode (below) lets a native speaker go through them. The slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+
+## Checker mode
+
+More → *Checker mode* (`#/check`) is for a native speaker going through your cards. Pick decks, optionally a name, and *Start checking*: one card at a time with ✓ Natural, ✎ Needs a fix, ✗ Wrong (the last two ask for a note: how they would say it). *日本語で表示* switches the interface to Japanese for them. Verdicts are stored on the card and never shown while studying; cards marked fix or wrong are listed under *Notes from checkers* with a link to edit, and the note also appears on that card's edit screen. *Clear note* returns a card to unchecked. Checks travel with backups and merges.
 
 ## Interface language
 
@@ -284,7 +289,7 @@ A backup is one UTF-8 JSON file. All timestamps are Unix epoch **milliseconds**.
 ```jsonc
 {
   "app": "goi-app",            // required; other files are rejected
-  "schemaVersion": 2,          // files with a higher number are rejected with a message
+  "schemaVersion": 3,          // files with a higher number are rejected with a message
   "exportedAt": 1794877200000,
   "deviceLabel": "phone",
   "cards": [ /* Card */ ],
@@ -304,8 +309,9 @@ A backup is one UTF-8 JSON file. All timestamps are Unix epoch **milliseconds**.
 | `meaning_ja` | string | Optional short Japanese definition; empty string if none. |
 | `example_ja` | string | |
 | `example_en` | string | |
-| `tags` | string[] | Built-in: `電話応対` `メール` `会議` `人事・契約` `IT` `接客` `日常`; plus any custom tags; `seed-unverified` on seed cards. |
+| `tags` | string[] | Built-in: `電話応対` `メール` `会議` `人事・契約` `IT` `接客` `日常`; plus any custom tags. Schema 1–2 put `seed-unverified` on starter-deck cards; reading an older file or database removes it. |
 | `deck` | string | Deck name; `''` is the default deck, shown as *My cards*. Added in schema 2: older files are read with `''`, or `Workplace` for cards whose `source` is `seed deck`. Merges like the other text fields. |
+| `check` | object \| null | Checker-mode verdict: `{ verdict: 'ok' \| 'fix' \| 'wrong', note, by, at }`. Added in schema 3 (older cards get `null`). Shown only in checker mode and, for fix/wrong, on the card's edit screen. Merges like the text fields. |
 | `register` | string \| null | `casual`, `polite`, `尊敬語`, `謙譲語`, `written-only`, or `null`. |
 | `source` | string | Free text. |
 | `created` | number | |
@@ -413,7 +419,7 @@ Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when a
 - **Text recognition is the weak link in Capture.** It was tested only on text rendered by a browser (light and dark backgrounds, one font), never on a real photo, a real screenshot from another app, or a phone camera. Expect worse results on those. Vertical text is not supported.
 - **The first image read needs a connection** to fetch about 5 MB from this site. Offline before that, it says so.
 - **Video is one frame at a time, chosen by you.** There is no automatic scan of a whole clip, and the browser must be able to play the file's format.
-- **Starter decks are unverified.** Their cards were machine-written and not checked by a native speaker or against a dictionary. Every one is tagged `seed-unverified`; treat readings, register labels and nuance as provisional.
+- **Starter decks have not been checked by a native speaker.** Their cards were written with AI help. Use checker mode to have someone go through them.
 - **No sync.** Two devices diverge until you export and import both ways.
 - **Automatic backup is only as good as where the file goes.** Download mode writes to the same device; if the phone is lost, so is the backup unless you move the file elsewhere. Folder mode into a cloud-synced folder is the only setup that survives losing the device, and it is not available in Firefox or Brave.
 - **Download mode leaves files behind.** A web page cannot delete or overwrite downloads, so old `goi-auto_…` files accumulate until you clear them.

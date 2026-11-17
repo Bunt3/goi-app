@@ -181,7 +181,7 @@ async function main() {
     const first = await exportBackup();
     assert.match(first.name, /^goi-backup_\d{4}-\d{2}-\d{2}_e2e-phone\.json$/);
     assert.equal(first.data.app, 'goi-app');
-    assert.equal(first.data.schemaVersion, 2);
+    assert.equal(first.data.schemaVersion, 3);
     assert.ok(first.data.cards.every((c) => c.deck === ''), 'cards added by hand are in the default deck');
     assert.equal(first.data.cards.length, 2);
     assert.equal(first.data.reviewLogs.length, 2, 'undone answer left no log behind');
@@ -289,14 +289,16 @@ async function main() {
     log('starter decks: slang, office slang and onomatopoeia each load into their own deck, offered on Today');
     await page.goto(URL + '#/browse?filter=all&deck=*');
     await page.waitForSelector('#card-list .item');
-    await page.selectOption('#filter-tag', 'seed-unverified');
+    await page.selectOption('#filter-deck', 'Workplace');
     const seedCount = Number((await page.innerText('#browse-count')).split(' ')[0]);
     assert.ok(seedCount >= 140, 'seed deck loaded: ' + seedCount);
     await page.fill('#search', 'りんぎ');
     assert.equal(await page.locator('#card-list .item').count(), 1);
     await page.fill('#search', '');
     await shot('browse-seed');
-    log(`seed deck: ${seedText.split('.')[0]}; second press adds nothing; all tagged seed-unverified`);
+    log(`seed deck: ${seedText.split('.')[0]}; second press adds nothing`);
+    assert.equal(await page.locator('.badge:has-text("unverified")').count(), 0, 'no unverified badges anywhere');
+    await page.selectOption('#filter-deck', '*');
 
     await page.goto(URL + '#/home');
     await page.waitForSelector('#quick-start');
@@ -650,6 +652,38 @@ async function main() {
     await page.waitForSelector('#tabs a[data-route="home"]:has-text("Today")');
     await page.waitForSelector('h1:has-text("More")');
     log('interface language: Japanese menus survive a reload, card text stays as written, English comes back');
+
+    // Checker mode: a native speaker marks cards; verdicts show only in checker mode and on a flagged card's edit screen.
+    await page.goto(URL + '#/check');
+    await page.click('#check-decks [data-deck="Office slang"]');
+    await page.waitForSelector('#check-decks [data-deck="Office slang"].on');
+    await page.fill('#check-by', '佐藤');
+    await page.locator('#check-by').blur();
+    await page.click('#check-start');
+    await page.waitForSelector('#check-card .check-word');
+    const firstChecked = await page.innerText('#check-card .check-word');
+    await page.click('#check-ok');
+    await page.waitForSelector('#check-progress:has-text("1 checked")');
+    const flaggedWord = await page.innerText('#check-card .check-word');
+    await page.click('#check-fix');
+    await page.fill('#check-note', '「なるべく早く」の方が上司には無難');
+    await shot('checker');
+    await page.click('#check-save');
+    await page.waitForSelector('#check-progress:has-text("2 checked")');
+    await page.click('text=Stop');
+    await page.waitForSelector('#check-results .check-result');
+    assert.equal(await page.locator('#check-results .check-result').count(), 1);
+    assert.match(await page.innerText('#check-results'), /上司には無難/);
+    const okCard = await cardByWord(firstChecked);
+    assert.equal(okCard.check.verdict, 'ok');
+    assert.equal(okCard.check.by, '佐藤');
+    await page.click('#check-results a:has-text("Edit card")');
+    await page.waitForSelector('#check-note:has-text("上司には無難")');
+    await page.goto(URL + '#/check');
+    await page.click('#check-results button:has-text("Clear note")');
+    await page.waitForSelector('#toast.show:has-text("Note cleared.")');
+    assert.equal((await cardByWord(flaggedWord)).check, null);
+    log(`checker mode: “${firstChecked}” marked natural, “${flaggedWord}” flagged with a note that reaches the edit screen, then cleared`);
 
     // Offline: the dictionary is local.
     await context.setOffline(true);

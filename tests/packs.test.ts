@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { PackEntry } from '../src/data/packs/common';
 import { PACKS, packCards } from '../src/data/packs/index';
 import { findTarget } from '../src/furigana';
-import { REGISTERS, SEED_DECK, SEED_TAG, type Card } from '../src/types';
+import { LEGACY_UNVERIFIED_TAG, REGISTERS, SEED_DECK, type Card } from '../src/types';
 import { uuidFromName } from '../src/util';
 import { T0, makeCard } from './helpers';
 
@@ -66,7 +66,7 @@ describe('starter decks together', () => {
     expect(fresh[0]!.source).toBe('seed deck');
   });
 
-  it('loads into the deck, tags as unverified, records the source, and skips what is already there', async () => {
+  it('loads into the deck, records the source, adds no unverified tag, and skips what is already there', async () => {
     const slang = PACKS.find((p) => p.id === 'slang')!;
     const entries = loaded.get('slang')!.slice(0, 5);
     const own = makeCard({ word: entries[1]!.word, reading: entries[1]!.reading });
@@ -76,7 +76,8 @@ describe('starter decks together', () => {
     expect(first.skipped).toBe(1);
     const c = first.fresh[0]!;
     expect(c.deck).toBe('Modern slang');
-    expect(c.tags).toContain(SEED_TAG);
+    expect(c.tags).not.toContain(LEGACY_UNVERIFIED_TAG);
+    expect(c.check).toBeNull();
     expect(c.source).toMatch(/^Modern slang starter deck · documented: /);
     for (const card of first.fresh) existing.set(card.id, card);
     const again = await packCards(slang, entries, existing, uuidFromName, T0);

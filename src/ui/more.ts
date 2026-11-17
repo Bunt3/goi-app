@@ -1,7 +1,7 @@
 import { ImportError, parseExport } from '../data/export';
 import { isNoop, type MergePlan } from '../data/merge';
 import { PACKS, packCards, type PackInfo } from '../data/packs/index';
-import { SEED_TAG, type ExportFile, type Settings } from '../types';
+import type { ExportFile, Settings } from '../types';
 import { daysAgoText, uuidFromName } from '../util';
 import { canShareFiles, exportAnki, exportBackup, shareBackup } from './actions';
 import { chooseFolder, folderAccess, folderSupported, forgetFolder, newestBackup, savedFolder } from '../backupfs';
@@ -524,13 +524,11 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     h(
       'p',
       { class: 'small' },
-      'Each loads into its own deck; choose which decks to study on the Today screen. ',
-      h('b', null, 'They were machine-written and have not been checked by a native speaker'),
-      `, so every card carries the ${SEED_TAG} tag. Treat readings and nuance as provisional until you verify them. Where a slang term was found in a published ranking or explainer, the card’s Source says where.`,
+      'Each loads into its own deck; choose which decks to study on the Today screen. The cards were written with AI help; checker mode lets a native speaker go through them. Where a slang term was found in a published ranking or explainer, the card’s Source says where.',
     ),
     packRows,
     h('h2', null, 'More'),
-    h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
+    h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/check', id: 'to-check' }, 'Checker mode (for a native speaker)'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
     h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`),
   );
 

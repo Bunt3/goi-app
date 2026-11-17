@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import { migrateDeck } from './decks';
+import { migrateDeck, migrateTags, parseCheck } from './decks';
 import { DEFAULT_SETTINGS, type Card, type ReviewLog, type Settings } from './types';
 
 interface MetaRow {
@@ -28,6 +28,18 @@ export class GoiDB extends Dexie {
           .toCollection()
           .modify((c: Card) => {
             c.deck = migrateDeck((c as Partial<Card>).deck, c.source ?? '');
+          }),
+      );
+    // Schema 3: a check record on every card, and the unverified tag gone.
+    this.version(3)
+      .stores({})
+      .upgrade((tx) =>
+        tx
+          .table('cards')
+          .toCollection()
+          .modify((c: Card) => {
+            c.check = parseCheck((c as Partial<Card>).check);
+            c.tags = migrateTags(c.tags ?? []);
           }),
       );
   }

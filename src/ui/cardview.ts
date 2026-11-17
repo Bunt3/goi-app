@@ -1,5 +1,5 @@
 import { exampleNode, wordNode } from '../furigana';
-import { SEED_TAG, isLeech, type Card } from '../types';
+import { isLeech, type Card } from '../types';
 import { speakOrExplain } from './actions';
 import { h } from './dom';
 import { openPickerSheet } from './picker';
@@ -49,7 +49,7 @@ export function cardBack(card: Card, furigana: boolean, opts: { audio?: boolean;
       'div',
       { class: 'meta-line' },
       card.register ? h('span', { class: 'badge accent' }, card.register) : null,
-      card.tags.map((t) => h('span', { class: t === SEED_TAG ? 'badge warn' : 'badge', 'data-content': '' }, t)),
+      card.tags.map((t) => h('span', { class: 'badge', 'data-content': '' }, t)),
       isLeech(card) ? h('span', { class: 'badge warn' }, 'leech — consider rewriting') : null,
       card.source ? h('span', { class: 'badge', 'data-content': '' }, card.source) : null,
     ),

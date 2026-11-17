@@ -52,6 +52,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/data/packs/` | Starter decks (`office.ts`, `slang.ts`, `onomatopoeia.ts`) and `packCards`; the Workplace deck is `data/seed.ts` |
 | `src/ui/dictview.ts` | Dictionary screen: search, browse by label, add to a deck |
 | `src/ui/deckpanel.ts`, `src/ui/deckselect.ts` | More → Decks; the deck chooser used by forms |
+| `src/check.ts`, `src/ui/checker.ts` | Checker mode: which cards to check, tallies (pure); the `#/check` screen |
 | `src/ui/i18n.ts`, `src/i18n/ja.ts` | Interface language: DOM translation layer and the Japanese catalogue |
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
 | `vite.config.ts` | Base path, version constant, service worker generator |
@@ -67,6 +68,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 - **Backups commit after the write.** Use `store.prepareBackup()` and call `commit()` only once the file is written, so a failed write is not recorded as a backup.
 - **An empty deck is never auto-backed-up** (`store.cards.size === 0` guard). Keep it: it stops a wiped browser overwriting a good backup.
 - **Starter-deck card ids are deterministic** (`uuidFromName('<idPrefix>:word:reading')`; the Workplace deck uses `seed`, others `pack:<id>`). Changing a prefix, or an entry's word or reading, creates a duplicate on devices that already loaded the deck. Workplace cards keep `source: 'seed deck'`: the schema-2 migration puts cards with that source into the Workplace deck.
+- **Checks are a card field (`check`, schema 3)**, set only by checker mode (`store.setCheck`, a content edit). Never show check status while studying or browsing; the owner asked for it to stay inside checker mode (plus the note on a flagged card's edit screen). The old `seed-unverified` tag is stripped by the schema-3 migration; don't reintroduce it.
 - **Decks are a card field (`deck`, schema 2).** Moving a card between decks is a content edit (bumps `updated`). Which decks are studied is a per-device setting (`studyDecks`); stale names are ignored, and none left means all. Queue-building screens use `store.studying()`, not `store.live()`.
 - **Schema changes.** Adding an optional `Settings` field needs only a default and a line in `parseSettings`. Changing `Card` or `ReviewLog` needs a `SCHEMA_VERSION` bump, a migration in `parseExport`, a Dexie `version()` upgrade in `db.ts`, and a README update.
 - **`h()` in `ui/dom.ts`:** `null`/`undefined` props are skipped; `false` is skipped unless the key is a real DOM property. Children may be `null`/`false`, but native `replaceChildren`/`append` do not accept `null`.

@@ -1,4 +1,4 @@
-import { AUTO_TAG, REGISTERS, SEED_TAG, isInbox, isLeech, type Card } from '../types';
+import { AUTO_TAG, REGISTERS, isInbox, isLeech, type Card } from '../types';
 import { deckLabel, deckNames } from '../decks';
 import { go, store, type View } from './app';
 import { h, plural } from './dom';
@@ -102,7 +102,6 @@ export function browseView(_arg: string, params: URLSearchParams): View {
           isLeech(c) ? h('span', { class: 'badge warn' }, 'leech') : null,
           c.register ? h('span', { class: 'badge' }, c.register) : null,
           decks.length > 1 && state.deck === '*' ? h('span', { class: 'badge' }, deckLabel(c.deck)) : null,
-          c.tags.includes(SEED_TAG) ? h('span', { class: 'badge warn' }, 'unverified') : null,
           c.tags.includes(AUTO_TAG) ? h('span', { class: 'badge' }, 'from dictionary') : null,
         ),
         h('div', { class: 'm', 'data-content': '' }, c.meaning_en || '—'),

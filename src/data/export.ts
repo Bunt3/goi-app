@@ -1,4 +1,4 @@
-import { migrateDeck } from '../decks';
+import { migrateDeck, migrateTags, parseCheck } from '../decks';
 import { isoDate } from '../day';
 import { newSrs } from '../srs/fsrs';
 import {
@@ -84,8 +84,9 @@ function parseCard(v: unknown, index: number): Card {
     meaning_ja: str(o.meaning_ja),
     example_ja: str(o.example_ja),
     example_en: str(o.example_en),
-    tags: Array.isArray(o.tags) ? o.tags.filter((t): t is string => typeof t === 'string') : [],
+    tags: migrateTags(Array.isArray(o.tags) ? o.tags.filter((t): t is string => typeof t === 'string') : []),
     deck: migrateDeck(o.deck, str(o.source)),
+    check: parseCheck(o.check),
     register,
     source: str(o.source),
     created,

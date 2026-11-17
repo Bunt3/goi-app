@@ -1,4 +1,4 @@
-import { SEED_TAG, isInbox, type Card } from '../types';
+import { isInbox, type Card } from '../types';
 import { lookup, segment, sentenceAround, type Token } from '../textpick';
 import type { DictMatch } from '../dict/lookup';
 import { ensurePersistence, store } from './app';
@@ -180,7 +180,7 @@ export function pickerPanel(opts: PickerOptions): HTMLElement {
         example_ja: example,
         // A translation only carries over if the example is the very sentence it translated.
         example_en: example === text.trim() ? (opts.exampleEn ?? '') : '',
-        tags: [...new Set([...(opts.tags ?? []).filter((t) => t !== SEED_TAG), ...fill.extras().tags])],
+        tags: [...new Set([...(opts.tags ?? []), ...fill.extras().tags])],
         register: fill.extras().register,
         deck: typeof opts.deck === 'function' ? opts.deck() : (opts.deck ?? ''),
         source: typeof opts.source === 'function' ? opts.source() : (opts.source ?? ''),

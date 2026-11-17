@@ -92,3 +92,44 @@ describe('managing decks', () => {
     expect(changes).toBe(4); // two adds, one move, one delete
   });
 });
+
+describe('schema 3: checks and the old unverified tag', () => {
+  it('drops the unverified tag and reads checks from older files', () => {
+    const a = makeCard({ tags: ['会議', 'seed-unverified'] });
+    const b = makeCard({ tags: [] });
+    const raw = JSON.parse(serializeExport({ app: 'goi-app', schemaVersion: 2, exportedAt: T0, deviceLabel: '', cards: [a, b], reviewLogs: [], settings: {} as never }));
+    delete raw.cards[0].check;
+    raw.cards[1].check = { verdict: 'fix', note: '「ご確認ください」の方が自然', by: '佐藤', at: T0 };
+    const file = parseExport(JSON.stringify(raw));
+    expect(file.cards[0]!.tags).toEqual(['会議']);
+    expect(file.cards[0]!.check).toBeNull();
+    expect(file.cards[1]!.check).toEqual({ verdict: 'fix', note: '「ご確認ください」の方が自然', by: '佐藤', at: T0 });
+    raw.cards[1].check = { verdict: 'maybe' };
+    expect(parseExport(JSON.stringify(raw)).cards[1]!.check).toBeNull();
+  });
+
+  it('upgrades a schema-2 database in place', async () => {
+    const name = `decks3-${Math.random()}`;
+    const old = new Dexie(name);
+    old.version(2).stores({ cards: 'id, updated', logs: 'id, cardId, reviewedAt', meta: 'key' });
+    const c = { ...makeCard({ tags: ['seed-unverified', 'IT'] }) } as Record<string, unknown>;
+    delete c.check;
+    await old.table('cards').put(c);
+    old.close();
+    const store = new Store(new GoiDB(name));
+    await store.load(T0);
+    const loaded = [...store.cards.values()][0]!;
+    expect(loaded.tags).toEqual(['IT']);
+    expect(loaded.check).toBeNull();
+  });
+
+  it('records a check as a content edit, so it survives a merge', async () => {
+    const store = new Store(new GoiDB(`decks3-${Math.random()}`));
+    await store.load(T0);
+    const card = await store.addCard({ word: '握る' }, T0);
+    const checked = await store.setCheck(card.id, { verdict: 'ok', note: '', by: '', at: T0 + 5 }, T0 + 5);
+    expect(checked.updated).toBeGreaterThan(card.updated);
+    const plan = planMerge([card], [], { cards: [checked], reviewLogs: [] }, 0.9);
+    expect(plan.cards.find((c) => c.id === card.id)?.check?.verdict).toBe('ok');
+  });
+});

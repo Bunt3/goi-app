@@ -129,8 +129,8 @@ export const JA: Record<string, string> = {
   'Saved. The Inbox is empty.': '保存しました。受信箱は空です。',
   'Progress reset.': '進捗をリセットしました。',
   'The word can’t be empty.': '単語は空にできません。',
-  'From the seed deck and not yet verified. Remove the seed-unverified tag once you’ve checked it against a source you trust.':
-    'スターターデッキのカードで、まだ確認されていません。信頼できる資料で確認したら seed-unverified タグを外してください。',
+  'A checker marked this card wrong': 'チェックで「間違い」とされたカードです',
+  'A checker suggested a fix': 'チェックで修正の提案がありました',
   'This card has lapsed 8 or more times. A clearer meaning or a different example sentence usually helps more than further repetition.':
     'このカードは8回以上忘れています。繰り返すより、意味を分かりやすくしたり例文を変えたりするほうが効果的です。',
   'Reset scheduling for both directions? The card starts again as new. Use this after rewriting a card that never stuck.':
@@ -142,7 +142,6 @@ export const JA: Record<string, string> = {
   'All tags': 'すべてのタグ',
   'All registers': 'すべての使用域',
   '(none set)': '（未設定）',
-  unverified: '未確認',
   'from dictionary': '辞書から',
   inbox: '受信箱',
   leech: '要見直し',
@@ -323,10 +322,9 @@ export const JA: Record<string, string> = {
   'Remove…': '削除…',
   'Delete deck and cards': 'デッキとカードを削除',
   'Starter decks': 'スターターデッキ',
-  'Each loads into its own deck; choose which decks to study on the Today screen.': 'それぞれ専用のデッキに読み込まれます。学習するデッキは「今日」画面で選べます。',
-  'They were machine-written and have not been checked by a native speaker': 'これらは機械が作成したもので、ネイティブスピーカーによる確認はまだです',
-  ', so every card carries the seed-unverified tag. Treat readings and nuance as provisional until you verify them. Where a slang term was found in a published ranking or explainer, the card’s Source says where.':
-    '。そのため全カードに seed-unverified タグが付いています。読みやニュアンスは確認するまで仮のものと考えてください。スラングが公開されたランキングや解説記事で確認できた場合は、カードの出典に記載しています。',
+  'Each loads into its own deck; choose which decks to study on the Today screen. The cards were written with AI help; checker mode lets a native speaker go through them. Where a slang term was found in a published ranking or explainer, the card’s Source says where.':
+    'それぞれ専用のデッキに読み込まれます。学習するデッキは「今日」画面で選べます。カードはAIの助けを借りて作成したもので、チェックモードでネイティブスピーカーに確認してもらえます。スラングが公開ランキングや解説記事で確認できた場合は、カードの出典に記載しています。',
+  'Checker mode (for a native speaker)': 'チェックモード（ネイティブの方向け）',
   Workplace: '仕事',
   'About 180 workplace words and set phrases: phone, email, meetings, HR and contracts, customer and IT support.': '仕事で使う語と決まり文句 約180語：電話、メール、会議、人事・契約、接客、ITサポート。',
   'Modern slang': '最近のスラング',
@@ -342,10 +340,40 @@ export const JA: Record<string, string> = {
   'Could not load this deck. Reload the app and try again.': 'デッキを読み込めませんでした。アプリを再読み込みしてもう一度お試しください。',
   'Capture from a photo, screenshot or text': '写真・スクショ・テキストから取り込む',
   'Paste many cards (TSV / CSV)': 'カードをまとめて貼り付け（TSV / CSV）',
+  // ---- Checker mode
+  'Checker mode': 'チェックモード',
+  'Show in English': '英語で表示',
+  'Thank you for helping. You will see one flashcard at a time. Please mark whether the Japanese sounds natural. If something is off, write how you would say it. Your notes go only to the owner of this app.':
+    'ご協力ありがとうございます。単語カードが1枚ずつ表示されます。日本語が自然かどうかを選んでください。おかしいところがあれば、あなたならどう言うかを書いてください。メモはこのアプリの持ち主にだけ届きます。',
+  'Choose decks to check (none = all):': 'チェックするデッキを選んでください（選ばなければ全部）：',
+  'Your name (optional)': 'お名前（任意）',
+  'e.g. 佐藤': '例：佐藤',
+  'Not checked yet': '未チェック',
+  Natural: '自然',
+  'Needs a fix': '要修正',
+  Wrong: '間違い',
+  'Start checking': 'チェックを始める',
+  'Everything here is checked': 'すべてチェック済みです',
+  'Notes from checkers': 'チェックした人からのメモ',
+  'Edit the card, then clear the note so it can be checked again.': 'カードを直したら、メモを消すと再チェックできます。',
+  'Clear note': 'メモを消す',
+  'Note cleared.': 'メモを消しました。',
+  'All done. Thank you!': '完了です。ありがとうございました！',
+  'Back to checker mode': 'チェックモードに戻る',
+  'How would you say it? What is wrong?': 'どう言えば自然ですか？ どこがおかしいですか？',
+  'Your note': 'メモ',
+  'Save note and continue': 'メモを保存して次へ',
+  'Reading': '読み',
+  'Meaning (Japanese)': '意味（日本語）',
+  Example: '例文',
+  'Example (English)': '例文（英語）',
+  '✓ Natural': '✓ 自然',
+  '✎ Needs a fix': '✎ 要修正',
+  '✗ Wrong': '✗ 間違い',
+  Stop: 'やめる',
   // ---- Bulk paste mapping
   'Match the columns': '列を対応付ける',
   'Check the guess for each column.': '各列の推定を確認してください。',
-  Reading: '読み',
   'Meaning (JA)': '意味（日）',
   'Example (JA)': '例文（日）',
   Source: '出典',
@@ -462,6 +490,9 @@ export const PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^Merged: (\d+) cards? added, (\d+) updated, (\d+) reviews? added\.$/, (m) => `統合しました：カード${m[1]}枚追加、${m[2]}枚更新、復習${m[3]}件追加。`],
   // Deck chips: translate a built-in deck name, keep the owner's own
   [/^(.+) · (\d+)$/, (m) => `${JA[m[1]!] ?? m[1]} · ${m[2]}`],
+  // Checker
+  [/^(\d+) checked · (\d+) to go$/, (m) => `チェック済み ${m[1]} · 残り ${m[2]}`],
+  [/^(\d+) cards? in this round\. You can stop at any time; checked cards are saved\.$/, (m) => `今回は${m[1]}枚です。いつでもやめられます。チェックした分は保存されています。`],
   // Version line
   [/^Goi (.+) · everything stays on this device · no requests to other sites\.$/, (m) => `Goi ${m[1]} · データはすべてこの端末内 · 外部サイトへの通信なし。`],
 ];

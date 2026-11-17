@@ -1,5 +1,5 @@
 /** Decks: a name on each card. Pure. */
-import { DEFAULT_DECK_LABEL, SEED_DECK, type Card } from './types';
+import { DEFAULT_DECK_LABEL, LEGACY_UNVERIFIED_TAG, SEED_DECK, type Card, type CardCheck } from './types';
 
 export function deckLabel(deck: string): string {
   return deck === '' ? DEFAULT_DECK_LABEL : deck;
@@ -9,6 +9,24 @@ export function deckLabel(deck: string): string {
 export function migrateDeck(deck: unknown, source: string): string {
   if (typeof deck === 'string') return deck.trim();
   return source === 'seed deck' ? SEED_DECK : '';
+}
+
+/** Tags as stored from schema 3 on: the legacy unverified tag removed. */
+export function migrateTags(tags: string[]): string[] {
+  return tags.filter((t) => t !== LEGACY_UNVERIFIED_TAG);
+}
+
+/** A check record read from storage or a file, or null. */
+export function parseCheck(v: unknown): CardCheck | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  if (o.verdict !== 'ok' && o.verdict !== 'fix' && o.verdict !== 'wrong') return null;
+  return {
+    verdict: o.verdict,
+    note: typeof o.note === 'string' ? o.note : '',
+    by: typeof o.by === 'string' ? o.by : '',
+    at: typeof o.at === 'number' ? o.at : 0,
+  };
 }
 
 /** Deck names in use, the default deck first, then alphabetical. */

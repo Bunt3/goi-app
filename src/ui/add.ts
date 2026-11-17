@@ -1,7 +1,7 @@
 import type { CardDraft } from '../data/tsv';
 import { toHiragana } from '../furigana';
 import { formatInterval } from '../srs/fsrs';
-import { DEFAULT_TAGS, DIRECTIONS, REGISTERS, SEED_TAG, SrsPhase, isInbox, isLeech, type Card, type Register } from '../types';
+import { DEFAULT_TAGS, DIRECTIONS, REGISTERS, SrsPhase, isInbox, isLeech, type Card, type Register } from '../types';
 import { ensurePersistence, go, store, type View } from './app';
 import { AutoFill, candidateList, dictLookup, dictStatus } from './dict';
 import { deckSelect } from './deckselect';
@@ -144,9 +144,7 @@ function cardForm(initial: Partial<CardDraft>, opts: { detailsOpen: boolean; dic
   const tagBox = h('div', { class: 'chips', id: 'f-tags', 'data-content': '' });
   const customTag = h('input', { type: 'text', placeholder: 'custom tag', autocomplete: 'off', style: 'flex:1' });
   const renderTags = () => {
-    const known = [...new Set<string>([...DEFAULT_TAGS, ...store.live().flatMap((c) => c.tags), ...selected])].filter(
-      (t) => t !== SEED_TAG || selected.has(t),
-    );
+    const known = [...new Set<string>([...DEFAULT_TAGS, ...store.live().flatMap((c) => c.tags), ...selected])];
     tagBox.replaceChildren(
       ...known.map((t) =>
         h(
@@ -423,8 +421,14 @@ export function editView(arg: string, params?: URLSearchParams): View {
     isLeech(card)
       ? h('div', { class: 'notice' }, 'This card has lapsed 8 or more times. A clearer meaning or a different example sentence usually helps more than further repetition.')
       : null,
-    card.tags.includes(SEED_TAG)
-      ? h('div', { class: 'notice info small' }, 'From the seed deck and not yet verified. Remove the seed-unverified tag once you’ve checked it against a source you trust.')
+    card.check && card.check.verdict !== 'ok'
+      ? h(
+          'div',
+          { class: 'notice', id: 'check-note' },
+          h('b', null, card.check.verdict === 'wrong' ? 'A checker marked this card wrong' : 'A checker suggested a fix'),
+          card.check.by ? h('span', { class: 'muted small', 'data-content': '' }, ` (${card.check.by})`) : null,
+          card.check.note ? h('p', { lang: 'ja', 'data-content': '', style: 'margin:6px 0 0' }, card.check.note) : null,
+        )
       : null,
     form.el,
     h('h2', null, 'Scheduling'),

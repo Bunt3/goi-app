@@ -1,6 +1,6 @@
 /** Starter decks: built-in sets of cards, each loaded into its own deck. */
 import { createCard } from '../../cards';
-import { SEED_DECK, SEED_TAG, type Card } from '../../types';
+import { SEED_DECK, type Card } from '../../types';
 import type { PackEntry } from './common';
 
 export interface PackInfo {
@@ -75,7 +75,7 @@ export async function packCards(
     }
     have.add(`${e.word}|${e.reading}`);
     const source = pack.id === 'workplace' ? 'seed deck' : `${pack.title} starter deck${e.source ? ` · documented: ${e.source}` : ''}`;
-    fresh.push(createCard({ ...e, tags: [...e.tags, SEED_TAG], source, deck: pack.deck }, now + i, id));
+    fresh.push(createCard({ ...e, tags: e.tags, source, deck: pack.deck }, now + i, id));
   }
   return { fresh, skipped };
 }
