@@ -3,7 +3,8 @@ import { logsSince } from '../db';
 import { forecast } from '../srs/queue';
 import { DIRECTIONS, SrsPhase, isInbox, isLeech, type ReviewLog } from '../types';
 import { store, type View } from './app';
-import { h } from './dom';
+import { weekSummary } from '../week';
+import { h, plural } from './dom';
 
 /** Share of reviews of already-learned cards that were remembered (Hard, Good or Easy). */
 export function retention(logs: ReviewLog[]): { total: number; passed: number } {
@@ -25,11 +26,59 @@ export async function statsView(): Promise<View> {
     DIRECTIONS.map((d) => [d, live.filter((c) => c.srs[d].state === SrsPhase.Review || c.srs[d].state === SrsPhase.Relearning).length]),
   );
   const weekday = new Intl.DateTimeFormat('en', { weekday: 'short' });
+  const week = weekSummary(store.cards.values(), recent, now);
+  const fromLabel = (g: string) => (g === 'Typed in' || g === 'Dictionary' || g === 'From example sentences' ? g : `“${g}”`);
 
   const el = h(
     'div',
     { class: 'page' },
     h('h1', null, 'Stats'),
+    h('h2', { id: 'week' }, 'Your week'),
+    h(
+      'div',
+      { class: 'card', id: 'week-card' },
+      h(
+        'dl',
+        { class: 'kv' },
+        h('dt', null, 'Words you added'),
+        h('dd', { id: 'week-added' }, week.added),
+        h('dt', null, 'Answers'),
+        h('dd', { id: 'week-reviews' }, week.reviews),
+        h('dt', null, 'Remembered when reviewed'),
+        h('dd', null, week.matureReviews ? `${Math.round((week.remembered / week.matureReviews) * 100)}%` : '—'),
+        h('dt', null, 'Moved into long-term review'),
+        h('dd', null, week.graduated),
+      ),
+      week.addedFrom.length
+        ? h(
+            'div',
+            { style: 'margin-top:10px' },
+            h('div', { class: 'muted small' }, 'Where new words came from'),
+            h(
+              'ul',
+              { class: 'small', id: 'week-from', style: 'margin:4px 0 0;padding-left:18px' },
+              week.addedFrom.map((f) =>
+                h('li', null, h('a', { href: `#/browse?filter=all&deck=*&from=${encodeURIComponent(f.group)}`, 'data-content': f.group === 'Typed in' ? null : '' }, fromLabel(f.group)), ` · ${f.count}`),
+              ),
+            ),
+          )
+        : null,
+      week.slipping.length
+        ? h(
+            'div',
+            { style: 'margin-top:10px' },
+            h('div', { class: 'muted small' }, 'Keep slipping (a clearer meaning or example may help more than repetition)'),
+            h(
+              'div',
+              { class: 'chips', id: 'week-slipping', style: 'margin-top:4px' },
+              week.slipping.map((x) =>
+                h('a', { href: '#/edit/' + encodeURIComponent(x.card.id), class: 'chip linkchip', lang: 'ja', 'data-content': '' }, `${x.card.word} ×${x.again}`),
+              ),
+            ),
+          )
+        : null,
+      h('p', { class: 'muted small', style: 'margin-top:10px' }, week.reviews === 0 && week.added === 0 ? 'A quiet week. Everything is where you left it.' : `The last 7 study days. ${plural(week.added, 'word')} of your own.`),
+    ),
     h('h2', null, 'Reviews due, next 7 days'),
     h(
       'div',

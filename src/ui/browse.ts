@@ -1,5 +1,6 @@
 import { AUTO_TAG, REGISTERS, isInbox, isLeech, type Card } from '../types';
 import { deckLabel, deckNames } from '../decks';
+import { sourceGroup, sourceGroups } from '../week';
 import { go, store, type View } from './app';
 import { h, plural } from './dom';
 
@@ -7,8 +8,8 @@ type Special = 'all' | 'inbox' | 'leech';
 const PAGE = 100;
 
 /** Remembered between visits so returning from an edit lands on the same list. */
-/** deck: '*' for every deck. */
-const state: { q: string; special: Special; tag: string; register: string; deck: string } = { q: '', special: 'all', tag: '', register: '', deck: '*' };
+/** deck: '*' for every deck. from: '' for every source. */
+const state: { q: string; special: Special; tag: string; register: string; deck: string; from: string } = { q: '', special: 'all', tag: '', register: '', deck: '*', from: '' };
 
 function matches(card: Card, needle: string): boolean {
   if (!needle) return true;
@@ -26,6 +27,8 @@ export function browseView(_arg: string, params: URLSearchParams): View {
   if (filter === 'inbox' || filter === 'leech' || filter === 'all') state.special = filter;
   const deckParam = params.get('deck');
   if (deckParam !== null) state.deck = deckParam;
+  const fromParam = params.get('from');
+  state.from = fromParam ?? (deckParam !== null ? '' : state.from);
 
   const all = store.live().sort((a, b) => b.created - a.created || a.id.localeCompare(b.id));
   const tags = [...new Set(all.flatMap((c) => c.tags))].sort((a, b) => a.localeCompare(b, 'ja'));
@@ -55,6 +58,19 @@ export function browseView(_arg: string, params: URLSearchParams): View {
     h('option', { value: '*' }, 'All decks'),
     decks.map((d) => h('option', { value: d, selected: state.deck === d }, deckLabel(d))),
   );
+  const groups = sourceGroups(all);
+  if (state.from && !groups.some((g) => g.group === state.from)) state.from = '';
+  const fromFilter = h(
+    'select',
+    { id: 'filter-from', 'aria-label': 'Where from' },
+    h('option', { value: '' }, 'Anywhere'),
+    groups.map((g) => h('option', { value: g.group, selected: state.from === g.group, 'data-content': ['Dictionary', 'From example sentences'].includes(g.group) ? null : '' }, `${g.group} (${g.count})`)),
+  );
+  fromFilter.addEventListener('change', () => {
+    state.from = fromFilter.value;
+    limit = PAGE;
+    renderList();
+  });
   const chips = h('div', { class: 'chips', style: 'margin:10px 0' });
   const count = h('p', { class: 'muted small', id: 'browse-count', style: 'margin:8px 0 0' });
   const list = h('div', { class: 'list', id: 'card-list' });
@@ -84,6 +100,7 @@ export function browseView(_arg: string, params: URLSearchParams): View {
       (c) =>
         (state.special === 'all' || (state.special === 'inbox' ? isInbox(c) : isLeech(c))) &&
         (state.deck === '*' || c.deck === state.deck) &&
+        (!state.from || sourceGroup(c) === state.from) &&
         (!state.tag || c.tags.includes(state.tag)) &&
         (!state.register || (state.register === 'none' ? c.register == null : c.register === state.register)) &&
         matches(c, state.q),
@@ -166,6 +183,6 @@ export function browseView(_arg: string, params: URLSearchParams): View {
   renderList();
 
   return {
-    el: h('div', { class: 'page' }, h('h1', null, 'Cards'), search, chips, decks.length > 1 ? deckFilter : null, h('div', { class: 'row', style: 'margin-top:6px' }, tagSelect, registerSelect), count, list),
+    el: h('div', { class: 'page' }, h('h1', null, 'Cards'), search, chips, h('div', { class: 'row', style: 'margin-top:6px' }, decks.length > 1 ? deckFilter : null, groups.length ? fromFilter : null), h('div', { class: 'row', style: 'margin-top:6px' }, tagSelect, registerSelect), count, list),
   };
 }

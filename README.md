@@ -21,6 +21,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
 - [Decks and starter decks](#decks-and-starter-decks)
+- [Your week, and where you met a word](#your-week-and-where-you-met-a-word)
 - [Share to Goi](#share-to-goi)
 - [Checker mode](#checker-mode)
 - [Interface language](#interface-language)
@@ -199,6 +200,12 @@ Every card belongs to one deck. Cards you add go to *My cards* unless you pick a
 | 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
 
 All were written with AI help; checker mode (below) lets a native speaker go through them. The slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+
+## Your week, and where you met a word
+
+Stats opens with **Your week** (also linked from Today): words you added yourself in the last 7 study days and where they came from, answers given, how often reviewed cards were remembered, how many moved into long-term review, and the cards answered *Again* at least twice (with a link to edit them, since a clearer meaning or example usually helps more than repetition). No streaks and nothing about days missed.
+
+**Where from** uses the Source field, which fills itself: the Source box in Capture, the page and site of a shared text, "example sentence for …" when you pick from a card, "dictionary" for dictionary additions. Browse has a *Where from* filter built from it, and each source in Your week links to its cards. Starter-deck cards are left out; their deck already says where they came from. Nothing needs to be entered by hand; cards you typed in without a source simply have none.
 
 ## Share to Goi
 

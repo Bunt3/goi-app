@@ -267,6 +267,19 @@ export const JA: Record<string, string> = {
   Inbox: '受信箱',
   Leeches: '要見直し',
 
+  'Your week': '今週のふりかえり',
+  'Your week →': '今週のふりかえり →',
+  'Words you added': '自分で追加した単語',
+  Answers: '回答数',
+  'Remembered when reviewed': '復習で思い出せた割合',
+  'Moved into long-term review': '長期の復習に入った単語',
+  'Where new words came from': '新しい単語の出どころ',
+  'Typed in': '手入力',
+  'From example sentences': '例文から',
+  'Keep slipping (a clearer meaning or example may help more than repetition)': 'よく忘れる単語（繰り返すより、意味や例文を分かりやすくするほうが効果的かもしれません）',
+  'A quiet week. Everything is where you left it.': '静かな一週間でした。すべてそのままです。',
+  Anywhere: 'すべての出どころ',
+  'Where from': '出どころ',
   // ---- Listen
   'Looking for a Japanese voice…': '日本語の音声を探しています…',
 
@@ -494,6 +507,8 @@ export const PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   // Checker
   [/^(\d+) checked · (\d+) to go$/, (m) => `チェック済み ${m[1]} · 残り ${m[2]}`],
   [/^(\d+) cards? in this round\. You can stop at any time; checked cards are saved\.$/, (m) => `今回は${m[1]}枚です。いつでもやめられます。チェックした分は保存されています。`],
+  [/^The last 7 study days\. (\d+) words? of your own\.$/, (m) => `直近7日間（学習日）。自分の単語 ${m[1]}語。`],
+  [/^(Dictionary|From example sentences) \((\d+)\)$/, (m) => `${JA[m[1]!]}（${m[2]}）`],
   // Version line
   [/^Goi (.+) · everything stays on this device · no requests to other sites\.$/, (m) => `Goi ${m[1]} · データはすべてこの端末内 · 外部サイトへの通信なし。`],
 ];

@@ -695,6 +695,21 @@ async function main() {
     assert.equal((await cardByWord(flaggedWord)).check, null);
     log(`checker mode: “${firstChecked}” marked natural, “${flaggedWord}” flagged with a note that reaches the edit screen, then cleared`);
 
+    // Weekly look-back and "where from", both built from the automatic Source field.
+    await page.goto(URL + '#/home');
+    await page.click('#to-week');
+    await page.waitForSelector('#week-card');
+    assert.ok(Number(await page.innerText('#week-added')) >= 3, 'own words counted');
+    assert.ok(Number(await page.innerText('#week-reviews')) >= 1);
+    assert.match(await page.innerText('#week-from'), /e2e dictionary/);
+    await shot('week');
+    await page.click('#week-from a:has-text("e2e dictionary")');
+    await page.waitForSelector('#filter-from');
+    assert.equal(await page.inputValue('#filter-from'), 'e2e dictionary');
+    assert.ok((await page.locator('#card-list .item').count()) >= 1);
+    assert.ok((await page.innerText('#card-list')).includes('書く'), 'the card picked from that source is listed');
+    log('weekly look-back counts your own words and where they came from; Browse filters by where you met them');
+
     // Offline: the dictionary is local.
     await context.setOffline(true);
     await page.reload();
