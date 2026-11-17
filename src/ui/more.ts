@@ -1,7 +1,7 @@
-import { createCard } from '../cards';
 import { ImportError, parseExport } from '../data/export';
 import { isNoop, type MergePlan } from '../data/merge';
-import { SEED_DECK, SEED_TAG, type Card, type ExportFile, type Settings } from '../types';
+import { PACKS, packCards, type PackInfo } from '../data/packs/index';
+import { SEED_TAG, type ExportFile, type Settings } from '../types';
 import { daysAgoText, uuidFromName } from '../util';
 import { canShareFiles, exportAnki, exportBackup, shareBackup } from './actions';
 import { chooseFolder, folderAccess, folderSupported, forgetFolder, newestBackup, savedFolder } from '../backupfs';
@@ -11,20 +11,9 @@ import { deckSection } from './deckpanel';
 import { dictSection } from './dictpanel';
 import { h, plural, toast } from './dom';
 
-async function loadSeedDeck(): Promise<{ added: number; skipped: number }> {
-  const { SEED } = await import('../data/seed');
-  const now = Date.now();
-  const fresh: Card[] = [];
-  let skipped = 0;
-  for (const [i, entry] of SEED.entries()) {
-    // Deterministic ids: loading the seed on two devices yields the same cards, so they merge instead of duplicating.
-    const id = await uuidFromName(`seed:${entry.word}:${entry.reading}`);
-    if (store.cards.has(id)) {
-      skipped++; // already loaded, or loaded and deliberately deleted
-      continue;
-    }
-    fresh.push(createCard({ ...entry, tags: [...entry.tags, SEED_TAG], source: 'seed deck', deck: SEED_DECK }, now + i, id));
-  }
+async function loadPack(pack: PackInfo): Promise<{ added: number; skipped: number }> {
+  const entries = await pack.load();
+  const { fresh, skipped } = await packCards(pack, entries, store.cards, uuidFromName, Date.now());
   await store.addCards(fresh);
   return { added: fresh.length, skipped };
 }
@@ -478,45 +467,47 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     h('label', { class: 'field', style: 'margin-top:8px' }, h('span', null, 'Theme'), theme),
   );
 
-  // ---------------- Seed deck & tools ----------------
-  const seedResult = h('p', { class: 'small', id: 'seed-result' });
-  const seedBtn = h(
-    'button',
-    {
-      class: 'block',
-      id: 'load-seed',
-      onclick: async () => {
-        seedBtn.disabled = true;
-        try {
-          const r = await loadSeedDeck();
-          void ensurePersistence();
-          seedResult.textContent =
-            r.added > 0
-              ? `Added ${plural(r.added, 'card')}${r.skipped ? ` (${r.skipped} were already loaded or previously deleted)` : ''}. They enter study at your new-card limit.`
-              : 'The seed deck is already loaded. Nothing was added.';
-        } catch {
-          // The deck is a separate file; an app update in the background can leave this copy pointing at a stale one.
-          seedResult.textContent = 'Could not load the seed deck. Reload the app and try again.';
-        } finally {
-          seedBtn.disabled = false;
-        }
+  // ---------------- Starter decks & tools ----------------
+  const packRows = PACKS.map((pack) => {
+    const result = h('p', { class: 'small', id: pack.id === 'workplace' ? 'seed-result' : `pack-result-${pack.id}` });
+    const btn = h(
+      'button',
+      {
+        class: 'block',
+        id: pack.id === 'workplace' ? 'load-seed' : `load-pack-${pack.id}`,
+        onclick: async () => {
+          btn.disabled = true;
+          try {
+            const r = await loadPack(pack);
+            void ensurePersistence();
+            result.textContent =
+              r.added > 0
+                ? `Added ${plural(r.added, 'card')} to ${pack.deck}${r.skipped ? ` (${r.skipped} were already here or previously deleted)` : ''}. They enter study at your new-card limit.`
+                : `${pack.title} is already loaded. Nothing was added.`;
+          } catch {
+            // The deck is a separate file; an app update in the background can leave this copy pointing at a stale one.
+            result.textContent = 'Could not load this deck. Reload the app and try again.';
+          } finally {
+            btn.disabled = false;
+          }
+        },
       },
-    },
-    'Load seed deck',
-  );
+      `Load ${pack.title}`,
+    );
+    return h('div', { class: 'card', style: 'margin-bottom:10px' }, h('b', null, pack.title), h('p', { class: 'small', style: 'margin:4px 0 8px' }, pack.blurb), btn, result);
+  });
   const tools = h(
     'section',
     { id: 'sec-seed' },
-    h('h2', null, 'Seed deck'),
+    h('h2', null, 'Starter decks'),
     h(
       'p',
       { class: 'small' },
-      'About 180 workplace words and set phrases (phone, email, meetings, HR and contracts, customer and IT support). ',
+      'Each loads into its own deck; choose which decks to study on the Today screen. ',
       h('b', null, 'They were machine-written and have not been checked by a native speaker'),
-      `, so every card carries the ${SEED_TAG} tag. Treat readings and nuance as provisional until you verify them.`,
+      `, so every card carries the ${SEED_TAG} tag. Treat readings and nuance as provisional until you verify them. Where a slang term was found in a published ranking or explainer, the card’s Source says where.`,
     ),
-    seedBtn,
-    seedResult,
+    packRows,
     h('h2', null, 'More'),
     h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
     h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`),

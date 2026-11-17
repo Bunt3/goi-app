@@ -20,6 +20,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Picking words from sentences](#picking-words-from-sentences)
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
+- [Decks and starter decks](#decks-and-starter-decks)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
 - [How scheduling behaves](#how-scheduling-behaves)
@@ -147,6 +148,8 @@ Speech is deliberately left to the keyboard: the browser speech-recognition API 
 
 An English–Japanese dictionary the app looks words up in, on the device, with no network after it is downloaded. It fills cards; it never adds cards on its own.
 
+**Browsing.** Add → 📖 Dictionary (or More → Dictionary) opens the dictionary screen: search by any Japanese form (conjugated forms work) or by English, or browse by label: slang, internet slang, colloquial, onomatopoeia, business, 尊敬語, 謙譲語, 四字熟語, idioms, Kansai-ben. Common words come first. Tap an entry for every sense, its labels and its example sentences; choose an example (or none) and a deck, and add it.
+
 **Installing.** More → Dictionary → *Download dictionary*. Nothing is downloaded until you press it. The size is shown on the button (the build log records it; see `HANDOFF.md`). It is installed into its own browser database in the background with a progress bar, and works offline from then on. *Remove dictionary* deletes it; cards are unaffected. If a newer version is published with the app, More offers it.
 
 **What it does.**
@@ -178,6 +181,21 @@ An English–Japanese dictionary the app looks words up in, on the device, with 
 - The first candidate is a best guess. For homographs it is sometimes the wrong word; that is what the `auto-filled` tag is for.
 - Deinflection is a rule table written for this app (`src/dict/deinflect.ts`), covering standard verb and adjective forms, polite and humble endings, te-form auxiliaries and common casual contractions (ちゃう, てる, とく, ねえ, ん, ら抜き). Rare classical forms are not covered.
 - If the data download failed when the site was built, More says *Dictionary not available in this build*.
+
+## Decks and starter decks
+
+Every card belongs to one deck. Cards you add go to *My cards* unless you pick another deck (Add, Capture and the dictionary screen each have a deck chooser; *New deck…* creates one). The Today screen shows a chip per deck: tap to study only those decks, *All decks* to study everything. More → Decks shows each deck's size, renames or merges a deck, and removes one (moving its cards to *My cards*, or deleting them).
+
+**Starter decks** (More → Starter decks), each loaded into its own deck:
+
+| Deck | Cards | What |
+| --- | --- | --- |
+| Workplace | ~180 | The original seed deck: phone, email, meetings, HR and contracts, customer and IT support. |
+| Modern slang | ~90 | Casual, youth and internet slang. Most terms were found in published rankings (三省堂 今年の新語 2016–2025, 新語・流行語大賞 2021–2025, JC・JK流行語大賞, LINE high-school surveys) or mainstream explainers; the card's Source names it. A small 死語ぎみ group holds words now considered dated. |
+| Office slang | ~85 | What office workers say that textbooks skip: なるはや, リスケ, アサイン, 握る, 温度感, chat and remote-work terms, recent buzzwords, a few older managers' phrases. Words already in Workplace are left out. |
+| 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
+
+All were machine-written and are tagged `seed-unverified`; the slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
 
 ## Where your data lives, and automatic backup
 
@@ -248,6 +266,7 @@ The import summary also offers **Replace everything…**, behind a second confir
 - **New cards during a backlog.** Held back while due reviews exceed the cap (can be turned off in More).
 - **Production.** Locked until the card's recognition side first graduates to the review phase with Hard, Good or Easy. It is offered as a new card from the following day, unlocked productions ahead of brand-new words.
 - **One direction per card per day.** If both sides of a card are due on the same day, the weaker is shown and the other waits until tomorrow, so one prompt doesn't give away the other.
+- **Decks.** Today has a chip per deck; choose one or several to study only those. The daily limits are shared across decks, not per deck. Listening mode follows the same choice.
 - **Inbox.** Cards without a reading or an English meaning are not scheduled until completed.
 - **Leeches.** 8 or more lapses in either direction. They are flagged and filterable, not suspended. The edit screen offers *Reset progress* for use after rewriting one.
 
@@ -258,7 +277,7 @@ A backup is one UTF-8 JSON file. All timestamps are Unix epoch **milliseconds**.
 ```jsonc
 {
   "app": "goi-app",            // required; other files are rejected
-  "schemaVersion": 1,          // files with a higher number are rejected with a message
+  "schemaVersion": 2,          // files with a higher number are rejected with a message
   "exportedAt": 1794877200000,
   "deviceLabel": "phone",
   "cards": [ /* Card */ ],
@@ -279,6 +298,7 @@ A backup is one UTF-8 JSON file. All timestamps are Unix epoch **milliseconds**.
 | `example_ja` | string | |
 | `example_en` | string | |
 | `tags` | string[] | Built-in: `電話応対` `メール` `会議` `人事・契約` `IT` `接客` `日常`; plus any custom tags; `seed-unverified` on seed cards. |
+| `deck` | string | Deck name; `''` is the default deck, shown as *My cards*. Added in schema 2: older files are read with `''`, or `Workplace` for cards whose `source` is `seed deck`. Merges like the other text fields. |
 | `register` | string \| null | `casual`, `polite`, `尊敬語`, `謙譲語`, `written-only`, or `null`. |
 | `source` | string | Free text. |
 | `created` | number | |
@@ -319,6 +339,8 @@ The `ts-fsrs` card object with dates as numbers.
 
 `deviceLabel`, `maxReviewsPerDay`, `maxNewPerDay`, `pauseNewDuringBacklog`, `quickMinutes`, `quickCards`, `requestRetention`, `furigana`, `ttsVoiceURI`, `ttsRate`, `listenSource` (`example` \| `word`), `theme` (`dark` \| `light`), `lastExportAt`.
 
+`studyDecks` (string[]): decks studied on this device; empty means all. Per device like every setting.
+
 Backup bookkeeping, added without a schema bump (older files simply lack them and get defaults): `autoBackup` (`off` \| `download` \| `folder`), `autoBackupDays`, `autoBackupKeep`, `lastBackupMark`, `lastBackupWhere`. On *Replace everything* the three `autoBackup*` settings are kept from the device, not taken from the file.
 
 A hand-edited file is accepted as long as `app`, `schemaVersion`, `cards` and `reviewLogs` are present and each card has an `id`; missing fields get defaults. The TypeScript definitions are in [`src/types.ts`](src/types.ts) and the validation in [`src/data/export.ts`](src/data/export.ts).
@@ -353,7 +375,9 @@ src/
   data/merge.ts       merge planning (pure)
   data/tsv.ts         pasted TSV/CSV parsing and column guessing
   data/anki.ts        Anki TSV
-  data/seed.ts        seed deck (lazy-loaded)
+  data/seed.ts        Workplace starter deck (lazy-loaded)
+  data/packs/         other starter decks (slang, office, onomatopoeia) and the loader
+  decks.ts            deck names, migration, study filter (pure)
   furigana.ts         target-word furigana and blanking
   textpick.ts         split text into tappable pieces; check a selection against the deck (pure)
   dict/entry.ts       compact dictionary entry and manifest types
@@ -382,7 +406,7 @@ Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when a
 - **Text recognition is the weak link in Capture.** It was tested only on text rendered by a browser (light and dark backgrounds, one font), never on a real photo, a real screenshot from another app, or a phone camera. Expect worse results on those. Vertical text is not supported.
 - **The first image read needs a connection** to fetch about 5 MB from this site. Offline before that, it says so.
 - **Video is one frame at a time, chosen by you.** There is no automatic scan of a whole clip, and the browser must be able to play the file's format.
-- **Seed deck is unverified.** Its ~180 cards were machine-written and not checked by a native speaker or against a dictionary. Every one is tagged `seed-unverified`; treat readings, register labels and nuance as provisional.
+- **Starter decks are unverified.** Their cards were machine-written and not checked by a native speaker or against a dictionary. Every one is tagged `seed-unverified`; treat readings, register labels and nuance as provisional.
 - **No sync.** Two devices diverge until you export and import both ways.
 - **Automatic backup is only as good as where the file goes.** Download mode writes to the same device; if the phone is lost, so is the backup unless you move the file elsewhere. Folder mode into a cloud-synced folder is the only setup that survives losing the device, and it is not available in Firefox or Brave.
 - **Download mode leaves files behind.** A web page cannot delete or overwrite downloads, so old `goi-auto_…` files accumulate until you clear them.

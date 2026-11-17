@@ -276,7 +276,18 @@ async function main() {
     const seedText = await page.innerText('#seed-result');
     await page.click('#load-seed');
     await page.waitForSelector('#seed-result:has-text("already loaded")');
-    await page.goto(URL + '#/browse?filter=all');
+    for (const [id, deck] of [['slang', 'Modern slang'], ['office', 'Office slang'], ['onomatopoeia', '擬音語・擬態語']]) {
+      await page.click(`#load-pack-${id}`);
+      await page.waitForSelector(`#pack-result-${id}:has-text("Added")`);
+      assert.match(await page.innerText(`#pack-result-${id}`), new RegExp(`^Added \\d+ cards to ${deck}`));
+    }
+    await page.goto(URL + '#/browse?filter=all&deck=' + encodeURIComponent('Modern slang'));
+    await page.waitForSelector('#card-list .item');
+    assert.ok((await page.locator('#card-list .item').count()) >= 60, 'slang deck loaded');
+    await page.goto(URL + '#/home');
+    await page.waitForSelector('#deck-bar [data-deck="擬音語・擬態語"]');
+    log('starter decks: slang, office slang and onomatopoeia each load into their own deck, offered on Today');
+    await page.goto(URL + '#/browse?filter=all&deck=*');
     await page.waitForSelector('#card-list .item');
     await page.selectOption('#filter-tag', 'seed-unverified');
     const seedCount = Number((await page.innerText('#browse-count')).split(' ')[0]);
@@ -498,7 +509,8 @@ async function main() {
     await page.goto(URL + '#/capture');
     await page.fill('#capture-text', '担当の者に取り次ぎますので、少々お待ちください。');
     await page.waitForSelector('#capture-pick .tok');
-    await page.locator('#capture-pick .tok').first().click();
+    await page.locator('#capture-pick .tok:not(.known)').first().click();
+    await page.waitForSelector('#pick-status:has-text("not in your deck")');
     await page.waitForSelector('#pick-dict a[href="#/more?focus=dict"]');
     await page.goto(URL + '#/more?focus=dict');
     await page.waitForSelector('#dict-install');
@@ -588,17 +600,17 @@ async function main() {
     await page.goto(URL + '#/dict');
     await page.click('#dict-labels [data-label="sl"]');
     await page.waitForSelector('#dict-count:has-text("3 entries labelled Slang")');
-    await page.locator('#dict-results .dict-row', { hasText: 'ガチ' }).click();
+    await page.locator('#dict-results .dict-row', { hasText: 'キモい' }).click();
     await page.waitForSelector('#dict-detail #dict-add');
     await page.selectOption('#dict-deck', { label: 'New deck…' });
     await page.fill('#dict-deck-new', 'Slang');
     await shot('dict-browse');
     await page.click('#dict-add');
-    await page.waitForSelector('#toast.show:has-text("Added ガチ to Slang.")');
-    await page.waitForSelector('#dict-results .dict-item:has-text("ガチ") .badge.accent');
-    const gachi = await cardByWord('ガチ');
-    assert.equal(gachi.deck, 'Slang');
-    assert.ok(gachi.tags.includes('slang') && gachi.tags.includes('auto-filled'), 'tags: ' + gachi.tags);
+    await page.waitForSelector('#toast.show:has-text("Added キモい to Slang.")');
+    await page.waitForSelector('#dict-results .dict-item:has-text("キモい") .badge.accent');
+    const kimoi = await cardByWord('キモい');
+    assert.equal(kimoi.deck, 'Slang');
+    assert.ok(kimoi.tags.includes('slang') && kimoi.tags.includes('auto-filled'), 'tags: ' + kimoi.tags);
     await page.fill('#dict-q', 'proportional');
     await page.waitForSelector('#dict-results .dict-item:has-text("按分")');
     await page.fill('#dict-q', '書きました');

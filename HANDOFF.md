@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-17 (after the fourth work block: offline dictionary)
+# Handoff — state as of 2026-11-17 (after the fifth work block: decks, dictionary browser, starter decks)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -9,17 +9,29 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   1. The original brief: FSRS-6 scheduling with caps and overdue spreading, two review directions, quick sessions, JSON export and merge import, Anki TSV, quick add, bulk paste, listening mode, furigana, seed deck, browse, stats.
   2. Automatic backup to a real file (download mode everywhere, folder mode in Chromium).
   3. Picking words out of example sentences, and a Capture screen that reads text from photos, screenshots and video frames on the device.
-  4. This block: an offline dictionary (JMdict) that fills readings, meanings, tags and examples. See below.
-- **Checks:** 168 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
+  4. An offline dictionary (JMdict) that fills readings, meanings, tags and examples.
+  5. This block: decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
+- **Checks:** 200 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK
 
-The offline dictionary (previous NEXT TASK) is built: phases A to D are done and shipped; phase E (dictionary-based word splitting) was not done. What remains, in order:
+No new feature is assigned. What remains, in order:
 
-1. **Owner tries it on the phone.** Install the dictionary from More on Wi-Fi, then: pick words from real example sentences, type slang into Add, walk the Inbox. Report wrong first candidates and misses with the exact text. Nothing has been checked against real JMdict data on a real sentence.
-2. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html and add the version if wanted.
-3. **Phase E, optional:** split picker text by longest dictionary match instead of `Intl.Segmenter`. Needs a batched lookup of all prefixes at each position (one IndexedDB query per position), so test speed on the phone first.
+1. **Owner tries it on the phone.** Dictionary: install on Wi-Fi, pick words from real sentences, type slang into Add, walk the Inbox, browse by label. Decks: choose decks on Today, load the starter decks. Report wrong first candidates, misses, and any starter-deck card that sounds unnatural, with the exact text.
+2. **Starter-deck review.** Slang, office and onomatopoeia cards were machine-written. Sources for slang were checked only from search-result summaries (full pages were blocked by the container's network policy). Native-speaker review of the examples and nuance notes is the highest-value check.
+3. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html.
+4. **Optional:** per-deck daily limits (today the limits are shared across decks); dictionary-based word splitting in the picker (needs speed testing on the phone).
+
+## Fifth block: decks, dictionary browser, starter decks
+
+The owner asked for: decks they can toggle for practice; browsing the installed dictionary and building their own decks from it, with example sentences pulled in; a modern slang deck (documented, roughly the last few years, including things like なるはや); then an onomatopoeia deck grouped by daily-life use. They left the use of subagents to the session's judgement.
+
+- **Decks** are a card field (`Card.deck`, schema 2), not tags: one deck per card merges cleanly as text, and the Today chooser stays short. Schema-1 data migrates in `parseExport` and in a Dexie `version(2)` upgrade: cards with `source: 'seed deck'` go to `Workplace`, everything else to `''` (*My cards*). The study choice is a per-device setting (`studyDecks`). Daily limits stay global so choosing a smaller deck doesn't multiply the workload; per-deck limits were not built.
+- **Dictionary browser** (`#/dict`): Japanese search runs the deinflecting lookup plus prefix matches; English search is a full scan with an early stop (no gloss index, to keep the database small). Browsing by label needs the `t` field added to the dictionary file (format 2) and a `*t` index (DictDB version 2); installs from the format-1 file show a note and More offers the newer download, because the manifest version changes with the data.
+- **Starter decks** (`src/data/packs/`): Modern slang (91 cards, 75 with a named source), Office slang (86, 63 sourced), 擬音語・擬態語 (126). The Workplace seed deck is now one of the packs, with the same ids. `packCards` skips existing ids (including deleted ones) and any word+reading the owner already has. All cards carry `seed-unverified`.
+- **Why two slang decks:** office jargon (なるはや, リスケ) and youth/internet slang are used with different people; separate decks let the owner study one without the other. Short-lived catchphrases (ほんmoney, ひき肉です) were left out; words now considered dated (ぴえん, きゅんです) are a separate group so they can be recognised, not used.
+- **Research method:** two subagents searched in parallel for documented slang (rankings: 三省堂 今年の新語, 新語・流行語大賞, JC・JK流行語大賞, LINE surveys; explainers: All About, DIME, Oggi, カオナビ, 東洋経済 …). Page fetches to most Japanese hosts failed in the container, so verification is from search summaries; rows the agents could not source were included only where the term is well established, with an empty source.
 
 ## Offline dictionary: what was built (this block)
 
