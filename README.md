@@ -7,6 +7,8 @@ A personal, offline-first Japanese vocabulary trainer. Installable PWA, one code
 - Quick sessions that end after 5 minutes or 20 cards (both adjustable).
 - Automatic backups to a real file (a folder you choose, or the download folder), one-button manual export, merge-on-import, Anki TSV export.
 - Quick add, pasted TSV/CSV import, listening mode (device text-to-speech), furigana on the target word.
+- Tap any word in an example sentence to see whether it is already in the deck, and add it if not.
+- Capture: get Japanese text out of a photo, screenshot or video frame on the device, then pick words from it.
 
 Live at **https://bunt3.github.io/goi-app/**
 
@@ -15,6 +17,8 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Develop](#develop)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Installing as an app](#installing-as-an-app)
+- [Picking words from sentences](#picking-words-from-sentences)
+- [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
 - [How scheduling behaves](#how-scheduling-behaves)
@@ -48,7 +52,7 @@ npm run build
 
 ### Browser run-through
 
-`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste, the next-day production card, and automatic backup in both download and folder modes.
+`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste, the next-day production card, automatic backup in both download and folder modes, the word picker, and capture (pasted text, reading rendered light and dark images, a dragged region, a video frame, and reading offline).
 
 ```bash
 npm run build
@@ -92,6 +96,48 @@ Open https://bunt3.github.io/goi-app/ once while online. Everything is cached on
 **Windows 11, Firefox:** Firefox on desktop does not install PWAs. The site still works offline in a normal tab once it has been loaded: bookmark it or pin the tab. When Firefox asks whether the site may store data in persistent storage, allow it.
 
 After installing, open **More** and check the storage line under *Backup & transfer*. If it says storage is not protected, press *Ask the browser to protect this data*. Chromium browsers grant this silently for installed or frequently used sites; Firefox asks.
+
+## Picking words from sentences
+
+On the answer side of any card with an example (in review and in listening mode), **＋ Word from sentence** opens the sentence as tappable pieces.
+
+- Tap a word to select it. Tap another to stretch the selection across a phrase. Tap inside a selection to narrow it; tap a lone selected piece to clear it.
+- Words already in the deck have a dotted underline before you tap anything.
+- The panel then says one of:
+  - **already in your deck**, with the card (tap it to open);
+  - **not in your deck**, with any *related* cards (the same word in another form, such as 承り for 承る, or a phrase that starts the same way), and a short form to add it.
+- Adding needs only the word. With no reading or meaning it goes to the Inbox. The sentence it came from becomes its example; the parent card's tags carry over.
+- The word field is editable, so a conjugated form can be changed to its dictionary form before adding.
+
+The split into words comes from the browser's built-in Japanese word breaker ([`Intl.Segmenter`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Segmenter)). It has no dictionary of the app's behind it and sometimes splits in the wrong place; *Pick by character* switches to one piece per character for those cases. The app does not look up readings or meanings: there is no dictionary in it.
+
+## Capture: photos, screenshots, video, text
+
+**Add → From a photo, screenshot or text** opens the Capture screen. Whatever the source, the result is text in a box that you can correct, and the same word picker underneath.
+
+| Input | How |
+| --- | --- |
+| Photo | *Photo* opens the camera on a phone (no camera permission is requested by the page; the phone's camera app hands back the picture). |
+| Screenshot or image file | *Image*, or drag a file onto the page, or press Ctrl+V with a screenshot on the clipboard. |
+| Video | *Video*, pause on the frame that shows the text, *Use this frame*. It is then handled as an image. |
+| Text | Type or paste into the text box, or *Paste*. |
+| Speech | Use the microphone key on your keyboard (Gboard or Samsung voice input, Win+H on Windows) in the text box. |
+
+Reading an image:
+
+- Drag across the picture to read only that part. A hand-drawn box is widened slightly so tight boxes don't clip characters.
+- Recognition runs on the device with [tesseract.js](https://github.com/naptha/tesseract.js) and its Japanese model. **Images are not uploaded anywhere.**
+- The first read fetches the engine and model, about 5 MB, **from this site's own address** (`/goi-app/ocr/`). They are then cached and it works offline. This is the one place the app loads something after install, and it is not a third-party request.
+- Dark-mode screenshots are inverted automatically.
+
+What to expect from it, plainly:
+
+- Clean horizontal text on a screenshot reads well. In testing, a rendered two-line sample came back with every expected character but one stray extra kana.
+- Photos of signs, low light, glare, handwriting, decorative fonts and **vertical text** are unreliable. Only the horizontal model is included.
+- Similar-looking kanji get confused. Always check the text box before adding.
+- The phone's own recognition (the “T” button in the camera or gallery) and Windows Snipping Tool's *Text actions* are stronger. For a hard image, copy the text there and paste it here.
+
+Speech is deliberately left to the keyboard: the browser speech-recognition API sends audio to a server by default ([MDN](https://developer.mozilla.org/docs/Web/API/Web_Speech_API/Using_the_Web_Speech_API)), which this app's no-network rule excludes, and it is not usable in Firefox or Brave.
 
 ## Where your data lives, and automatic backup
 
@@ -269,18 +315,25 @@ src/
   data/anki.ts        Anki TSV
   data/seed.ts        seed deck (lazy-loaded)
   furigana.ts         target-word furigana and blanking
+  textpick.ts         split text into tappable pieces; check a selection against the deck (pure)
+  ocr.ts              tesseract.js wrapper, lazy-loaded
   tts.ts              speechSynthesis wrapper
   backupfs.ts         File System Access API: folder handle, write, verify, prune
-  ui/                 views (vanilla TS, no framework); ui/autobackup.ts runs the backups
-tests/                Vitest: scheduling, round trip, merge, auto-backup, TSV, furigana, seed
+  ui/                 views (vanilla TS, no framework); ui/autobackup.ts runs the backups;
+                      ui/picker.ts is the word picker, ui/capture.ts the capture screen
+tests/                Vitest: scheduling, round trip, merge, auto-backup, text picking, TSV, furigana, seed
 e2e/runthrough.cjs    headless browser run-through
 vite.config.ts        base path, service worker generation
 ```
 
-Runtime dependencies: `ts-fsrs`, `dexie`. Nothing else ships to the browser.
+Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when an image is read). `scripts/copy-ocr.cjs` copies the OCR engine and Japanese model from `node_modules` into `public/ocr/` before `dev` and `build`; that folder is generated and not committed.
 
 ## Known limits
 
+- **No dictionary.** Picking a word tells you whether it is in the deck; it cannot supply the reading or meaning. You type those, or leave the card in the Inbox.
+- **Text recognition is the weak link in Capture.** It was tested only on text rendered by a browser (light and dark backgrounds, one font), never on a real photo, a real screenshot from another app, or a phone camera. Expect worse results on those. Vertical text is not supported.
+- **The first image read needs a connection** to fetch about 5 MB from this site. Offline before that, it says so.
+- **Video is one frame at a time, chosen by you.** There is no automatic scan of a whole clip, and the browser must be able to play the file's format.
 - **Seed deck is unverified.** Its ~180 cards were machine-written and not checked by a native speaker or against a dictionary. Every one is tagged `seed-unverified`; treat readings, register labels and nuance as provisional.
 - **No sync.** Two devices diverge until you export and import both ways.
 - **Automatic backup is only as good as where the file goes.** Download mode writes to the same device; if the phone is lost, so is the backup unless you move the file elsewhere. Folder mode into a cloud-synced folder is the only setup that survives losing the device, and it is not available in Firefox or Brave.

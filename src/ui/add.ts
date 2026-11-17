@@ -223,7 +223,13 @@ export function addView(): View {
   const el = h(
     'div',
     { class: 'page' },
-    h('div', { class: 'row spread' }, h('h1', null, 'Add a word'), h('a', { href: '#/bulk', class: 'small' }, 'Paste many →')),
+    h('h1', null, 'Add a word'),
+    h(
+      'div',
+      { class: 'chips', style: 'margin-bottom:14px' },
+      h('a', { href: '#/capture', class: 'chip linkchip', id: 'to-capture' }, '📷 From a photo, screenshot or text'),
+      h('a', { href: '#/bulk', class: 'chip linkchip' }, 'Paste a list'),
+    ),
     form.el,
     h(
       'div',

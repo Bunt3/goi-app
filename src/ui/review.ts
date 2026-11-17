@@ -7,6 +7,7 @@ import { ensurePersistence, go, store, type View } from './app';
 import { runAutoBackup } from './autobackup';
 import { cardBack, productionFront, recognitionFront } from './cardview';
 import { clear, h, plural } from './dom';
+import { closePicker, pickerOpen } from './picker';
 
 interface Shown {
   item: QueueItem;
@@ -132,6 +133,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
     busy = true;
     try {
       stopSpeaking();
+      closePicker();
       const now = Date.now();
       // Cap the recorded time so a card left open over lunch doesn't skew anything.
       const duration = Math.min(now - shown.shownAt, 120_000);
@@ -233,6 +235,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
     const t = e.target as HTMLElement | null;
     if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (pickerOpen()) return; // the word picker is on top: keys belong to it
     if (e.key === 'Escape') {
       go('home');
     } else if (finished) {
@@ -257,6 +260,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
     destroy: () => {
       clearInterval(ticker);
       document.removeEventListener('keydown', onKey);
+      closePicker();
       stopSpeaking();
     },
   };

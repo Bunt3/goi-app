@@ -7,6 +7,7 @@ import { reviewView } from './ui/review';
 import { addView, editView } from './ui/add';
 import { browseView } from './ui/browse';
 import { bulkView } from './ui/bulk';
+import { captureView } from './ui/capture';
 import { listenView } from './ui/listen';
 import { statsView } from './ui/stats';
 import { moreView } from './ui/more';
@@ -40,6 +41,7 @@ async function start(): Promise<void> {
   register('edit', editView);
   register('browse', browseView);
   register('bulk', bulkView);
+  register('capture', captureView);
   register('listen', listenView);
   register('stats', statsView);
   register('more', moreView);

@@ -3,6 +3,7 @@ import { SrsPhase, isInbox, type Card } from '../types';
 import { store, type View } from './app';
 import { cardBack } from './cardview';
 import { h, toast } from './dom';
+import { closePicker } from './picker';
 
 function shuffle<T>(xs: T[]): T[] {
   const a = [...xs];
@@ -172,6 +173,7 @@ export function listenView(): View {
     destroy: () => {
       destroyed = true;
       stopSpeaking();
+      closePicker();
     },
   };
 }

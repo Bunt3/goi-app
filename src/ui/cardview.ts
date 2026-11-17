@@ -2,6 +2,7 @@ import { exampleNode, wordNode } from '../furigana';
 import { SEED_TAG, isLeech, type Card } from '../types';
 import { speakOrExplain } from './actions';
 import { h } from './dom';
+import { openPickerSheet } from './picker';
 
 const wordClass = (word: string) => ([...word].length > 7 ? 'word long' : 'word');
 
@@ -52,16 +53,30 @@ export function cardBack(card: Card, furigana: boolean, opts: { audio?: boolean;
       isLeech(card) ? h('span', { class: 'badge warn' }, 'leech — consider rewriting') : null,
       card.source ? h('span', { class: 'badge' }, card.source) : null,
     ),
-    audio
-      ? h(
-          'div',
-          { class: 'meta-line' },
-          h('button', { class: 'chip', onclick: () => void speakOrExplain(card.word) }, '🔊 Word'),
-          card.example_ja
-            ? h('button', { class: 'chip', onclick: () => void speakOrExplain(card.example_ja) }, '🔊 Sentence')
-            : null,
-          h('a', { class: 'chip', href: '#/edit/' + encodeURIComponent(card.id), style: 'display:inline-flex;align-items:center;text-decoration:none;border:1px solid var(--line)' }, '✎ Edit'),
-        )
-      : null,
+    h(
+      'div',
+      { class: 'meta-line' },
+      audio ? h('button', { class: 'chip', onclick: () => void speakOrExplain(card.word) }, '🔊 Word') : null,
+      audio && card.example_ja ? h('button', { class: 'chip', onclick: () => void speakOrExplain(card.example_ja) }, '🔊 Sentence') : null,
+      card.example_ja
+        ? h(
+            'button',
+            {
+              class: 'chip',
+              id: 'pick-open',
+              onclick: () =>
+                openPickerSheet({
+                  text: card.example_ja,
+                  exampleEn: card.example_en,
+                  tags: card.tags,
+                  source: `example sentence for ${card.word}`,
+                  ownWord: card.word,
+                }),
+            },
+            '＋ Word from sentence',
+          )
+        : null,
+      h('a', { class: 'chip', href: '#/edit/' + encodeURIComponent(card.id), style: 'display:inline-flex;align-items:center;text-decoration:none;border:1px solid var(--line)' }, '✎ Edit'),
+    ),
   );
 }

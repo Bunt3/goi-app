@@ -46,7 +46,9 @@ async function main() {
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e)));
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+  // The OCR engine prints harmless model-config warnings on the error channel.
+  const isNoise = (t) => t.startsWith('Warning: Parameter not found');
+  page.on('console', (m) => m.type() === 'error' && !isNoise(m.text()) && errors.push(m.text()));
   const external = [];
   page.on('request', (r) => !r.url().startsWith('http://localhost:4173/') && !r.url().startsWith('blob:') && !r.url().startsWith('data:') && external.push(r.url()));
 
@@ -286,6 +288,33 @@ async function main() {
     await page.waitForSelector('#reveal');
     await page.click('#reveal');
     await shot('review-seed-back');
+
+    // Pick an unknown word out of the example sentence without leaving the review.
+    const deckSize = async () => page.evaluate(() => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const c = r.result.transaction('cards').objectStore('cards').count(); c.onsuccess = () => { r.result.close(); res(c.result); }; }; }));
+    const sizeBefore = await deckSize();
+    await page.click('#pick-open');
+    await page.waitForSelector('.sheet .tok');
+    const picked = await page.locator('.sheet .tok:not(.known)').first().innerText();
+    await page.locator('.sheet .tok:not(.known)').first().click();
+    await page.waitForSelector('#pick-status:has-text("not in your deck")');
+    assert.equal(await page.inputValue('#pick-word'), picked);
+    assert.equal(await page.innerText('#pick-add'), 'Add to Inbox');
+    await page.fill('#pick-reading', 'てすと');
+    await page.fill('#pick-meaning', 'picked from a sentence');
+    assert.equal(await page.innerText('#pick-add'), 'Add to deck');
+    await shot('picker-sheet');
+    await page.click('#pick-add');
+    await page.waitForSelector('#pick-status:has-text("already in your deck")');
+    assert.equal(await deckSize(), sizeBefore + 1);
+    // Number keys must not rate the card underneath while the sheet is open.
+    await page.keyboard.press('3');
+    assert.equal(await page.locator('.sheet').count(), 1);
+    assert.equal(await page.locator('.ratings').count(), 1);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.sheet').count(), 0);
+    assert.equal(await page.locator('.ratings').count(), 1, 'still on the same card after closing the picker');
+    log(`word picker: “${picked}” reported as new, added mid-review, then reported as already in the deck`);
+
     await page.click('.ratings button[data-rating="4"]');
     await page.waitForSelector('#reveal');
     await page.keyboard.press('Escape');
@@ -317,6 +346,136 @@ async function main() {
     await page.waitForFunction(() => document.documentElement.dataset.theme === 'light');
     await shot('more-light');
     await page.selectOption('#set-theme', 'dark');
+
+    // ---- 9b. Capture: paste text, read an image, read a video frame -----
+    await page.goto(URL + '#/capture');
+    await page.fill('#capture-text', '平素より大変お世話になっております。\n稟議を上げる前に、齟齬がないかご確認ください。');
+    await page.waitForSelector('#capture-pick .tok');
+    const known = page.locator('#capture-pick .tok.known', { hasText: '稟議' });
+    assert.equal(await known.count(), 1, 'a word already in the deck is marked in the text');
+    await known.click();
+    await page.waitForSelector('#pick-status:has-text("already in your deck")');
+    await known.click(); // clear
+    await page.fill('#capture-source', 'e2e email');
+    await page.locator('#capture-source').blur();
+    const firstTok = page.locator('#capture-pick .tok:not(.known)').first();
+    const firstText = await firstTok.innerText();
+    await firstTok.click();
+    await page.waitForSelector('#pick-status:has-text("not in your deck")');
+    await page.click('#pick-add'); // word only → Inbox
+    await page.waitForSelector('#pick-status:has-text("already in your deck")');
+    const captured = await page.evaluate((w) => new Promise((res) => { const r = indexedDB.open('goi-app'); r.onsuccess = () => { const q = r.result.transaction('cards').objectStore('cards').getAll(); q.onsuccess = () => { r.result.close(); res(q.result.find((c) => c.word === w && !c.deleted)); }; }; }), firstText);
+    assert.equal(captured.example_ja, '平素より大変お世話になっております。', 'the sentence it came from becomes the example');
+    assert.equal(captured.source, 'e2e email');
+    assert.equal(captured.reading, '');
+    await shot('capture-text');
+    log(`capture from pasted text: “${firstText}” added with its sentence as the example and the source filled in`);
+
+    // Render Japanese text to PNGs (light and dark) and read them back on-device.
+    const truth = ['資料を添付いたしますので', 'ご査収ください', '納期について懸念があります'];
+    const makeImage = async (name, dark) => {
+      const p2 = await context.newPage();
+      await p2.setViewportSize({ width: 900, height: 360 });
+      await p2.setContent(`<body style="margin:0;padding:36px;background:${dark ? '#15181c' : '#fff'};color:${dark ? '#eee' : '#111'};font:38px/1.9 IPAGothic,sans-serif">${truth[0]}、${truth[1]}。<br>${truth[2]}。</body>`);
+      const file = path.join(OUT, name);
+      await p2.screenshot({ path: file });
+      await p2.close();
+      return file;
+    };
+    const accuracy = (got) => {
+      const want = [...truth.join('')];
+      const have = got.replace(/\s/g, '');
+      return want.filter((ch) => have.includes(ch)).length / want.length;
+    };
+    const readImage = async (file) => {
+      await page.fill('#capture-text', '');
+      await page.setInputFiles('#capture-image', file);
+      await page.waitForSelector('#crop-frame');
+      const t0 = Date.now();
+      await page.click('#ocr-read');
+      await page.waitForFunction(() => document.querySelector('#capture-text').value.trim() !== '', null, { timeout: 180000 });
+      return { text: await page.inputValue('#capture-text'), ms: Date.now() - t0 };
+    };
+    const light = await readImage(await makeImage('ocr-light.png', false));
+    await shot('capture-ocr');
+    assert.ok(accuracy(light.text) > 0.8, 'light image read poorly: ' + light.text);
+    assert.ok(!/[\u3040-\u9fff] [\u3040-\u9fff]/.test(light.text), 'OCR spacing between Japanese characters removed');
+    await page.waitForSelector('#capture-pick .tok');
+    log(`on-device OCR, dark text on white: ${Math.round(accuracy(light.text) * 100)}% of expected characters found, ${light.ms} ms incl. first load → ${JSON.stringify(light.text)}`);
+    const dark = await readImage(await makeImage('ocr-dark.png', true));
+    assert.ok(accuracy(dark.text) > 0.8, 'dark image read poorly: ' + dark.text);
+    log(`on-device OCR, light text on dark: ${Math.round(accuracy(dark.text) * 100)}% of expected characters found, ${dark.ms} ms`);
+
+    // A region dragged on the image limits what is read.
+    await page.fill('#capture-text', '');
+    await page.locator('#crop-frame').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(700); // let the smooth scroll after the last read settle
+    const frameBox = await page.locator('#crop-frame').boundingBox();
+    // The second line of text sits roughly 35–55% of the way down the image.
+    await page.mouse.move(frameBox.x + 4, frameBox.y + frameBox.height * 0.38);
+    await page.mouse.down();
+    await page.mouse.move(frameBox.x + frameBox.width - 4, frameBox.y + frameBox.height * 0.54, { steps: 4 });
+    await page.mouse.up();
+    assert.equal(await page.innerText('#ocr-read'), 'Read selected part');
+    await page.click('#ocr-read');
+    await page.waitForFunction(() => document.querySelector('#capture-text').value.trim() !== '', null, { timeout: 60000 });
+    const part = await page.inputValue('#capture-text');
+    assert.ok(part.includes('懸念') && !part.includes('添付'), 'only the selected line was read: ' + part);
+    log('dragging a box on the image reads only that region');
+
+    // Video: record a short clip showing the same text, load it, grab a frame, read it.
+    const videoB64 = await page.evaluate(async (lines) => {
+      if (typeof MediaRecorder === 'undefined') return null;
+      const c = document.createElement('canvas');
+      c.width = 900; c.height = 300;
+      const g = c.getContext('2d');
+      const draw = () => { g.fillStyle = '#fff'; g.fillRect(0, 0, 900, 300); g.fillStyle = '#111'; g.font = '40px IPAGothic, sans-serif'; lines.forEach((l, i) => g.fillText(l, 30, 90 + i * 80)); };
+      draw();
+      const type = ['video/webm;codecs=vp8', 'video/webm'].find((t) => MediaRecorder.isTypeSupported(t));
+      if (!type) return null;
+      const rec = new MediaRecorder(c.captureStream(15), { mimeType: type });
+      const chunks = [];
+      rec.ondataavailable = (e) => chunks.push(e.data);
+      const done = new Promise((r) => (rec.onstop = r));
+      rec.start();
+      const timer = setInterval(draw, 60);
+      await new Promise((r) => setTimeout(r, 1200));
+      clearInterval(timer);
+      rec.stop();
+      await done;
+      const buf = new Uint8Array(await new Blob(chunks, { type }).arrayBuffer());
+      let bin = '';
+      for (const b of buf) bin += String.fromCharCode(b);
+      return btoa(bin);
+    }, [truth[0], truth[2]]);
+    if (videoB64) {
+      const videoFile = path.join(OUT, 'clip.webm');
+      fs.writeFileSync(videoFile, Buffer.from(videoB64, 'base64'));
+      await page.fill('#capture-text', '');
+      await page.setInputFiles('#capture-video-file', videoFile);
+      await page.waitForSelector('#capture-video');
+      await page.waitForFunction(() => document.querySelector('#capture-video').readyState >= 2, null, { timeout: 15000 });
+      await page.click('#video-grab');
+      await page.waitForSelector('#crop-frame');
+      await page.click('#ocr-read');
+      await page.waitForFunction(() => document.querySelector('#capture-text').value.trim() !== '', null, { timeout: 60000 });
+      const fromVideo = await page.inputValue('#capture-text');
+      assert.ok(fromVideo.includes('懸念') || fromVideo.includes('添付'), 'video frame read: ' + fromVideo);
+      await shot('capture-video');
+      log(`video: frame grabbed from a clip and read → ${JSON.stringify(fromVideo)}`);
+    } else {
+      log('video: SKIPPED (this browser build cannot record a test clip)');
+    }
+
+    // Once used, the reader works with no connection (its files are kept by the service worker).
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+    await context.setOffline(true);
+    await page.reload();
+    await page.waitForSelector('#btn-image');
+    const offline = await readImage(path.join(OUT, 'ocr-light.png'));
+    await context.setOffline(false);
+    assert.ok(accuracy(offline.text) > 0.8, 'offline read: ' + offline.text);
+    log(`on-device OCR works offline after first use (${offline.ms} ms including reloading the engine)`);
 
     // ---- 10. Next day: production direction unlocks ---------------------
     const tomorrow = await context.newPage();

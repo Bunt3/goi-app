@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config';
 
 const BASE = '/goi-app/';
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
+const ocrVersion = (JSON.parse(readFileSync(new URL('./node_modules/tesseract.js/package.json', import.meta.url), 'utf8')) as { version: string }).version;
 
 /**
  * Emits sw.js with the list of built files baked in, so the whole app is
@@ -38,6 +39,10 @@ function serviceWorker(): Plugin {
       const source = `// Generated at build time. Do not edit.
 const VERSION = ${JSON.stringify(version)};
 const CACHE = 'goi-' + VERSION;
+// The OCR engine and language model are large and change only when the
+// library is upgraded, so they are fetched on first use and kept in their
+// own cache across app updates instead of being precached.
+const OCR_CACHE = 'goi-ocr-' + ${JSON.stringify(ocrVersion)};
 const BASE = ${JSON.stringify(BASE)};
 const FILES = ${JSON.stringify(all)};
 
@@ -55,7 +60,7 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((k) => k.startsWith('goi-') && k !== CACHE).map((k) => caches.delete(k))),
+        Promise.all(keys.filter((k) => k.startsWith('goi-') && k !== CACHE && k !== OCR_CACHE).map((k) => caches.delete(k))),
       )
       .then(() => self.clients.claim()),
   );
@@ -66,6 +71,18 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || !url.pathname.startsWith(BASE)) return;
+  if (url.pathname.startsWith(BASE + 'ocr/')) {
+    event.respondWith(
+      caches.open(OCR_CACHE).then(async (cache) => {
+        const hit = await cache.match(req, { ignoreVary: true });
+        if (hit) return hit;
+        const res = await fetch(req);
+        if (res.ok) await cache.put(req, res.clone());
+        return res;
+      }),
+    );
+    return;
+  }
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {
       // ignoreVary: some hosts send "Vary: Origin", which would stop precached files matching.
