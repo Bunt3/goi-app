@@ -5,7 +5,7 @@ A personal, offline-first Japanese vocabulary trainer. Installable PWA, one code
 - Spaced repetition with [FSRS-6](https://github.com/open-spaced-repetition/ts-fsrs) (`ts-fsrs`), separate schedules for recognition and production.
 - Daily caps on reviews and new cards. A backlog after missed days is worked off gradually, weakest cards first. No streaks.
 - Quick sessions that end after 5 minutes or 20 cards (both adjustable).
-- One-button JSON backup, merge-on-import, Anki TSV export.
+- Automatic backups to a real file (a folder you choose, or the download folder), one-button manual export, merge-on-import, Anki TSV export.
 - Quick add, pasted TSV/CSV import, listening mode (device text-to-speech), furigana on the target word.
 
 Live at **https://bunt3.github.io/goi-app/**
@@ -15,6 +15,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Develop](#develop)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Installing as an app](#installing-as-an-app)
+- [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
 - [Moving data between devices](#moving-data-between-devices)
 - [How scheduling behaves](#how-scheduling-behaves)
 - [The JSON backup schema](#the-json-backup-schema)
@@ -47,7 +48,7 @@ npm run build
 
 ### Browser run-through
 
-`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste and the next-day production card.
+`e2e/runthrough.cjs` drives the production build in headless Chromium: add card → review → export → clear storage → import → verify restored, plus offline reload, replace-everything, the seed deck, bulk paste, the next-day production card, and automatic backup in both download and folder modes.
 
 ```bash
 npm run build
@@ -56,6 +57,8 @@ npm run build
 ```bash
 npm run e2e
 ```
+
+The folder-backup part points the folder picker at the origin-private file system (the real picker can't be driven headlessly) and runs in a persistent profile, because headless Chromium's incognito contexts crash when a stored directory handle is read back from IndexedDB.
 
 Playwright is deliberately not a project dependency. Install it once with `npm i --no-save playwright` followed by `npx playwright install chromium`. Screenshots land in `e2e/out/`.
 
@@ -90,6 +93,37 @@ Open https://bunt3.github.io/goi-app/ once while online. Everything is cached on
 
 After installing, open **More** and check the storage line under *Backup & transfer*. If it says storage is not protected, press *Ask the browser to protect this data*. Chromium browsers grant this silently for installed or frequently used sites; Firefox asks.
 
+## Where your data lives, and automatic backup
+
+The working copy of the deck is in the browser's IndexedDB. That is the only storage every target browser offers that works offline with no prompts, but it is not durable: clearing site data, uninstalling the browser, a "clear on exit" privacy setting, or the browser reclaiming space can all erase it. So the app also keeps a copy **outside** the browser, automatically.
+
+**More → Backup & transfer → Automatic backup** has three modes:
+
+| Mode | What happens | Works in |
+| --- | --- | --- |
+| **Download a file after I study** (default) | When a session ends and something has changed, `goi-auto_DATE_LABEL.json` is saved to the browser's download folder. At most once per study day (or every 3 days / weekly). | Every browser |
+| **Save into a folder I choose** | You pick a folder once. From then on the backup is written there silently, about 20 seconds after any change and whenever you leave the app. One file per day, newest 14 kept, older ones removed. | Chrome and Edge on desktop, Chrome on Android |
+| **Off** | Nothing leaves the browser unless you export. The Today screen reminds you after 7 days. | — |
+
+Notes on the folder mode:
+
+- It uses the [File System Access API](https://developer.chrome.com/docs/capabilities/web-apis/file-system-access). **Firefox does not implement it**, and **Brave disables it** ([brave-browser#11407](https://github.com/brave/brave-browser/issues/11407)); in those browsers the option is not shown and downloads are used.
+- Choose a folder inside OneDrive, Google Drive for desktop, Syncthing or similar and the backups also leave the device. The app itself still makes no network requests.
+- After a browser restart Chrome may need to re-confirm access to the folder. The Today screen then shows *Allow and back up now*. Installed apps keep the permission ([Chrome 122+](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api)); in a normal tab, choose "Allow on every visit" when asked.
+- If the chosen folder already contains a Goi backup holding data this device lacks, you are shown the import summary first and nothing is written until you have dealt with it.
+- If a write fails at the end of a session (folder moved, drive unplugged), the backup falls back to a download and says so.
+- Only this device's `goi-auto_*_LABEL.json` files are ever deleted by the rotation. Manual exports, other devices' files and anything else in the folder are left alone.
+
+In every mode:
+
+- An empty deck is never backed up, so a wiped browser cannot replace a good backup with an empty one.
+- A backup is skipped when nothing has changed since the last one.
+- Manual export still works and counts as a backup.
+
+**To restore** after data loss: open the app, **More → Import a backup…**, pick the newest `goi-auto_…` or `goi-backup_…` file, then *Merge* (or *Replace everything*).
+
+What is at risk between backups: in download mode, up to one study day of reviews and any cards added since the last session ended. In folder mode, the last few seconds.
+
 ## Moving data between devices
 
 There is no sync. Data moves by file.
@@ -117,10 +151,6 @@ To keep two devices in step, export from each and import into the other. Merging
 ### Replace everything
 
 The import summary also offers **Replace everything…**, behind a second confirmation. It erases this device's cards and history and loads the file as-is, including its settings (this device's own label and voice choice are kept if set). Use it to restore after site data was cleared, or to make one device an exact copy of another.
-
-### Backups
-
-Browsers can clear site data, and uninstalling the app or clearing browsing data removes everything. The export is the only backup. The Today screen shows when you last exported and starts prompting once that is more than 7 days ago.
 
 ## How scheduling behaves
 
@@ -203,6 +233,8 @@ The `ts-fsrs` card object with dates as numbers.
 
 `deviceLabel`, `maxReviewsPerDay`, `maxNewPerDay`, `pauseNewDuringBacklog`, `quickMinutes`, `quickCards`, `requestRetention`, `furigana`, `ttsVoiceURI`, `ttsRate`, `listenSource` (`example` \| `word`), `theme` (`dark` \| `light`), `lastExportAt`.
 
+Backup bookkeeping, added without a schema bump (older files simply lack them and get defaults): `autoBackup` (`off` \| `download` \| `folder`), `autoBackupDays`, `autoBackupKeep`, `lastBackupMark`, `lastBackupWhere`. On *Replace everything* the three `autoBackup*` settings are kept from the device, not taken from the file.
+
 A hand-edited file is accepted as long as `app`, `schemaVersion`, `cards` and `reviewLogs` are present and each card has an `id`; missing fields get defaults. The TypeScript definitions are in [`src/types.ts`](src/types.ts) and the validation in [`src/data/export.ts`](src/data/export.ts).
 
 ## Anki export
@@ -231,14 +263,16 @@ src/
   srs/fsrs.ts         ts-fsrs wrapper: review, preview, replay
   srs/queue.ts        daily queue: caps, overdue spreading, unlocks, forecast
   data/export.ts      backup build / parse / validate
+  data/autobackup.ts  when a backup is due, deck fingerprint, folder rotation (pure)
   data/merge.ts       merge planning (pure)
   data/tsv.ts         pasted TSV/CSV parsing and column guessing
   data/anki.ts        Anki TSV
   data/seed.ts        seed deck (lazy-loaded)
   furigana.ts         target-word furigana and blanking
   tts.ts              speechSynthesis wrapper
-  ui/                 views (vanilla TS, no framework)
-tests/                Vitest: scheduling, round trip, merge, TSV, furigana, seed
+  backupfs.ts         File System Access API: folder handle, write, verify, prune
+  ui/                 views (vanilla TS, no framework); ui/autobackup.ts runs the backups
+tests/                Vitest: scheduling, round trip, merge, auto-backup, TSV, furigana, seed
 e2e/runthrough.cjs    headless browser run-through
 vite.config.ts        base path, service worker generation
 ```
@@ -249,6 +283,9 @@ Runtime dependencies: `ts-fsrs`, `dexie`. Nothing else ships to the browser.
 
 - **Seed deck is unverified.** Its ~180 cards were machine-written and not checked by a native speaker or against a dictionary. Every one is tagged `seed-unverified`; treat readings, register labels and nuance as provisional.
 - **No sync.** Two devices diverge until you export and import both ways.
+- **Automatic backup is only as good as where the file goes.** Download mode writes to the same device; if the phone is lost, so is the backup unless you move the file elsewhere. Folder mode into a cloud-synced folder is the only setup that survives losing the device, and it is not available in Firefox or Brave.
+- **Download mode leaves files behind.** A web page cannot delete or overwrite downloads, so old `goi-auto_…` files accumulate until you clear them.
+- **Folder mode was verified against the origin-private file system in headless Chromium, not against a real folder picker, a real cloud-synced folder, or Chrome on Android**, where writes are not atomic. The app checks the written size and falls back to a download on failure.
 - **Text-to-speech depends on the device.** Voice quality and availability vary; on Android the voice picker may be ignored in favour of the system default Japanese voice. Audio was not testable in the headless environment this was built in.
 - **Reading autofill** in quick add takes the kana from the keyboard's composition events. It works with typical Japanese IMEs but is best-effort; check the reading before saving.
 - **Furigana and blanking** find the target word by its kanji stem. A word whose example uses an irregular or kana-only form won't be found: it is then shown without highlighting, and the production prompt omits the sentence rather than reveal the answer.

@@ -3,6 +3,7 @@ import { isInbox } from '../types';
 import { daysAgoText } from '../util';
 import { exportBackup } from './actions';
 import { go, refresh, store, type View } from './app';
+import { folderNeedsAttention, runAutoBackup } from './autobackup';
 import { h, plural } from './dom';
 
 export const EXPORT_NUDGE_DAYS = 7;
@@ -60,29 +61,46 @@ export async function homeView(): Promise<View> {
     );
   }
 
+  // Folder mode can save without a tap, so catch up on anything left over from last time.
+  if (s.autoBackup === 'folder') await runAutoBackup('silent');
+  const attention = await folderNeedsAttention();
   // Never exported: the clock starts at the first card, so a brand-new deck isn't nagged on day one.
-  const unprotectedSince = s.lastExportAt ?? Math.min(...live.map((c) => c.created));
+  const unprotectedSince = store.settings.lastExportAt ?? Math.min(...live.map((c) => c.created));
   const sinceExport = (now - unprotectedSince) / 86_400_000;
-  const exportLine =
-    sinceExport >= EXPORT_NUDGE_DAYS
-      ? h(
-          'div',
-          { class: 'notice' },
-          h('div', null, s.lastExportAt == null ? 'This deck has never been exported.' : `Last exported ${daysAgoText(s.lastExportAt, now)}.`),
-          h('div', { class: 'muted small', style: 'margin:2px 0 8px' }, 'Browsers can clear site data. An export is your only backup.'),
-          h(
-            'button',
-            {
-              id: 'home-export',
-              onclick: async () => {
-                await exportBackup();
-                refresh();
-              },
-            },
-            'Export backup now',
-          ),
-        )
-      : h('p', { class: 'muted small', id: 'export-status' }, s.lastExportAt == null ? 'Not exported yet.' : `Last exported ${daysAgoText(s.lastExportAt, now)}.`);
+  const last = store.settings.lastExportAt;
+  const where = store.settings.lastBackupWhere ? ` (${store.settings.lastBackupWhere})` : '';
+  const mode = { off: 'Automatic backup is off.', download: 'Backs up to Downloads after you study.', folder: 'Backs up to your chosen folder.' }[s.autoBackup];
+  const backupNow = async () => {
+    await (s.autoBackup === 'off' ? exportBackup() : runAutoBackup('manual'));
+    refresh();
+  };
+  let exportLine: HTMLElement;
+  if (attention !== 'ok') {
+    exportLine = h(
+      'div',
+      { class: 'notice', id: 'backup-attention' },
+      h('div', null, attention === 'no-folder' ? 'Automatic backup has no folder to save into.' : 'The backup folder needs permission again before it can be written to.'),
+      h('div', { class: 'muted small', style: 'margin:2px 0 8px' }, attention === 'no-folder' ? 'Choose one under More → Backup.' : 'Browsers ask again after a restart unless the app is installed.'),
+      attention === 'no-folder'
+        ? h('button', { onclick: () => go('more?focus=import') }, 'Open backup settings')
+        : h('button', { id: 'backup-allow', onclick: backupNow }, 'Allow and back up now'),
+    );
+  } else if (sinceExport >= EXPORT_NUDGE_DAYS) {
+    exportLine = h(
+      'div',
+      { class: 'notice' },
+      h('div', null, last == null ? 'This deck has never been backed up.' : `Last backed up ${daysAgoText(last, now)}.`),
+      h('div', { class: 'muted small', style: 'margin:2px 0 8px' }, 'Browsers can clear site data. A backup file is the only copy outside the browser.'),
+      h('button', { id: 'home-export', onclick: backupNow }, 'Back up now'),
+    );
+  } else {
+    exportLine = h(
+      'p',
+      { class: 'muted small', id: 'export-status' },
+      last == null ? 'Not backed up yet. ' : `Last backed up ${daysAgoText(last, now)}${where}. `,
+      mode,
+    );
+  }
 
   let status: string;
   if (available > 0) status = '';

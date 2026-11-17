@@ -4,6 +4,7 @@ import type { AnswerUndo } from '../store';
 import { stopSpeaking } from '../tts';
 import type { Card } from '../types';
 import { ensurePersistence, go, store, type View } from './app';
+import { runAutoBackup } from './autobackup';
 import { cardBack, productionFront, recognitionFront } from './cardview';
 import { clear, h, plural } from './dom';
 
@@ -223,6 +224,9 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
       ),
     );
     updateProgress();
+    // The tap that ended the session still counts as a user gesture, which a
+    // download or a folder permission prompt needs.
+    if (answered > 0) void runAutoBackup('session');
   }
 
   function onKey(e: KeyboardEvent): void {

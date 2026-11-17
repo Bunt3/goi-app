@@ -85,8 +85,22 @@ export interface Settings {
   ttsRate: number;
   listenSource: 'example' | 'word';
   theme: 'dark' | 'light';
-  /** Epoch ms of the last JSON export on this device. */
+  /** Epoch ms of the last backup of any kind (manual export or automatic) on this device. */
   lastExportAt: number | null;
+  /**
+   * Automatic backup. 'download' saves a file to the browser's download
+   * folder after a study session; 'folder' writes into a folder chosen once
+   * (File System Access API, Chromium only); 'off' leaves it to manual export.
+   */
+  autoBackup: 'off' | 'download' | 'folder';
+  /** Download mode: minimum study days between automatic downloads. */
+  autoBackupDays: number;
+  /** Folder mode: how many daily files to keep before the oldest is removed. */
+  autoBackupKeep: number;
+  /** Fingerprint of the deck at the last backup; a different one means there is unsaved work. */
+  lastBackupMark: string;
+  /** Where the last backup went, for display ("Downloads", a folder name, "manual export"). */
+  lastBackupWhere: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -103,6 +117,11 @@ export const DEFAULT_SETTINGS: Settings = {
   listenSource: 'example',
   theme: 'dark',
   lastExportAt: null,
+  autoBackup: 'download',
+  autoBackupDays: 1,
+  autoBackupKeep: 14,
+  lastBackupMark: '',
+  lastBackupWhere: '',
 };
 
 export const SCHEMA_VERSION = 1;

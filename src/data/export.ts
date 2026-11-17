@@ -39,8 +39,8 @@ export function fileLabel(deviceLabel: string): string {
   return cleaned || 'device';
 }
 
-export function exportFilename(kind: 'backup' | 'anki', deviceLabel: string, now: number): string {
-  const ext = kind === 'backup' ? 'json' : 'tsv';
+export function exportFilename(kind: 'backup' | 'auto' | 'anki', deviceLabel: string, now: number): string {
+  const ext = kind === 'anki' ? 'tsv' : 'json';
   return `goi-${kind}_${isoDate(now)}_${fileLabel(deviceLabel)}.${ext}`;
 }
 
@@ -140,6 +140,11 @@ export function parseSettings(v: unknown): Settings {
     listenSource: o.listenSource === 'word' ? 'word' : 'example',
     theme: o.theme === 'light' ? 'light' : 'dark',
     lastExportAt: typeof o.lastExportAt === 'number' ? o.lastExportAt : null,
+    autoBackup: o.autoBackup === 'off' || o.autoBackup === 'folder' ? o.autoBackup : d.autoBackup,
+    autoBackupDays: clampInt(o.autoBackupDays, d.autoBackupDays, 1, 30),
+    autoBackupKeep: clampInt(o.autoBackupKeep, d.autoBackupKeep, 1, 365),
+    lastBackupMark: str(o.lastBackupMark),
+    lastBackupWhere: str(o.lastBackupWhere),
   };
 }
 

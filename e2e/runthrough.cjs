@@ -51,6 +51,7 @@ async function main() {
   page.on('request', (r) => !r.url().startsWith('http://localhost:4173/') && !r.url().startsWith('blob:') && !r.url().startsWith('data:') && external.push(r.url()));
 
   let step = 0;
+  let persistent = null;
   const shot = async (name) => SHOTS && page.screenshot({ path: path.join(OUT, `${String(++step).padStart(2, '0')}-${name}.png`) });
   const log = (msg) => console.log('  ✓ ' + msg);
 
@@ -144,8 +145,18 @@ async function main() {
     await page.click('.ratings button[data-rating="3"]');
     await page.waitForSelector('#reveal');
     await page.click('#reveal');
+    // Ending a session triggers the automatic backup (default mode: a download).
+    const autoDownload = page.waitForEvent('download');
     await page.click('.ratings button[data-rating="3"]'); // Good → graduates
     await page.waitForSelector('#summary-line');
+    const auto = await autoDownload;
+    assert.match(auto.suggestedFilename(), /^goi-auto_\d{4}-\d{2}-\d{2}_device\.json$/);
+    const autoFile = path.join(OUT, auto.suggestedFilename());
+    await auto.saveAs(autoFile);
+    const autoData = JSON.parse(fs.readFileSync(autoFile, 'utf8'));
+    assert.equal(autoData.cards.length, 2);
+    assert.equal(autoData.reviewLogs.length, 2);
+    log('automatic backup: finishing a session downloaded ' + auto.suggestedFilename() + ' without being asked');
     const summary = await page.innerText('#summary-line');
     assert.match(summary, /^2 reviews in \d+:\d\d · 2 remembered\.$/);
     await shot('summary');
@@ -324,6 +335,99 @@ async function main() {
     await tomorrow.close();
     log('next day: production card appears (English → Japanese) with the word blanked from its example');
 
+    // ---- 11. Automatic backup into a folder ------------------------------
+    // The real folder picker can't be driven headlessly, so it is pointed at a
+    // directory in the origin-private file system, which has the same handle API.
+    // A persistent profile is used here: headless Chromium's incognito contexts
+    // crash when a stored OPFS directory handle is read back from IndexedDB.
+    persistent = await chromium.launchPersistentContext(path.join(OUT, 'profile'), {
+      viewport: { width: 412, height: 915 },
+      acceptDownloads: true,
+      locale: 'en-US',
+      timezoneId: 'Asia/Tokyo',
+    });
+    const fsPage = await persistent.newPage();
+    fsPage.on('pageerror', (e) => errors.push(String(e)));
+    fsPage.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+    await fsPage.addInitScript(() => {
+      window.showDirectoryPicker = async () => (await navigator.storage.getDirectory()).getDirectoryHandle('picked', { create: true });
+    });
+    const folderFiles = () =>
+      fsPage.evaluate(async () => {
+        const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('picked', { create: true });
+        const out = {};
+        for await (const entry of dir.values()) out[entry.name] = JSON.parse(await (await entry.getFile()).text());
+        return out;
+      });
+    // Bring this fresh profile up to date from the first export.
+    await fsPage.goto(URL + '#/more');
+    await fsPage.setInputFiles('#import-file', first.file);
+    await fsPage.waitForSelector('#import-summary');
+    await fsPage.click('#confirm-merge');
+    await fsPage.waitForSelector('#toast.show:has-text("Merged")');
+    await fsPage.fill('#set-deviceLabel', 'e2e phone');
+    await fsPage.locator('#set-deviceLabel').blur();
+    await fsPage.waitForSelector('#set-autoBackup');
+    // A backup from another device is already sitting in the folder, holding a card this device lacks.
+    const foreign = JSON.parse(JSON.stringify(first.data));
+    foreign.deviceLabel = 'other';
+    foreign.cards.push({ ...foreign.cards[0], id: 'aaaaaaaa-0000-4000-8000-000000000001', word: '他端末', reading: 'たたんまつ', srs: undefined, productionUnlockedAt: null });
+    await fsPage.evaluate(async (text) => {
+      const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('picked', { create: true });
+      const w = await (await dir.getFileHandle('goi-backup_2026-01-01_other.json', { create: true })).createWritable();
+      await w.write(text);
+      await w.close();
+    }, JSON.stringify(foreign));
+
+    await fsPage.selectOption('#set-autoBackup', 'folder');
+    await fsPage.waitForSelector('#import-summary');
+    assert.equal(await fsPage.innerText('#sum-added'), '1');
+    assert.deepEqual(Object.keys(await folderFiles()), ['goi-backup_2026-01-01_other.json'], 'nothing written over a folder with unseen data');
+    await fsPage.click('#confirm-merge');
+    await fsPage.waitForSelector('#toast.show:has-text("Merged")');
+    log('folder mode: an existing backup in the chosen folder is offered for import before anything is written');
+
+    await fsPage.waitForSelector('#backup-now');
+    await fsPage.click('#backup-now');
+    await fsPage.waitForSelector('#last-export:has-text("folder")');
+    let files = await folderFiles();
+    const autoName = Object.keys(files).find((n) => /^goi-auto_\d{4}-\d{2}-\d{2}_e2e-phone\.json$/.test(n));
+    assert.ok(autoName, 'daily file written: ' + Object.keys(files));
+    assert.ok(files[autoName].cards.some((c) => c.word === '他端末'));
+    const before = files[autoName].cards.length;
+
+    // A change with no further action from the user reaches the file.
+    await fsPage.goto(URL + '#/add');
+    await fsPage.fill('#f-word', '自動保存');
+    await fsPage.fill('#f-reading', 'じどうほぞん');
+    await fsPage.click('#save-card');
+    await fsPage.waitForSelector('#toast.show');
+    await fsPage.click('#tabs a[data-route="home"]');
+    await fsPage.waitForSelector('#export-status:has-text("folder")');
+    files = await folderFiles();
+    assert.equal(files[autoName].cards.length, before + 1, 'new card written to the folder silently');
+    assert.ok(files[autoName].cards.some((c) => c.word === '自動保存'));
+    assert.equal(Object.keys(files).length, 2, 'same-day backups overwrite one file');
+    if (SHOTS) await fsPage.screenshot({ path: path.join(OUT, `${String(++step).padStart(2, '0')}-home-folder-backup.png`) });
+    await fsPage.goto(URL + '#/more');
+    await fsPage.waitForSelector('#auto-folder');
+    if (SHOTS) await fsPage.screenshot({ path: path.join(OUT, `${String(++step).padStart(2, '0')}-more-auto-backup.png`) });
+    await persistent.close();
+    persistent = null;
+    log('folder mode: backups are written to the folder silently after changes, one file per day');
+
+    // Browsers without the folder picker (Firefox, Brave) only offer downloads, and say why.
+    const noFs = await context.newPage();
+    await noFs.addInitScript(() => {
+      delete window.showDirectoryPicker;
+      Object.defineProperty(window, 'showDirectoryPicker', { value: undefined });
+    });
+    await noFs.goto(URL + '#/more');
+    await noFs.waitForSelector('#folder-unsupported');
+    assert.equal(await noFs.locator('#set-autoBackup option[value="folder"]').count(), 0);
+    await noFs.close();
+    log('without a folder picker the option is hidden and the reason is stated');
+
     assert.deepEqual(external, [], 'no requests left the origin');
     assert.deepEqual(errors, [], 'no console or page errors');
     log('no network requests outside the app origin; no console errors');
@@ -334,6 +438,7 @@ async function main() {
     if (errors.length) console.error('Page errors:', errors);
     process.exitCode = 1;
   } finally {
+    if (persistent) await persistent.close().catch(() => {});
     await browser.close();
     server.kill();
   }

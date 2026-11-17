@@ -4,10 +4,10 @@ import { japaneseVoices, speak, ttsSupported } from '../tts';
 import { store } from './app';
 import { download, toast } from './dom';
 
-/** One-tap backup: writes the JSON file and records the export time. */
+/** One-tap manual export: always a downloaded file, whatever the automatic backup mode. */
 export async function exportBackup(): Promise<void> {
   const now = Date.now();
-  const file = await store.export(now);
+  const file = await store.export(now, 'manual export');
   download(exportFilename('backup', store.settings.deviceLabel, now), serializeExport(file), 'application/json');
   toast(`Backup saved: ${file.cards.filter((c) => !c.deleted).length} cards, ${file.reviewLogs.length} reviews.`);
 }
@@ -15,7 +15,7 @@ export async function exportBackup(): Promise<void> {
 /** Same backup through the OS share sheet (Android: send to Drive, email, Quick Share…). */
 export async function shareBackup(): Promise<void> {
   const now = Date.now();
-  const file = await store.export(now);
+  const file = await store.export(now, 'shared file');
   const f = new File([serializeExport(file)], exportFilename('backup', store.settings.deviceLabel, now), {
     type: 'application/json',
   });

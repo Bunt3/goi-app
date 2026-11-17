@@ -1,4 +1,5 @@
 import { createCard } from './cards';
+import { deckMark } from './data/autobackup';
 import { buildExport } from './data/export';
 import { planMerge, type MergePlan } from './data/merge';
 import type { CardDraft } from './data/tsv';
@@ -22,6 +23,8 @@ export class Store {
   settings: Settings = { ...DEFAULT_SETTINGS };
   todayLogs: ReviewLog[] = [];
   private todayStart = 0;
+  /** Called after any change to cards or review logs (used to schedule automatic backups). */
+  onChange: (() => void) | null = null;
 
   constructor(private readonly db: GoiDB = defaultDb) {}
 
@@ -56,12 +59,14 @@ export class Store {
     const card = createCard(draft, now, id);
     await this.db.cards.put(card);
     this.cards.set(card.id, card);
+    this.onChange?.();
     return card;
   }
 
   async addCards(cards: Card[]): Promise<void> {
     await this.db.cards.bulkPut(cards);
     for (const c of cards) this.cards.set(c.id, c);
+    this.onChange?.();
   }
 
   /** Save a content edit. Bumps `updated` so the edit wins a later merge. */
@@ -71,6 +76,7 @@ export class Store {
     const next: Card = { ...current, ...patch, updated: Math.max(now, current.updated + 1) };
     await this.db.cards.put(next);
     this.cards.set(id, next);
+    this.onChange?.();
     return next;
   }
 
@@ -81,6 +87,7 @@ export class Store {
     const next: Card = { ...current, deleted: true, updated: Math.max(now, current.updated + 1) };
     await this.db.cards.put(next);
     this.cards.set(id, next);
+    this.onChange?.();
   }
 
   async answer(cardId: string, direction: Direction, rating: Rating, now = Date.now(), durationMs = 0): Promise<AnswerUndo> {
@@ -94,6 +101,7 @@ export class Store {
     });
     this.cards.set(card.id, card);
     this.todayLogs.push(log);
+    this.onChange?.();
     return { previous, logId: log.id };
   }
 
@@ -109,6 +117,7 @@ export class Store {
     });
     this.cards.set(restored.id, restored);
     this.todayLogs = this.todayLogs.filter((l) => l.id !== undo.logId);
+    this.onChange?.();
   }
 
   async resetCardProgress(id: string, now = Date.now()): Promise<void> {
@@ -121,16 +130,34 @@ export class Store {
     });
     this.cards.set(id, card);
     this.todayLogs.push(...logs);
+    this.onChange?.();
   }
 
   async allLogs(): Promise<ReviewLog[]> {
     return this.db.logs.toArray();
   }
 
+  /** Fingerprint of the current deck; see deckMark. */
+  async mark(): Promise<string> {
+    const last = await this.db.logs.orderBy('reviewedAt').last();
+    return deckMark(this.cards.values(), await this.db.logs.count(), last?.reviewedAt ?? 0);
+  }
+
+  /**
+   * Build a backup file. Nothing is recorded until `commit()` is called, so a
+   * write that fails doesn't leave the app believing it has a backup.
+   */
+  async prepareBackup(where: string, now = Date.now()): Promise<{ file: ExportFile; commit: () => Promise<void> }> {
+    const patch = { lastExportAt: now, lastBackupMark: await this.mark(), lastBackupWhere: where };
+    const file = buildExport([...this.cards.values()], await this.allLogs(), { ...this.settings, ...patch }, now);
+    return { file, commit: () => this.setSettings(patch) };
+  }
+
   /** Build the backup file and record that an export happened. */
-  async export(now = Date.now()): Promise<ExportFile> {
-    await this.setSettings({ lastExportAt: now });
-    return buildExport([...this.cards.values()], await this.allLogs(), this.settings, now);
+  async export(now = Date.now(), where = 'manual export'): Promise<ExportFile> {
+    const { file, commit } = await this.prepareBackup(where, now);
+    await commit();
+    return file;
   }
 
   async planImport(file: ExportFile): Promise<MergePlan> {
@@ -143,20 +170,28 @@ export class Store {
       await this.db.logs.bulkPut(plan.logs);
     });
     await this.load(now);
+    this.onChange?.();
   }
 
   /**
    * Discard everything on this device and load the file instead. This
-   * device's own label and voice choice are kept if they were set.
+   * device's own label, voice choice and backup setup are kept.
    */
   async replaceWith(file: ExportFile, now = Date.now()): Promise<void> {
     const settings: Settings = {
       ...file.settings,
       deviceLabel: this.settings.deviceLabel || file.settings.deviceLabel,
       ttsVoiceURI: this.settings.ttsVoiceURI ?? file.settings.ttsVoiceURI,
+      // How this device backs itself up is a property of the device, not of the data.
+      autoBackup: this.settings.autoBackup,
+      autoBackupDays: this.settings.autoBackupDays,
+      autoBackupKeep: this.settings.autoBackupKeep,
       lastExportAt: file.exportedAt || null,
+      lastBackupWhere: 'the imported file',
     };
     await replaceAll(file.cards, file.reviewLogs, settings, this.db);
     await this.load(now);
+    // The deck now equals that file, so there is nothing new to back up yet.
+    await this.setSettings({ lastBackupMark: await this.mark() });
   }
 }

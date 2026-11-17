@@ -1,5 +1,6 @@
 import './styles.css';
 import { applyTheme, ensurePersistence, mountShell, register, store } from './ui/app';
+import { installBackupHooks } from './ui/autobackup';
 import { h, toast } from './ui/dom';
 import { homeView } from './ui/home';
 import { reviewView } from './ui/review';
@@ -44,6 +45,7 @@ async function start(): Promise<void> {
   register('more', moreView);
   mountShell(root);
   if (store.cards.size > 0) void ensurePersistence();
+  installBackupHooks();
 
   if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     const hadController = !!navigator.serviceWorker.controller;

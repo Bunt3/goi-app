@@ -57,7 +57,8 @@ describe('export → import round trip', () => {
     const byId = <T extends { id: string }>(xs: T[]) => [...xs].sort((x, y) => x.id.localeCompare(y.id));
     expect(byId([...target.cards.values()])).toEqual(byId([...source.cards.values()]));
     expect(byId(await target.allLogs())).toEqual(byId(await source.allLogs()));
-    expect(target.settings).toEqual(source.settings);
+    // Everything is restored except the note of where the last backup went.
+    expect(target.settings).toEqual({ ...source.settings, lastBackupWhere: 'the imported file' });
     expect(target.settings.lastExportAt).toBe(T0);
     expect(target.todayLogs).toHaveLength(1);
   });

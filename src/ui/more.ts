@@ -4,7 +4,9 @@ import { isNoop, type MergePlan } from '../data/merge';
 import { SEED_TAG, type Card, type ExportFile, type Settings } from '../types';
 import { daysAgoText, uuidFromName } from '../util';
 import { canShareFiles, exportAnki, exportBackup, shareBackup } from './actions';
+import { chooseFolder, folderAccess, folderSupported, forgetFolder, newestBackup, savedFolder } from '../backupfs';
 import { applyTheme, ensurePersistence, refresh, store, type View } from './app';
+import { runAutoBackup } from './autobackup';
 import { h, plural, toast } from './dom';
 
 async function loadSeedDeck(): Promise<{ added: number; skipped: number }> {
@@ -44,7 +46,6 @@ function numberSetting(
 
 export function moreView(_arg: string, params: URLSearchParams): View {
   const s = store.settings;
-  const now = Date.now();
   const liveCount = store.live().length;
 
   // ---------------- Backup & import ----------------
@@ -194,6 +195,186 @@ export function moreView(_arg: string, params: URLSearchParams): View {
   }
   void describePersistence();
 
+  // ---------------- Automatic backup ----------------
+  const autoBox = h('div', { class: 'card', id: 'auto-backup' });
+
+  /** After a folder is picked: offer to import what's already there, otherwise prove the folder works. */
+  async function afterFolderChosen(): Promise<void> {
+    const folder = await savedFolder();
+    if (!folder) return;
+    let existing: Awaited<ReturnType<typeof newestBackup>> = null;
+    try {
+      existing = await newestBackup(folder);
+    } catch {
+      /* unreadable folder: the write below will report it */
+    }
+    if (existing) {
+      try {
+        const file = parseExport(existing.text);
+        const plan = await store.planImport(file);
+        if (!isNoop(plan.summary)) {
+          // Don't write over a folder holding data this device lacks until the user has seen it.
+          showPlan(file, plan, `${existing.name} (already in “${folder.name}”)`);
+          toast('That folder already has a backup with data this device doesn’t. Review it below.', undefined, 7000);
+          return;
+        }
+      } catch {
+        /* not a usable backup: ignore it */
+      }
+    }
+    await runAutoBackup('manual');
+  }
+
+  async function renderAuto(): Promise<void> {
+    const cur = store.settings;
+    const supported = folderSupported();
+    const folder = supported ? await savedFolder() : null;
+    const access = folder ? await folderAccess(folder, false) : null;
+
+    const mode = h(
+      'select',
+      { id: 'set-autoBackup', 'aria-label': 'Automatic backup' },
+      h('option', { value: 'download', selected: cur.autoBackup === 'download' }, 'Download a file after I study'),
+      supported ? h('option', { value: 'folder', selected: cur.autoBackup === 'folder' }, 'Save into a folder I choose') : null,
+      h('option', { value: 'off', selected: cur.autoBackup === 'off' }, 'Off (I’ll export by hand)'),
+    );
+    mode.addEventListener('change', async () => {
+      const value = mode.value as 'off' | 'download' | 'folder';
+      if (value === 'folder' && !(await savedFolder())) {
+        const picked = await chooseFolder().catch(() => null);
+        if (!picked) {
+          await renderAuto(); // cancelled: stay on the previous mode
+          return;
+        }
+        await store.setSettings({ autoBackup: 'folder' });
+        await afterFolderChosen();
+      } else {
+        await store.setSettings({ autoBackup: value });
+      }
+      await renderAuto();
+      updateLastExport();
+    });
+
+    const days = h(
+      'select',
+      { id: 'set-autoBackupDays', 'aria-label': 'How often' },
+      ([1, 3, 7] as const).map((d) =>
+        h('option', { value: String(d), selected: cur.autoBackupDays === d }, d === 1 ? 'At most once a day' : d === 3 ? 'At most every 3 days' : 'At most once a week'),
+      ),
+    );
+    days.addEventListener('change', () => void store.setSettings({ autoBackupDays: Number(days.value) }));
+
+    const detail: (HTMLElement | null)[] = [];
+    if (cur.autoBackup === 'download') {
+      detail.push(
+        h('label', { class: 'field', style: 'margin-top:10px' }, h('span', null, 'How often'), days),
+        h('p', { class: 'muted small' }, 'When a session ends and there is something new, a file named goi-auto_DATE_LABEL.json is saved to your browser’s download folder. Old files are yours to tidy: a web page can’t delete downloads.'),
+      );
+    } else if (cur.autoBackup === 'folder') {
+      detail.push(
+        h(
+          'p',
+          { style: 'margin-top:10px', id: 'auto-folder' },
+          folder ? ['Folder: ', h('b', null, folder.name), access === 'granted' ? '' : ' — permission needed'] : 'No folder chosen yet.',
+        ),
+        h(
+          'div',
+          { class: 'row wrap' },
+          h(
+            'button',
+            {
+              id: 'choose-folder',
+              onclick: async () => {
+                try {
+                  if (await chooseFolder()) await afterFolderChosen();
+                } catch (err) {
+                  toast(`Couldn’t use that folder: ${(err as Error).message}`, undefined, 7000);
+                }
+                await renderAuto();
+                updateLastExport();
+              },
+            },
+            folder ? 'Change folder…' : 'Choose folder…',
+          ),
+          folder && access !== 'granted'
+            ? h(
+                'button',
+                {
+                  id: 'allow-folder',
+                  onclick: async () => {
+                    await runAutoBackup('manual');
+                    await renderAuto();
+                    updateLastExport();
+                  },
+                },
+                'Allow access',
+              )
+            : null,
+          folder
+            ? h(
+                'button',
+                {
+                  class: 'link',
+                  onclick: async () => {
+                    await forgetFolder();
+                    await store.setSettings({ autoBackup: 'download' });
+                    await renderAuto();
+                  },
+                },
+                'Stop using it',
+              )
+            : null,
+        ),
+        h(
+          'p',
+          { class: 'muted small', style: 'margin-top:8px' },
+          `Saved quietly whenever something changes, one file per day, keeping the newest ${cur.autoBackupKeep}. Pick a folder inside OneDrive, Google Drive or similar and the copies leave this device too — the app itself still never touches the network.`,
+        ),
+      );
+    } else {
+      detail.push(h('p', { class: 'muted small', style: 'margin-top:10px' }, 'Nothing is saved outside the browser unless you export. The Today screen reminds you after 7 days.'));
+    }
+    if (!supported) {
+      detail.push(
+        h('p', { class: 'muted small', id: 'folder-unsupported' }, 'Saving straight into a folder isn’t available in this browser: Firefox doesn’t support it and Brave turns it off. Chrome and Edge do.'),
+      );
+    }
+
+    if (cur.autoBackup !== 'off') {
+      detail.push(
+        h(
+            'button',
+            {
+              class: 'block',
+              id: 'backup-now',
+              style: 'margin-top:4px',
+              onclick: async () => {
+                await runAutoBackup('manual');
+                await renderAuto();
+                updateLastExport();
+              },
+            },
+            'Back up now',
+        ),
+      );
+    }
+    autoBox.replaceChildren(
+      h('label', { class: 'field', style: 'margin-bottom:0' }, h('span', null, 'Automatic backup'), mode),
+      ...detail.filter((x): x is HTMLElement => x !== null),
+    );
+  }
+  void renderAuto();
+
+  const lastExport = h('p', { id: 'last-export' });
+  function updateLastExport(): void {
+    const cur = store.settings;
+    lastExport.textContent =
+      liveCount === 0 && cur.lastExportAt == null
+        ? 'Nothing to back up yet.'
+        : `Last backed up ${daysAgoText(cur.lastExportAt, Date.now())}${cur.lastBackupWhere ? ` (${cur.lastBackupWhere})` : ''}.`;
+  }
+  updateLastExport();
+
   const deviceLabel = h('input', { type: 'text', id: 'set-deviceLabel', value: s.deviceLabel, placeholder: 'e.g. s24 or desktop', autocomplete: 'off', autocapitalize: 'off' });
   deviceLabel.addEventListener('change', () => void store.setSettings({ deviceLabel: deviceLabel.value.trim() }));
 
@@ -201,8 +382,9 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     'section',
     { id: 'sec-backup' },
     h('h2', null, 'Backup & transfer'),
-    h('p', { id: 'last-export' }, liveCount === 0 && s.lastExportAt == null ? 'Nothing to back up yet.' : `Last exported ${daysAgoText(s.lastExportAt, now)}.`),
+    lastExport,
     h('label', { class: 'field' }, h('span', null, 'Device label (goes in the backup filename)'), deviceLabel),
+    autoBox,
     h(
       'div',
       { class: 'stack' },
@@ -216,7 +398,7 @@ export function moreView(_arg: string, params: URLSearchParams): View {
             refresh();
           },
         },
-        'Export backup (JSON)',
+        'Export backup now (JSON)',
       ),
       canShareFiles()
         ? h(
