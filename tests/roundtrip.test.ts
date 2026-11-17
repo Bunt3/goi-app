@@ -17,7 +17,7 @@ async function freshStore(): Promise<Store> {
 
 async function populated(): Promise<Store> {
   const store = await freshStore();
-  await store.setSettings({ deviceLabel: 'S24 Ultra', maxReviewsPerDay: 25, furigana: false, ttsRate: 0.8 });
+  await store.setSettings({ deviceLabel: 'My Phone', maxReviewsPerDay: 25, furigana: false, ttsRate: 0.8 });
   const a = await store.addCard(
     {
       word: '承る',
@@ -100,8 +100,8 @@ describe('export → import round trip', () => {
     const file = await source.export(T0);
     expect(file.app).toBe('goi-app');
     expect(file.schemaVersion).toBe(1);
-    expect(file.deviceLabel).toBe('S24 Ultra');
-    expect(exportFilename('backup', file.deviceLabel, T0)).toBe('goi-backup_2026-11-17_S24-Ultra.json');
+    expect(file.deviceLabel).toBe('My Phone');
+    expect(exportFilename('backup', file.deviceLabel, T0)).toBe('goi-backup_2026-11-17_My-Phone.json');
     expect(exportFilename('anki', '', T0)).toBe('goi-anki_2026-11-17_device.tsv');
     expect(exportFilename('backup', 'a/b:c*?', T0)).toBe('goi-backup_2026-11-17_a-b-c.json');
   });

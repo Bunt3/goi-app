@@ -54,7 +54,9 @@ Scale check done here with a synthetic 210,000-entry file (fixture entries repea
 
 ## The owner
 
-Sole user. American, long-term resident of Japan, moving into Japanese-language office work. Passed N1; the gap is written business vocabulary and keigo set phrases. Studies in 5-minute bursts. Devices: Galaxy S24 Ultra (Brave or Chrome), Windows 11 desktop (Firefox, Brave). Wants direct answers with risks stated and sources for factual claims, and prefers that reasonable decisions are made and justified afterwards rather than asked about first.
+Sole user. Target vocabulary: N1+ written business vocabulary and keigo set phrases, with casual, colloquial and slang vocabulary equally important. Studies in 5-minute bursts. Devices to support: an Android phone (Brave or Chrome) and a Windows desktop (Firefox, Brave). Wants direct answers with risks stated and sources for factual claims, and prefers that reasonable decisions are made and justified afterwards rather than asked about first.
+
+This repository is public. Keep personal details about the owner out of it: describe requirements, not the person.
 
 Standing instruction for this repo: when a build is finished and tests pass, merge into `main` so Pages deploys.
 
@@ -125,7 +127,7 @@ Ordered by how likely they are to bite.
 1. **Text recognition on real input.** Tested only on text rendered by headless Chromium in one font, on plain light and dark backgrounds. Not tested: any real photograph, a phone camera, a screenshot from another application, mixed Japanese and Latin layouts, small text. One stray extra kana appeared even in the clean test. Expect materially worse results on photos. Vertical text is unsupported (no `jpn_vert` model shipped).
 2. **Recognition speed and memory on the phone.** Sub-second in the build container. A phone will be slower and the engine holds tens of MB; `disposeOcr` runs when leaving the Capture screen.
 3. **Word splitting quality.** `Intl.Segmenter` output depends on the browser's ICU version. Tests assert only properties that should hold everywhere. The user-facing escape hatch is *Pick by character*.
-4. **Real devices generally.** No run on the S24, in Brave, or in Firefox: PWA install, safe-area insets, the bottom sheet over the on-screen keyboard, `<input capture>` behaviour, drag-to-select on a touch screen, downloads on Android.
+4. **Real devices generally.** No run on a real phone, in Brave, or in Firefox: PWA install, safe-area insets, the bottom sheet over the on-screen keyboard, `<input capture>` behaviour, drag-to-select on a touch screen, downloads on Android.
 5. **Video formats.** The run-through uses a WebM clip it records itself. Phone recordings are usually MP4/H.264 or HEVC; whether the browser plays them is untested, and HEVC often fails in Chromium.
 6. **Folder backup against a real folder.** Tested with the picker pointed at the origin-private file system only.
 7. **Audio output.** No Japanese voice in the build environment; only the "no voice" path was exercised.

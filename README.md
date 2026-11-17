@@ -214,7 +214,7 @@ What is at risk between backups: in download mode, up to one study day of review
 
 There is no sync. Data moves by file.
 
-1. On the source device: **More → Export backup (JSON)**. Where the browser allows sharing JSON files, a *Share backup…* button also appears and hands the same file to the system share sheet; otherwise the file goes to Downloads. Set a *device label* first so files are easy to tell apart: `goi-backup_2026-11-17_s24.json`.
+1. On the source device: **More → Export backup (JSON)**. Where the browser allows sharing JSON files, a *Share backup…* button also appears and hands the same file to the system share sheet; otherwise the file goes to Downloads. Set a *device label* first so files are easy to tell apart: `goi-backup_2026-11-17_phone.json`.
 2. Get the file to the other device however you like.
 3. On the target device: **More → Import a backup…** and pick the file. A summary of what would change appears. Nothing is written yet.
 4. Press **Merge into this device**.
@@ -260,7 +260,7 @@ A backup is one UTF-8 JSON file. All timestamps are Unix epoch **milliseconds**.
   "app": "goi-app",            // required; other files are rejected
   "schemaVersion": 1,          // files with a higher number are rejected with a message
   "exportedAt": 1794877200000,
-  "deviceLabel": "s24",
+  "deviceLabel": "phone",
   "cards": [ /* Card */ ],
   "reviewLogs": [ /* ReviewLog */ ],
   "settings": { /* Settings */ }

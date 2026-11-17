@@ -156,7 +156,7 @@ describe('folder rotation', () => {
   it('never touches manual exports, other devices’ files or unrelated files', () => {
     const names = [
       day(1), day(2), day(3),
-      day(1, 's24'), day(2, 's24'),
+      day(1, 'phone'), day(2, 'phone'),
       'goi-backup_2026-11-01_desktop.json',
       'goi-auto_2026-11-01_desktop.json.bak',
       'notes.txt',
@@ -170,9 +170,9 @@ describe('folder rotation', () => {
   });
 
   it('recognises Goi backup files of either kind', () => {
-    expect(isBackupName('goi-auto_2026-11-17_s24.json')).toBe(true);
-    expect(isBackupName('goi-backup_2026-11-17_s24.json')).toBe(true);
-    expect(isBackupName('goi-anki_2026-11-17_s24.tsv')).toBe(false);
+    expect(isBackupName('goi-auto_2026-11-17_phone.json')).toBe(true);
+    expect(isBackupName('goi-backup_2026-11-17_phone.json')).toBe(true);
+    expect(isBackupName('goi-anki_2026-11-17_phone.tsv')).toBe(false);
     expect(isBackupName('holiday.json')).toBe(false);
   });
 });

@@ -376,7 +376,7 @@ export function moreView(_arg: string, params: URLSearchParams): View {
   }
   updateLastExport();
 
-  const deviceLabel = h('input', { type: 'text', id: 'set-deviceLabel', value: s.deviceLabel, placeholder: 'e.g. s24 or desktop', autocomplete: 'off', autocapitalize: 'off' });
+  const deviceLabel = h('input', { type: 'text', id: 'set-deviceLabel', value: s.deviceLabel, placeholder: 'e.g. phone or desktop', autocomplete: 'off', autocapitalize: 'off' });
   deviceLabel.addEventListener('change', () => void store.setSettings({ deviceLabel: deviceLabel.value.trim() }));
 
   const backup = h(
