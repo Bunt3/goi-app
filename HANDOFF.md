@@ -18,9 +18,8 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 The offline dictionary (previous NEXT TASK) is built: phases A to D are done and shipped; phase E (dictionary-based word splitting) was not done. What remains, in order:
 
 1. **Owner tries it on the phone.** Install the dictionary from More on Wi-Fi, then: pick words from real example sentences, type slang into Add, walk the Inbox. Report wrong first candidates and misses with the exact text. Nothing has been checked against real JMdict data on a real sentence.
-2. **Check the CI-built file.** See "Dictionary: real data" below for what the first CI run showed. If the example-sentence count is 0 there, the key names in the examples file differ from what `examplePair` in `scripts/build-dict.mjs` accepts (`sentences[].land` or `.lang`, values `jpn`/`eng`); inspect one entry and adjust.
-3. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html and add the version if wanted.
-4. **Phase E, optional:** split picker text by longest dictionary match instead of `Intl.Segmenter`. Needs a batched lookup of all prefixes at each position (one IndexedDB query per position), so test speed on the phone first.
+2. **Verify the licence wording.** The EDRDG licence page and Tatoeba's terms could not be fetched from the build container. The More screen and README avoid naming a licence version; confirm the attribution wording on https://www.edrdg.org/edrdg/licence.html and add the version if wanted.
+3. **Phase E, optional:** split picker text by longest dictionary match instead of `Intl.Segmenter`. Needs a batched lookup of all prefixes at each position (one IndexedDB query per position), so test speed on the phone first.
 
 ## Offline dictionary: what was built (this block)
 
@@ -41,9 +40,20 @@ The owner asked for an offline dictionary that fills definitions and example sen
 
 ### Dictionary: real data
 
-Not yet seen. The first CI run with this code fetches and builds it; record here the asset name, entry and example counts, raw and gzip size printed by `build-dict.mjs` in the "npm run build" step of the Actions log.
+First built by CI on 2026-11-17 ([run 44092584339](https://github.com/Bunt3/goi-app/actions/runs/44092584339)), deployed successfully:
 
-Scale check done here with a synthetic 210,000-entry file (fixture entries repeated, so shorter than real ones): build 4 s; in headless Chromium with the CPU slowed 4×, install 18 s, 77 MB of storage, first lookup well under a second. Real entries are longer, so expect roughly 2–3× the install time and storage. Unmeasured on a phone.
+| | |
+| --- | --- |
+| Source asset | `jmdict-examples-eng-3.6.2+20261116213322.json.zip` (14.2 MB) |
+| Entries | 219,127 |
+| Example sentences | 32,322 (up to 2 per sense; the examples' key names parsed correctly) |
+| Compacted, uncompressed | 28.5 MB |
+| Download (gzip) | 10.38 MB, under the 15 MB budget, so no examples were dropped |
+| Build time | about 6 s for the dictionary step |
+
+The download is cached in Actions under the asset name, so later deploys reuse it until jmdict-simplified publishes a new release.
+
+Scale check done here before the real data existed, with a synthetic 210,000-entry file of 26.3 MB uncompressed (close to the real 28.5 MB): in headless Chromium with the CPU slowed 4×, install 18 s, 77 MB of storage, first lookup well under a second. Expect similar on the real file. Unmeasured on a phone.
 
 ### Dictionary limits to tell the owner
 
@@ -123,7 +133,7 @@ The owner mentioned audio alongside visuals. In-app speech recognition was not a
 
 Ordered by how likely they are to bite.
 
-0. **The dictionary on real data and real text.** Only the 49-entry fixture and a synthetic 210,000-entry file were run here. Ranking, deinflection coverage, example-sentence parsing, install time and storage on the phone are all unverified. See "NEXT TASK".
+0. **The dictionary on real text.** The real file builds (219,127 entries, 10.4 MB download) but has never been installed or queried. Ranking, deinflection coverage on real sentences, install time and storage on the phone are unverified. See "NEXT TASK".
 1. **Text recognition on real input.** Tested only on text rendered by headless Chromium in one font, on plain light and dark backgrounds. Not tested: any real photograph, a phone camera, a screenshot from another application, mixed Japanese and Latin layouts, small text. One stray extra kana appeared even in the clean test. Expect materially worse results on photos. Vertical text is unsupported (no `jpn_vert` model shipped).
 2. **Recognition speed and memory on the phone.** Sub-second in the build container. A phone will be slower and the engine holds tens of MB; `disposeOcr` runs when leaving the Capture screen.
 3. **Word splitting quality.** `Intl.Segmenter` output depends on the browser's ICU version. Tests assert only properties that should hold everywhere. The user-facing escape hatch is *Pick by character*.
