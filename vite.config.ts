@@ -68,10 +68,11 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin || !url.pathname.startsWith(BASE)) return;
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {
-      const hit = await cache.match(req, { ignoreSearch: true });
+      // ignoreVary: some hosts send "Vary: Origin", which would stop precached files matching.
+      const hit = await cache.match(req, { ignoreSearch: true, ignoreVary: true });
       if (hit) return hit;
       if (req.mode === 'navigate') {
-        const shell = await cache.match(BASE);
+        const shell = await cache.match(BASE, { ignoreVary: true });
         if (shell) return shell;
       }
       return fetch(req);

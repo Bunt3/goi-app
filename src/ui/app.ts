@@ -103,14 +103,21 @@ export function mountShell(root: HTMLElement): void {
 
 /**
  * Ask the browser not to evict our IndexedDB data under storage pressure.
- * Called after the first real write, when there is something worth keeping.
+ * Called once there is something worth keeping. Firefox shows a permission
+ * prompt for this, so the automatic request is made at most once a week;
+ * the More screen has a button to ask again on demand.
  */
-let persistAsked = false;
+const PERSIST_KEY = 'goi.persistAskedAt';
+let persistChecked = false;
 export async function ensurePersistence(): Promise<void> {
-  if (persistAsked || !navigator.storage?.persist) return;
-  persistAsked = true;
+  if (persistChecked || !navigator.storage?.persist) return;
+  persistChecked = true;
   try {
-    if (!(await navigator.storage.persisted())) await navigator.storage.persist();
+    if (await navigator.storage.persisted()) return;
+    const last = Number(localStorage.getItem(PERSIST_KEY) ?? 0);
+    if (Date.now() - last < 7 * 86_400_000) return;
+    localStorage.setItem(PERSIST_KEY, String(Date.now()));
+    await navigator.storage.persist();
   } catch {
     /* not fatal: export remains the real backup */
   }

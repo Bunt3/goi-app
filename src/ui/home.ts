@@ -60,7 +60,9 @@ export async function homeView(): Promise<View> {
     );
   }
 
-  const sinceExport = s.lastExportAt == null ? Infinity : (now - s.lastExportAt) / 86_400_000;
+  // Never exported: the clock starts at the first card, so a brand-new deck isn't nagged on day one.
+  const unprotectedSince = s.lastExportAt ?? Math.min(...live.map((c) => c.created));
+  const sinceExport = (now - unprotectedSince) / 86_400_000;
   const exportLine =
     sinceExport >= EXPORT_NUDGE_DAYS
       ? h(
@@ -80,7 +82,7 @@ export async function homeView(): Promise<View> {
             'Export backup now',
           ),
         )
-      : h('p', { class: 'muted small', id: 'export-status' }, `Last exported ${daysAgoText(s.lastExportAt, now)}.`);
+      : h('p', { class: 'muted small', id: 'export-status' }, s.lastExportAt == null ? 'Not exported yet.' : `Last exported ${daysAgoText(s.lastExportAt, now)}.`);
 
   let status: string;
   if (available > 0) status = '';

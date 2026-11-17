@@ -521,6 +521,9 @@ rt {
 
 .answer {
   width: 100%;
+}
+
+.answer.divided {
   border-top: 1px solid var(--line);
   margin-top: 20px;
   padding-top: 16px;
@@ -736,11 +739,12 @@ th select {
 
 /* ---------- Toast ---------- */
 
+/* Top of the screen, so it never covers the thumb-zone buttons. */
 #toast {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--tabs-h) + env(safe-area-inset-bottom, 0px) + 14px);
-  transform: translate(-50%, 16px);
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  transform: translate(-50%, -16px);
   background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -763,10 +767,6 @@ th select {
   opacity: 1;
   transform: translate(-50%, 0);
   pointer-events: auto;
-}
-
-body.fullscreen #toast {
-  bottom: 110px;
 }
 
 @media (prefers-reduced-motion: reduce) {

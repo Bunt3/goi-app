@@ -30,13 +30,15 @@ export function productionFront(card: Card): HTMLElement[] {
 }
 
 /** The full answer, shared by both directions and by listening mode. */
-export function cardBack(card: Card, furigana: boolean, opts: { showWord?: boolean; audio?: boolean } = {}): HTMLElement {
-  const { showWord = true, audio = true } = opts;
+export function cardBack(card: Card, furigana: boolean, opts: { audio?: boolean; divider?: boolean } = {}): HTMLElement {
+  const { audio = true, divider = false } = opts;
   const example = card.example_ja ? exampleNode(card.example_ja, card.word, card.reading, 'highlight', furigana) : null;
   return h(
     'div',
-    { class: 'answer' },
-    showWord ? h('div', { class: wordClass(card.word), lang: 'ja' }, wordNode(card.word, card.reading, furigana)) : null,
+    { class: divider ? 'answer divided' : 'answer' },
+    // Furigana goes on the word inside the example sentence. Only when there is
+    // no sentence does it go on the headword (the reading line follows either way).
+    h('div', { class: wordClass(card.word), lang: 'ja' }, example ? card.word : wordNode(card.word, card.reading, furigana)),
     h('div', { class: 'reading', lang: 'ja' }, card.reading),
     h('div', { class: 'meaning' }, card.meaning_en),
     card.meaning_ja ? h('div', { class: 'meaning-ja', lang: 'ja' }, card.meaning_ja) : null,

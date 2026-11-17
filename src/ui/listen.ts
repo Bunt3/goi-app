@@ -129,9 +129,6 @@ export function listenView(): View {
           ? cardBack(c, store.settings.furigana, { audio: false })
           : h('div', { class: 'muted', style: 'font-size:44px', 'aria-hidden': 'true' }, '🔊'),
       );
-      // The answer block carries a top border meant for the review screen.
-      const answer = stage.querySelector<HTMLElement>('.answer');
-      if (answer) answer.style.cssText = 'border:none;margin:0;padding:0';
       revealBtn.textContent = revealed ? 'Next' : 'Reveal';
       position.textContent = `${index + 1} / ${deck.length}`;
     }

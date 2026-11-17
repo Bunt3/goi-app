@@ -94,7 +94,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
       else body.append(cardBack(card, s.furigana));
     } else {
       body.append(...productionFront(card));
-      if (revealed) body.append(cardBack(card, s.furigana));
+      if (revealed) body.append(cardBack(card, s.furigana, { divider: true }));
     }
     if (!revealed) {
       actions.append(h('button', { class: 'primary big', id: 'reveal', onclick: reveal }, 'Show answer'));
@@ -177,7 +177,7 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
     } else {
       const kept = answered - again;
       line =
-        `${plural(answered, 'card')} in ${clock(elapsed)} · ${kept} remembered` +
+        `${plural(answered, 'review')} in ${clock(elapsed)} · ${kept} remembered` +
         (again > 0 ? ` · ${again} to see again` : '') +
         '.';
     }
