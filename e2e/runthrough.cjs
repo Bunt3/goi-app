@@ -634,6 +634,16 @@ async function main() {
     assert.equal(await page.locator('#card-list .item').count(), 1);
     log(`decks: Today studies only the chosen decks (Slang: 1 new vs ${allNew} for all); Browse filters by deck`);
 
+    // Share to Goi: another app's share sheet opens /goi-app/share?… and lands in Capture.
+    await page.goto(URL + 'share?' + new URLSearchParams({ title: '社内報', text: '来週の会議はリスケになりました https://example.com/news/1' }));
+    await page.waitForSelector('#capture-pick .tok');
+    assert.equal(await page.inputValue('#capture-text'), '来週の会議はリスケになりました');
+    assert.equal(await page.inputValue('#capture-source'), '社内報 · example.com');
+    assert.ok(page.url().endsWith('/goi-app/#/capture'), 'share URL replaced: ' + page.url());
+    await page.goto(URL + 'share?' + new URLSearchParams({ url: 'https://example.com/en' }));
+    await page.waitForSelector('#share-note');
+    log('share target: shared text opens in Capture ready to pick, with the page and site as the source; a bare link explains what to do');
+
     // Interface language: Japanese for menus and messages, card content untouched, and back.
     await page.goto(URL + '#/more');
     await page.selectOption('#set-uiLang', 'ja');

@@ -2,6 +2,7 @@ import { disposeOcr, recognize } from '../ocr';
 import { cleanCapturedText } from '../textpick';
 import type { View } from './app';
 import { h, toast } from './dom';
+import type { Shared } from '../share';
 import { deckSelect } from './deckselect';
 import { closePicker, pickerPanel } from './picker';
 
@@ -18,6 +19,12 @@ const MAX_EDGE = 2600;
 /** Remembered while the app is open: several captures usually share a source. */
 let stickySource = '';
 let stickyDeck = '';
+/** Text shared in from another app, waiting for the capture screen to open. */
+let pendingShare: Shared | null = null;
+
+export function setPendingShare(s: Shared): void {
+  pendingShare = s;
+}
 
 async function toCanvas(source: Blob | HTMLVideoElement): Promise<HTMLCanvasElement> {
   let width: number;
@@ -143,6 +150,22 @@ export function captureView(): View {
   function setText(value: string): void {
     text.value = value;
     renderPicker();
+  }
+
+  // Shared in from another app (Android share sheet): straight to picking.
+  const shared = pendingShare;
+  pendingShare = null;
+  let shareNote: HTMLElement | null = null;
+  if (shared) {
+    source.value = shared.source;
+    stickySource = shared.source;
+    if (shared.text) setTimeout(() => setText(shared.text), 0);
+    else
+      shareNote = h(
+        'div',
+        { class: 'notice info', id: 'share-note' },
+        'Only a link was shared, with no text. Open the page, select the Japanese you want, and share that selection to Goi instead.',
+      );
   }
 
   // ---- Image stage: preview, drag to select a region, read ---------------
@@ -337,6 +360,7 @@ export function captureView(): View {
     'div',
     { class: 'page' },
     h('h1', null, 'Capture'),
+    shareNote,
     h('p', { class: 'muted small' }, 'Get Japanese text in from a photo, a screenshot or a paste, then tap the words you want. Images are read on this device and never uploaded.'),
     h(
       'div',

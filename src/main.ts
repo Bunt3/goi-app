@@ -7,10 +7,11 @@ import { reviewView } from './ui/review';
 import { addView, editView } from './ui/add';
 import { dictView } from './ui/dictview';
 import { checkerView } from './ui/checker';
+import { readShare } from './share';
 import { setUiLang } from './ui/i18n';
 import { browseView } from './ui/browse';
 import { bulkView } from './ui/bulk';
-import { captureView } from './ui/capture';
+import { captureView, setPendingShare } from './ui/capture';
 import { listenView } from './ui/listen';
 import { statsView } from './ui/stats';
 import { moreView } from './ui/more';
@@ -50,6 +51,12 @@ async function start(): Promise<void> {
   register('listen', listenView);
   register('stats', statsView);
   register('more', moreView);
+  // Opened from another app's share sheet: /goi-app/share?title=…&text=…&url=…
+  if (location.pathname.endsWith('/share')) {
+    const shared = readShare(new URLSearchParams(location.search));
+    history.replaceState(null, '', import.meta.env.BASE_URL + '#/capture');
+    if (shared) setPendingShare(shared);
+  }
   mountShell(root);
   if (store.settings.uiLang === 'ja') setUiLang('ja');
   if (store.cards.size > 0) void ensurePersistence();

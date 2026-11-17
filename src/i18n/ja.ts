@@ -232,6 +232,7 @@ export const JA: Record<string, string> = {
   'Use this frame': 'このフレームを使う',
   'Read the whole image': '画像全体を読み取る',
   'Clear selection': '選択を解除',
+  'Only a link was shared, with no text. Open the page, select the Japanese you want, and share that selection to Goi instead.': 'リンクだけが共有され、テキストがありませんでした。ページを開いて日本語を選択し、その選択部分をGoiに共有してください。',
 
   // ---- Bulk
   'Paste many': 'まとめて貼り付け',

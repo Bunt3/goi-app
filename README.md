@@ -21,6 +21,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
 - [Decks and starter decks](#decks-and-starter-decks)
+- [Share to Goi](#share-to-goi)
 - [Checker mode](#checker-mode)
 - [Interface language](#interface-language)
 - [Where your data lives, and automatic backup](#where-your-data-lives-and-automatic-backup)
@@ -198,6 +199,15 @@ Every card belongs to one deck. Cards you add go to *My cards* unless you pick a
 | 擬音語・擬態語 | ~125 | Onomatopoeia grouped by situation (weather, food, body, feelings, manner, work, home, sounds, movement), each with an example. |
 
 All were written with AI help; checker mode (below) lets a native speaker go through them. The slang sources were checked from search-result summaries, not full pages. Loading a deck twice adds nothing, a card you deleted stays deleted, and a word you already have (same word and reading) is skipped.
+
+## Share to Goi
+
+Select Japanese text in any app (LINE, Slack, a browser, a news app), tap **Share**, and choose **Goi**. The app opens on Capture with the text ready to pick from, and the cards' Source filled in with the page title and site when the sharing app provides them. A link inside the shared text goes into the Source, not the text. Sharing only a link (no selected text) opens Capture with a note explaining what to do.
+
+- **Permissions:** none. The app doesn't read anything you don't share; Android hands over only the shared text.
+- **Requirements:** the app must be *installed* (not just a bookmark), because Android only lists installed web apps in the share sheet. After this update you may need to remove and re-add the home-screen app once so Android picks up the new share entry; your cards are stored by the browser, not the icon, so they stay.
+- **Where it works:** Chrome on Android supports this. Brave on Android installs web apps differently, and whether it registers share targets is untested. Firefox and desktop browsers don't offer it.
+- The share opens `…/goi-app/share?title=…&text=…`, which the service worker serves from cache, so it works offline.
 
 ## Checker mode
 
