@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (after the seventh work block: checker mode, sharing, keigo, weekly look-back, new look)
+# Handoff — state as of 2026-11-18 (next: Android APK; seventh block done)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -16,14 +16,72 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 - **Checks:** 242 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
-## NEXT TASK
+## NEXT TASK: Android APK (Capacitor), then a transitions proposal
 
-No new feature is assigned. What remains, in order:
+**Read this section first. It is the active assignment.** Decided with the owner on 2026-11-18. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
 
-1. **Owner uses it on the phone** (they reload the installed app in Brave and get the update prompt; that path works). Try: Share to Goi from another app (needs the home-screen app re-added once; Brave support for share targets is unverified), a keigo round, Your week, the new look in both themes. Collect anything that reads wrong with the exact text.
-2. **A native check, if it happens:** checker mode is ready; the owner may never use it, and that's fine.
-3. **Licence wording** for JMdict/Tatoeba still unverified (see the dictionary section).
-4. **Optional:** per-deck daily limits; dictionary-based word splitting.
+### What the owner wants
+
+- The app as an **APK** they download from GitHub (Releases) and sideload; they know how to allow non-Play-Store installs.
+- **No data needed after install**, including the dictionary. **No persistent online dependencies.**
+- **An update check against GitHub**, which the owner asked for. Make it a button they press, never automatic. This is the one approved exception to "no requests to other origins", and it applies to the APK only.
+- The repo may be **made private** for long stretches. They expect to work with Claude while it's private.
+
+### Design (decisions already made; justify any change)
+
+1. **Wrap the existing web build with Capacitor** (Android platform). The WebView loads the bundled `dist/` from the APK, not from a URL. A Trusted Web Activity was rejected because it needs the website online. One codebase: native features go behind a small `src/native.ts` bridge with web fallbacks, so the web build is unaffected.
+2. **Bundle the dictionary in the APK.** The ~10 MB gzip `dict/` file goes into the assets, and the install worker reads it from the bundle on first run. No download button in the APK, just a one-time "Preparing dictionary…" step. Expected APK size is about 30 MB, including OCR.
+3. **Build in GitHub Actions:** JDK, Android SDK, Gradle, then `assembleRelease`. Attach `goi-<version>.apk` to a GitHub Release on a tag such as `apk-v1.2.0`. The build container here probably can't download the Android SDK (`dl.google.com` is likely blocked); verify, and otherwise build only in CI. A separate workflow keeps `deploy.yml` unchanged.
+4. **Signing key.** Generate a release keystore once and store it as Actions secrets (`ANDROID_KEYSTORE_BASE64`, passwords, alias). **Tell the owner to keep an offline copy.** Android only installs an update signed with the same key, and losing it means uninstalling, which wipes app data unless there's a backup. Never commit the key.
+5. **Update check:** compare the installed version with `api.github.com/repos/Bunt3/goi-app/releases/latest`, then show the release notes and a link to the APK. Anonymous API calls only see public repos, so while the repo is private the check should say so plainly. The owner can still download Releases from a private repo while logged in to GitHub on the phone, so making the repo public is **not** needed for the APK route.
+6. **Moving data:** the APK's WebView storage is separate from Brave's. The owner exports a backup from the PWA and imports it into the APK once. Say this clearly in the first release notes.
+
+### Native features, in order of value (all offline)
+
+1. **Text-selection menu entry** (`ACTION_PROCESS_TEXT`): long-press Japanese in any app → "Goi" → opens Capture with the text. Also handle `ACTION_SEND` (the share sheet). Both feed the existing `setPendingShare` path.
+2. **Native text-to-speech** (an Android TTS plugin). **Android WebView does not implement `speechSynthesis`**, so listening mode is broken in the APK without this. It's required, not optional.
+3. **Automatic backups into a real folder** via Android's Storage Access Framework: the user picks a folder once and backups are written silently, matching folder mode on Chromium desktop. Reuse `src/data/autobackup.ts` (pure) and add a native writer.
+4. **Better photo text recognition:** Google ML Kit text recognition v2, Japanese model, **bundled** variant (on-device, no download). It's much better than tesseract on real photos. **Before using it, check whether ML Kit sends usage telemetry and whether it can be turned off.** Report to the owner and let them decide. Keep tesseract as the web fallback.
+5. **Durable storage** comes free: app-private, cleared only on uninstall or "clear data".
+6. **Later, only if asked:** a home-screen widget, offline speech input, and gentle reminders. Reminders must never nag or carry guilt (hard constraint).
+
+### Order of work, with safe stopping points
+
+- **A:** Capacitor project, CI workflow, signed release APK that runs the current app offline with the bundled dictionary. Owner installs it and imports a backup. *Ship.*
+- **B:** native TTS, plus the text-selection and share intents.
+- **C:** folder backups through SAF.
+- **D:** the ML Kit decision, made with the owner after the telemetry check; implement if approved.
+- **E:** the update-check button.
+
+### Not verified (check before relying on it)
+
+- Whether `dl.google.com` and the Gradle/Maven repositories are reachable from the build container.
+- Whether Capacitor's current major version supports the installed Node version.
+- Exact plugin names for TTS, `PROCESS_TEXT` and SAF: they may need small custom Capacitor plugins written in Kotlin.
+- The ML Kit telemetry behaviour.
+- Brave/WebView differences that affect the existing UI (IndexedDB quotas, `DecompressionStream`, module workers in the WebView).
+
+### Testing
+
+Vitest and the web run-through still cover the shared code and must stay green. Android-only features can't be run in the build container; the owner tests them on the phone. Each release's notes should list what to try.
+
+### Then: transitions and motion (research + proposal, not a rewrite)
+
+The owner wants to learn what tasteful animation could add: screen transitions, the card reveal, rating feedback, toasts and sheets. Nothing "wild" (no avatars). Produce a small **demo page (an Artifact or a hidden `#/motion` lab screen)** showing 4–6 options side by side, for example:
+
+- screen changes with the View Transitions API (supported in Chromium and Android WebView);
+- a card flip vs fade-up reveal;
+- a subtle press and settle on rating buttons;
+- the bottom sheet sliding with a spring;
+- a progress tick in sessions.
+
+Every option must respect `prefers-reduced-motion` and stay under about 300 ms. The owner picks; then implement only what they choose. Motion must never slow a 5-minute session.
+
+### Earlier open items (still true)
+
+- Nothing has been tried on the phone yet beyond reloading the PWA. Share to Goi in Brave is unverified.
+- Checker mode is ready if a native speaker ever helps.
+- The JMdict/Tatoeba licence wording is unverified (see the dictionary section).
 
 ## Seventh block (2026-11-18, overnight)
 
