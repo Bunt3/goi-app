@@ -94,7 +94,7 @@ After installing, open **More** and check the storage line under *Backup & trans
 
 There is no sync. Data moves by file.
 
-1. On the source device: **More → Export backup (JSON)**. On Android, *Share backup…* sends the same file straight to Drive, email, Quick Share and so on. Set a *device label* first so files are easy to tell apart: `goi-backup_2026-11-17_s24.json`.
+1. On the source device: **More → Export backup (JSON)**. Where the browser allows sharing JSON files, a *Share backup…* button also appears and hands the same file to the system share sheet; otherwise the file goes to Downloads. Set a *device label* first so files are easy to tell apart: `goi-backup_2026-11-17_s24.json`.
 2. Get the file to the other device however you like.
 3. On the target device: **More → Import a backup…** and pick the file. A summary of what would change appears. Nothing is written yet.
 4. Press **Merge into this device**.

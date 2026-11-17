@@ -303,13 +303,19 @@ export function moreView(_arg: string, params: URLSearchParams): View {
       id: 'load-seed',
       onclick: async () => {
         seedBtn.disabled = true;
-        const r = await loadSeedDeck();
-        void ensurePersistence();
-        seedResult.textContent =
-          r.added > 0
-            ? `Added ${plural(r.added, 'card')}${r.skipped ? ` (${r.skipped} were already loaded or previously deleted)` : ''}. They enter study at your new-card limit.`
-            : 'The seed deck is already loaded. Nothing was added.';
-        seedBtn.disabled = false;
+        try {
+          const r = await loadSeedDeck();
+          void ensurePersistence();
+          seedResult.textContent =
+            r.added > 0
+              ? `Added ${plural(r.added, 'card')}${r.skipped ? ` (${r.skipped} were already loaded or previously deleted)` : ''}. They enter study at your new-card limit.`
+              : 'The seed deck is already loaded. Nothing was added.';
+        } catch {
+          // The deck is a separate file; an app update in the background can leave this copy pointing at a stale one.
+          seedResult.textContent = 'Could not load the seed deck. Reload the app and try again.';
+        } finally {
+          seedBtn.disabled = false;
+        }
       },
     },
     'Load seed deck',
