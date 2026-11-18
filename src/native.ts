@@ -42,6 +42,7 @@ interface GoiNativePlugin {
   openTtsSettings(): Promise<void>;
   takeShare(): Promise<{ share?: AppShare }>;
   openUrl(options: { url: string }): Promise<void>;
+  recognizeText(options: { image: string }): Promise<{ text: string }>;
   pickBackupFolder(): Promise<{ picked: boolean; name?: string }>;
   backupFolderInfo(): Promise<NativeFolderInfo>;
   forgetBackupFolder(): Promise<void>;
@@ -194,4 +195,10 @@ export function nativeFolderHandle(folderName: string): DirHandleLike {
       return (await nativeFolderInfo()).granted ? 'granted' : 'prompt';
     },
   };
+}
+
+/** APK only: read Japanese text with ML Kit on the phone. `image` is a data: URL. */
+export async function nativeRecognize(image: string): Promise<string> {
+  await goiNative();
+  return (await plugin!.recognizeText({ image })).text;
 }

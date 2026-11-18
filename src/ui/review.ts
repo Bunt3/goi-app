@@ -37,6 +37,9 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
   let finished = false;
 
   const progress = h('span', { id: 'review-progress' });
+  // A thin bar under the top row that grows one step per answer.
+  const barFill = h('div', { class: 'session-bar-fill' });
+  const bar = h('div', { class: 'session-bar', id: 'session-bar', 'aria-hidden': 'true' }, barFill);
   const undoBtn = h('button', { class: 'link', id: 'undo', onclick: () => void undo() }, 'Undo');
   const body = h('div', { class: 'review-body' });
   const actions = h('div', { class: 'review-actions' });
@@ -50,12 +53,15 @@ export function reviewView(_arg: string, params: URLSearchParams): View {
       progress,
       undoBtn,
     ),
+    bar,
     body,
     actions,
   );
 
   function updateProgress(): void {
     undoBtn.style.visibility = lastUndo && !finished ? 'visible' : 'hidden';
+    const total = quick ? limitCards : answered + remaining;
+    barFill.style.width = finished ? '100%' : `${total > 0 ? Math.min(100, (answered / total) * 100) : 0}%`;
     if (finished) {
       progress.textContent = '';
       return;

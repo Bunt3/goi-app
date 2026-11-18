@@ -23,6 +23,11 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode pkgVersionCode
         versionName pkgVersion
+        // ML Kit's text recognition ships native code per processor type;
+        // these two cover Android phones (not emulators or Chromebooks on x86).
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a'
+        }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -61,6 +66,9 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+    // On-device Japanese text recognition, model bundled in the APK. Its usage
+    // reports are blocked by res/xml/network_security_config.xml.
+    implementation 'com.google.mlkit:text-recognition-japanese:16.0.1'
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

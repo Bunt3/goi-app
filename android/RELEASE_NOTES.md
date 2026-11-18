@@ -1,5 +1,10 @@
 Goi for Android: the same app as the website, installed from this file instead of the browser. It works with no connection at all: the dictionary and the text recogniser are inside the APK.
 
+## New in 1.5.0
+
+- **Better text recognition from photos.** Capture now reads images with Google's ML Kit, which runs on the phone (the Japanese model is inside the APK) and is much better on real photos than the old reader. The old reader stays as a fallback if ML Kit fails. ML Kit normally sends usage statistics to Google (phone model, Android version, speed, error codes; not your images or text). Goi blocks those two report servers at the network level, so nothing is sent. This makes the APK about 20 MB larger.
+- **Small animations**, all under 300 ms and turned off when the phone's "remove animations" setting is on: screens fade in, the answer unfolds below the word, the rating button fills with its colour while pressed, the word-picker sheet springs up, and a thin bar shows progress through a session.
+
 ## New in 1.4.0
 
 - **Automatic backups into a folder you choose.** More → Automatic backup → "Save into a folder I choose", then pick a folder in Android's folder picker (for example a "Goi backups" folder you create in Documents). Goi then saves quietly whenever something changes, one file per day, keeping the newest 14 of this phone's automatic backups. It never touches other files in the folder. If the folder already holds a backup with cards this phone doesn't have, Goi shows what it would import and writes nothing until you've seen it. If a write fails or the file doesn't come out the right size, that backup goes to Downloads instead and you're told.
@@ -42,6 +47,7 @@ The Android app has its own storage, separate from Brave's. Your cards don't mov
 - Long-press a Japanese word in a browser or chat app: is Goi in the menu, and does Capture open with the text? Then Back: does it return to where you were in Goi?
 - Share a selection or a web page to Goi from the share sheet.
 - More → Updates → Check for updates: it should say you have the latest version.
+- Capture a photo of Japanese text: is the result better than before? Does it read vertical text?
 - Folder backups: choose a folder, make a change (add a card), wait half a minute, then look in the folder with the Files app. Leaving the app also triggers a backup.
 
 ## Known gaps in this build

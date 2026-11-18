@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ML Kit (text recognition) carries Google's usage-report uploader, which
+     sends to the two hosts below and has no supported off switch. Pinning them
+     to a key that no real certificate has makes every connection to them fail
+     its TLS handshake, so nothing is sent. Everything else is unaffected.
+     The pin is 32 zero bytes: it can never match. -->
+<network-security-config>
+    <domain-config>
+        <domain includeSubdomains="false">firebaselogging.googleapis.com</domain>
+        <domain includeSubdomains="false">firebaselogging-pa.googleapis.com</domain>
+        <pin-set>
+            <pin digest="SHA-256">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</pin>
+        </pin-set>
+    </domain-config>
+</network-security-config>

@@ -1296,7 +1296,7 @@ textarea {
   padding: 16px;
   margin-top: 22px;
   box-shadow: var(--raise);
-  animation: goi-reveal 0.22s var(--ease);
+  animation: goi-unfold 0.2s var(--ease);
 }
 
 .ratings button {
@@ -1334,10 +1334,61 @@ textarea {
   border-radius: 14px;
 }
 
-/* Sheets. */
+/* Sheets: rise with a slight spring; the backdrop fades. The shadow below
+   fills the gap the overshoot would open at the bottom edge. */
 .sheet {
   border: none;
   border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 64px 0 0 var(--surface);
+  animation: goi-sheet-up 0.26s cubic-bezier(0.34, 1.36, 0.64, 1);
+}
+
+.sheet-backdrop {
+  animation: goi-fade 0.15s linear;
+}
+
+@keyframes goi-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* Rating: the pressed button fills with its colour and the others dim, while
+   the finger is down. The next card still appears without waiting. */
+.ratings button:active:not(:disabled) {
+  transform: scale(0.96);
+  color: var(--bg);
+}
+.ratings .r1:active {
+  background: var(--again);
+}
+.ratings .r2:active {
+  background: var(--hard);
+}
+.ratings .r3:active {
+  background: var(--good);
+}
+.ratings .r4:active {
+  background: var(--easy);
+}
+.ratings:has(button:active) button:not(:active) {
+  opacity: 0.45;
+}
+
+/* Session progress: a thin bar that grows one step per answer. */
+.session-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  overflow: hidden;
+  margin: 2px 0 8px;
+}
+.session-bar-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.25s var(--ease);
 }
 
 /* Checker and keigo prompts read like an index card. */
@@ -1347,13 +1398,15 @@ textarea {
   font-synthesis: none;
 }
 
-@keyframes goi-reveal {
+@keyframes goi-unfold {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
+    clip-path: inset(0);
     transform: none;
   }
 }
@@ -1366,8 +1419,15 @@ textarea {
   button:active:not(:disabled) {
     transform: none;
   }
-  .answer.divided {
+  .answer.divided,
+  .sheet {
     animation: goi-fade 0.1s linear;
+  }
+  .session-bar-fill {
+    transition: none;
+  }
+  .ratings button:active:not(:disabled) {
+    transform: none;
   }
 }
 

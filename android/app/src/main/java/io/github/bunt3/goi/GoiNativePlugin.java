@@ -5,6 +5,9 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Base64;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
@@ -19,6 +22,10 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -49,6 +56,7 @@ public class GoiNativePlugin extends Plugin {
 
     private Speech speech;
     private BackupFolder folder;
+    private TextRecognizer recognizer;
     private JSObject pendingShare;
 
     @Override
@@ -71,6 +79,7 @@ public class GoiNativePlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         if (speech != null) speech.shutdown();
+        if (recognizer != null) recognizer.close();
         super.handleOnDestroy();
     }
 
@@ -203,6 +212,37 @@ public class GoiNativePlugin extends Plugin {
             } catch (ActivityNotFoundException ignored) {}
         }
         call.reject("The phone has no settings screen for this.");
+    }
+
+    // ---- Text recognition (ML Kit, Japanese model bundled; runs on the phone)
+
+    /** Read the text in an image (a data: URL from the Capture screen's prepared canvas). */
+    @PluginMethod
+    public void recognizeText(PluginCall call) {
+        String data = call.getString("image", "");
+        int comma = data.indexOf(',');
+        Bitmap bitmap;
+        try {
+            byte[] bytes = Base64.decode(comma >= 0 ? data.substring(comma + 1) : data, Base64.DEFAULT);
+            bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        } catch (IllegalArgumentException e) {
+            bitmap = null;
+        }
+        if (bitmap == null) {
+            call.reject("The image could not be read.");
+            return;
+        }
+        synchronized (this) {
+            if (recognizer == null) recognizer = TextRecognition.getClient(new JapaneseTextRecognizerOptions.Builder().build());
+        }
+        recognizer
+            .process(InputImage.fromBitmap(bitmap, 0))
+            .addOnSuccessListener((result) -> {
+                JSObject ret = new JSObject();
+                ret.put("text", result.getText());
+                call.resolve(ret);
+            })
+            .addOnFailureListener((e) -> call.reject("Text recognition failed (" + message(e) + ")."));
     }
 
     // ---- Links

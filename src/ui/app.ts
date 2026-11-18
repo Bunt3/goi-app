@@ -59,6 +59,11 @@ async function render(): Promise<void> {
   const main = document.getElementById('view')!;
   clear(main);
   main.append(view.el);
+  // The new screen fades in (140 ms). A plain animation, not a View
+  // Transition, so taps are never held up while it runs.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    view.el.animate?.([{ opacity: 0 }, { opacity: 1 }], { duration: 140, easing: 'linear' });
+  }
   main.scrollTop = 0;
   window.scrollTo(0, 0);
   document.body.classList.toggle('fullscreen', !!view.fullscreen);

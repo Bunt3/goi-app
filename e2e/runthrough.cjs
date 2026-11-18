@@ -144,9 +144,13 @@ async function main() {
     assert.equal(await page.locator('.review-body ruby').count(), 1, 'furigana on the target word only');
     assert.equal(await page.locator('.review-body .example ruby rt').innerText(), 'うけたまわ');
     await shot('review-back');
+    const barBefore = await page.$eval('#session-bar > div', (e) => e.style.width);
     await page.click('.ratings button[data-rating="3"]'); // Good → 10 min learning step
     // Only card left, so the learning step is shown again straight away.
     await page.waitForSelector('#reveal');
+    const barAfter = await page.$eval('#session-bar > div', (e) => e.style.width);
+    assert.ok(parseFloat(barAfter) > parseFloat(barBefore), `session bar grows after an answer (${barBefore} → ${barAfter})`);
+    log('the session bar grows one step per answer');
     // Undo, then answer again.
     await page.click('#undo');
     await page.waitForSelector('.ratings');

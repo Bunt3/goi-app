@@ -2,9 +2,11 @@
  * On-device text recognition (tesseract.js, Japanese model). The engine and
  * model are loaded lazily from this app's own origin under ocr/ — about
  * 4–6 MB the first time, cached by the service worker after that. Images
- * never leave the device.
+ * never leave the device. The APK tries Google's ML Kit (bundled, on the
+ * phone) first and uses this reader only if ML Kit fails.
  */
 import type { Worker } from 'tesseract.js';
+import { nativeRecognize } from './native';
 
 export type OcrProgress = (stage: string, fraction: number) => void;
 
@@ -45,8 +47,22 @@ async function getWorker(): Promise<Worker> {
   return worker;
 }
 
-/** Read the text in an image. Rejects with a readable message if the engine can't be loaded. */
+/**
+ * Read the text in an image. Rejects with a readable message if the engine
+ * can't be loaded. In the APK, Google's ML Kit (on the phone, much better on
+ * photos) reads it first; if that fails, the built-in reader below does.
+ */
 export async function recognize(image: HTMLCanvasElement, onProgress: OcrProgress): Promise<string> {
+  if (__NATIVE__) {
+    try {
+      onProgress('Reading', 0);
+      const text = await nativeRecognize(image.toDataURL('image/png'));
+      onProgress('Reading', 1);
+      return text;
+    } catch (err) {
+      console.warn('ML Kit could not read the image; using the built-in reader.', err);
+    }
+  }
   progress = onProgress;
   let w: Worker;
   try {

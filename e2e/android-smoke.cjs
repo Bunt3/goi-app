@@ -55,7 +55,7 @@ function fakeNative() {
   const bytes = (t) => new TextEncoder().encode(t).length;
   window.androidBridge = { postMessage() {} };
   const methods = ['saveDownload', 'ttsVoices', 'speak', 'stopSpeaking', 'openTtsSettings', 'takeShare', 'openUrl', 'removeListener',
-    'pickBackupFolder', 'backupFolderInfo', 'forgetBackupFolder', 'folderList', 'folderRead', 'folderWrite', 'folderDelete'].map((name) => ({ name, rtype: 'promise' }));
+    'recognizeText', 'pickBackupFolder', 'backupFolderInfo', 'forgetBackupFolder', 'folderList', 'folderRead', 'folderWrite', 'folderDelete'].map((name) => ({ name, rtype: 'promise' }));
   methods.push({ name: 'addListener', rtype: 'callback' });
   window.Capacitor = {
     PluginHeaders: [{ name: 'GoiNative', methods }],
@@ -68,6 +68,11 @@ function fakeNative() {
           return Promise.resolve({ voices: st.voices, engine: 'com.google.android.tts' });
         case 'speak':
           return st.voices.length ? Promise.resolve() : Promise.reject(new Error('No Japanese voice is installed on this phone.'));
+        case 'recognizeText':
+          // Off by default, so the fallback to the built-in reader is tested; a step turns it on.
+          return st.mlkit
+            ? Promise.resolve({ text: st.mlkit })
+            : Promise.reject(new Error('Text recognition failed (model not available).'));
         case 'takeShare': {
           const share = st.share ?? window.__initialShare ?? null;
           st.share = null;
@@ -183,7 +188,18 @@ async function main() {
     const read = (await page.inputValue('#capture-text')).replace(/\s/g, '');
     if (!read.includes('お待ち')) throw new Error('OCR read ' + JSON.stringify(read));
     if (!ocrRequests.some((u) => u.endsWith('/ocr/lang/jpn.traineddata'))) throw new Error('OCR did not load the plain model: ' + ocrRequests.join(', '));
-    ok('text recognition works with the plain model file → ' + JSON.stringify(read));
+    if (!(await calls(page, 'recognizeText')).some((c) => /^data:image\/png;base64,/.test(c.options.image))) throw new Error('ML Kit was not asked first');
+    ok('when ML Kit fails, the built-in reader takes over, with the plain model file → ' + JSON.stringify(read));
+    // ML Kit working: its text is used and the built-in reader isn't loaded again.
+    await page.evaluate(() => (window.__native.mlkit = '担当の者に取り次ぎます'));
+    const ocrBefore = ocrRequests.length;
+    await page.fill('#capture-text', '');
+    await page.setInputFiles('#capture-image', { name: 'text2.png', mimeType: 'image/png', buffer: png });
+    await page.waitForSelector('#crop-frame');
+    await page.click('#ocr-read');
+    await page.waitForFunction(() => document.querySelector('#capture-text').value.includes('取り次ぎます'), null, { timeout: 15000 });
+    if (ocrRequests.length !== ocrBefore) throw new Error('the built-in reader was loaded although ML Kit answered');
+    ok('in the APK, ML Kit reads the image first and its text goes into Capture');
 
     // Saving goes to the native side; a failure is reported, not lost.
     await page.goto(ORIGIN + '/#/more');

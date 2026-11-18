@@ -1,6 +1,6 @@
 {
   "name": "goi-app",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "type": "module",
   "description": "Personal offline-first Japanese vocabulary PWA (FSRS-6).",

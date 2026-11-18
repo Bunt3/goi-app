@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (Android APK 1.4.0: steps A, B, C, E done; D waits on the owner's decision)
+# Handoff — state as of 2026-11-18 (Android APK 1.5.0: steps A–E done, motion added; waiting on the owner's phone test)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -68,7 +68,13 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 
 **Motion demo (published 2026-11-18):** a private Artifact, https://claude.ai/artifact/KiKSDFSKwLgQpvFcMcany4, built from the app's own tokens. Five moments, A = today's behaviour: 1 screen changes (B cross-fade 140 ms, C slide and fade 220 ms), 2 answer reveal (B card flip 280 ms, C unfold below 200 ms), 3 rating press (B press and settle 180 ms, C press and fill 200 ms), 4 word-picker sheet (B slide 200 ms, C spring 260 ms), 5 session progress (B thin bar 250 ms, C dots 160 ms). Suggested: 1B 2C 3B 4C 5B. Every option is under 300 ms, accepts input while moving, and becomes instant or a ≤100 ms fade with reduced motion. The owner replies with one letter per row; build only those. Screen changes would use View Transitions where supported (Chromium, Android WebView) and stay instant in Firefox.
 
-**Next, waiting on the owner:** the D decision (ML Kit: no / yes / yes with reports blocked), the motion letters, and the smaller items from the 1.1.0 checklist (insets, keyboard, back button, camera) once tried. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
+**Owner's decisions (2026-11-18):** D option 3 (ML Kit with usage reports blocked), and motion 1B 2C 3C 4C 5B.
+
+**1.5.0:**
+- ML Kit: `GoiNativePlugin.recognizeText` (data: URL in, `Text.getText()` out), `TextRecognizer` kept until destroy. `ocr.ts` tries it first in the APK and falls back to tesseract on any failure (logged, not shown: the result still arrives). The same `prepareForOcr` canvas is sent (tuned for tesseract; ML Kit has not been tuned or compared on real photos). Reports blocked by `network_security_config.xml` (pins). ABIs limited to arm64-v8a and armeabi-v7a; ML Kit's `.so` is 11 MB + 7 MB stored uncompressed, so the APK grew by about 20 MB (the earlier "about 4 MB" estimate from Google's docs was wrong for this model). Dropping `armeabi-v7a` would save 7 MB; it was kept so 32-bit phones can still install. Unverified on a phone: the pin actually blocking the uploads, recognition quality, vertical text.
+- Motion: screens fade in (140 ms, a plain animation rather than View Transitions, so taps are never held); the answer unfolds (`goi-unfold`, 200 ms); rating buttons fill with their colour and the others dim while pressed (`:active`, so the next card is never delayed, a deliberate change from the demo's 200 ms held fill); the picker sheet springs up (260 ms, a `box-shadow` fills the overshoot gap); a 4 px session bar (`#session-bar`) grows per answer (250 ms). All fall back to instant or a 100 ms fade with reduced motion. Applies to the website too (same code).
+
+**Next, waiting on the owner:** the phone test of 1.5.0 (see the release notes' list), including the smaller items from the first checklist.
 
 ### What the owner wants
 
