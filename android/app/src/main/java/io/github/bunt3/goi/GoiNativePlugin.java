@@ -198,6 +198,26 @@ public class GoiNativePlugin extends Plugin {
         call.reject("The phone has no settings screen for this.");
     }
 
+    // ---- Links
+
+    /** Opens a GitHub page (a release, the APK download) in the phone's browser. Nothing else. */
+    @PluginMethod
+    public void openUrl(PluginCall call) {
+        String url = call.getString("url", "");
+        if (!url.startsWith("https://github.com/")) {
+            call.reject("Only GitHub links are opened.");
+            return;
+        }
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (ActivityNotFoundException e) {
+            call.reject("No browser is installed.");
+        }
+    }
+
     // ---- Files
 
     @PluginMethod

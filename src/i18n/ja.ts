@@ -319,6 +319,16 @@ export const JA: Record<string, string> = {
   'Come back here and press Check again.': 'ここに戻って「再確認」を押します。',
   'Open text-to-speech settings': '読み上げの設定を開く',
   'Check again': '再確認',
+  Updates: '更新',
+  'Check for updates': '更新を確認',
+  'Asking GitHub…': 'GitHubに問い合わせ中…',
+  'What’s new': '新しい点',
+  'The download opens in your browser. Open the downloaded file to install; Android asks you to confirm the update. Your cards stay. Export a backup first if you want to be safe.':
+    'ダウンロードはブラウザで開きます。ダウンロードしたファイルを開くとインストールでき、Androidが更新の確認を求めます。カードはそのまま残ります。念のため先にバックアップを書き出しておくと安心です。',
+  'GitHub didn’t show a release. While the repository is private, the app can’t see its releases. Open the releases page in a browser where you are logged in to GitHub.':
+    'GitHubからリリースが返ってきませんでした。リポジトリが非公開の間は、アプリからリリースを見られません。GitHubにログインしたブラウザでリリースのページを開いてください。',
+  'Open the releases page': 'リリースのページを開く',
+  'GitHub limits how often it answers without a login. Try again in an hour.': 'GitHubはログインなしの問い合わせ回数を制限しています。1時間ほどしてからお試しください。',
   'Couldn’t open the settings. Look for Text-to-speech under Settings → Accessibility.': '設定を開けませんでした。設定 → ユーザー補助 の中の「テキスト読み上げ」を探してください。',
 
   // ---- More
@@ -558,6 +568,15 @@ export const PATTERNS: [RegExp, (m: RegExpMatchArray) => string][] = [
   [/^(\d+) of (\d+) right\.$/, (m) => `${m[2]}問中${m[1]}問正解。`],
   // Version line
   [/^Goi (.+) · everything stays on this device · no requests to other sites\.$/, (m) => `Goi ${m[1]} · データはすべてこの端末内 · 外部サイトへの通信なし。`],
+  // Android app: update check
+  [/^Goi (.+) · everything stays on this device · contacts GitHub only when you check for updates\.$/, (m) => `Goi ${m[1]} · データはすべてこの端末内 · 外部への通信は更新の確認時のGitHubのみ。`],
+  [/^This is Goi ([\d.]+)\. Check for updates asks GitHub for the newest release\. It is the only time the app contacts another site, and it happens only when you press the button\.$/, (m) =>
+    `このアプリはGoi ${m[1]}です。「更新を確認」を押すとGitHubに最新版を問い合わせます。アプリが外部と通信するのはこのときだけで、ボタンを押したときにしか行いません。`],
+  [/^You have the latest version \(([\d.]+)\)\.$/, (m) => `最新版です（${m[1]}）。`],
+  [/^Version ([\d.]+) is available\. You have ([\d.]+)\.$/, (m) => `バージョン${m[1]}が出ています。現在は${m[2]}です。`],
+  [/^Download ([\d.]+)$/, (m) => `${m[1]}をダウンロード`],
+  [/^Couldn’t check \((.+)\)\. Try again when the connection is steady\.$/, (m) => `確認できませんでした（${m[1]}）。接続が安定したらもう一度お試しください。`],
+  [/^Couldn’t open the browser \((.+)\)\.$/, (m) => `ブラウザを開けませんでした（${m[1]}）。`],
 ];
 
 /** Japanese strings already produced, so a translated node is not looked up again. */

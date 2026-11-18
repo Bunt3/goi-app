@@ -25,6 +25,7 @@ interface GoiNativePlugin {
   stopSpeaking(): Promise<void>;
   openTtsSettings(): Promise<void>;
   takeShare(): Promise<{ share?: AppShare }>;
+  openUrl(options: { url: string }): Promise<void>;
   addListener(event: 'share', fn: () => void): Promise<{ remove: () => Promise<void> }>;
 }
 
@@ -87,4 +88,10 @@ export async function takeAppShare(): Promise<AppShare | null> {
 export async function onAppShare(fn: () => void): Promise<void> {
   await goiNative();
   await plugin!.addListener('share', fn);
+}
+
+/** APK only: open a github.com link in the phone's browser. */
+export async function openInBrowser(url: string): Promise<void> {
+  await goiNative();
+  await plugin!.openUrl({ url });
 }

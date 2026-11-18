@@ -157,6 +157,7 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(`v${pkg.version} (${new Date().toISOString().slice(0, 10)})`),
       __NATIVE__: JSON.stringify(native),
+      __APP_SEMVER__: JSON.stringify(pkg.version),
     },
     build: { target: 'es2022', sourcemap: false, outDir: native ? 'dist-android' : 'dist' },
     test: {

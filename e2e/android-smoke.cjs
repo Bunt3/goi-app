@@ -43,7 +43,7 @@ function startServer() {
 function fakeNative() {
   const st = (window.__native = { calls: [], voices: [], failSave: false, share: null, listeners: [], nextId: 1 });
   window.androidBridge = { postMessage() {} };
-  const methods = ['saveDownload', 'ttsVoices', 'speak', 'stopSpeaking', 'openTtsSettings', 'takeShare', 'removeListener'].map((name) => ({ name, rtype: 'promise' }));
+  const methods = ['saveDownload', 'ttsVoices', 'speak', 'stopSpeaking', 'openTtsSettings', 'takeShare', 'openUrl', 'removeListener'].map((name) => ({ name, rtype: 'promise' }));
   methods.push({ name: 'addListener', rtype: 'callback' });
   window.Capacitor = {
     PluginHeaders: [{ name: 'GoiNative', methods }],
@@ -99,12 +99,13 @@ async function main() {
     const page = await context.newPage();
     const errors = [];
     const external = [];
+    let checkPresses = 0;
     const ocrRequests = [];
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('requestfinished', (r) => r.url().includes('/ocr/') && ocrRequests.push(r.url()));
     page.on('request', (r) => {
       const u = r.url();
-      if (!u.startsWith(ORIGIN + '/') && !u.startsWith('blob:') && !u.startsWith('data:')) external.push(u);
+      if (!u.startsWith(ORIGIN + '/') && !u.startsWith('blob:') && !u.startsWith('data:')) external.push({ url: u, pressed: checkPresses });
     });
 
     await page.goto(ORIGIN + '/');
@@ -195,9 +196,33 @@ async function main() {
     await cold.close();
     ok('text that starts the app opens straight into Capture, link removed, page as the source');
 
-    if (external.length) throw new Error('requests outside the app: ' + external.join(', '));
+    // Update check: GitHub's answer is faked here; the request must happen only on a press.
+    const API = 'https://api.github.com/repos/Bunt3/goi-app/releases/latest';
+    let answer = { status: 200, body: { tag_name: 'apk-v9.9.0', name: 'Goi 9.9.0 (Android)', body: '## New in 9.9.0\n\n- **Something** new', html_url: 'https://github.com/Bunt3/goi-app/releases/tag/apk-v9.9.0', assets: [{ name: 'goi-9.9.0.apk', browser_download_url: 'https://github.com/Bunt3/goi-app/releases/download/apk-v9.9.0/goi-9.9.0.apk' }] } };
+    await context.route(API, (route) => route.fulfill({ status: answer.status, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(answer.body) }));
+    await page.goto(ORIGIN + '/#/more');
+    await page.waitForSelector('#update-check');
+    if (external.length) throw new Error('requests outside the app before pressing Check for updates: ' + JSON.stringify(external));
+    checkPresses++;
+    await page.click('#update-check');
+    await page.waitForSelector('#update-status:has-text("Version 9.9.0 is available")');
+    if (!(await page.textContent('#update-result details')).includes('Something new')) throw new Error('release notes not shown as plain text');
+    await page.click('#update-download');
+    await page.waitForFunction(() => window.__native.calls.some((c) => c.method === 'openUrl'));
+    const opened = (await calls(page, 'openUrl'))[0].options.url;
+    if (opened !== 'https://github.com/Bunt3/goi-app/releases/download/apk-v9.9.0/goi-9.9.0.apk') throw new Error('download opened ' + opened);
+    ok('Check for updates finds a newer release, shows its notes, and Download opens the APK link in the browser');
+    answer = { status: 404, body: { message: 'Not Found' } };
+    checkPresses++;
+    await page.click('#update-check');
+    await page.waitForSelector('#update-status:has-text("private")');
+    await page.waitForSelector('#update-page');
+    ok('a private repository (404) is explained, with a link to the releases page');
+    const strays = external.filter((r) => r.url !== API || r.pressed === 0);
+    if (strays.length) throw new Error('requests outside the app: ' + JSON.stringify(strays));
+    if (external.length !== checkPresses) throw new Error(`expected one GitHub request per press, got ${external.length} for ${checkPresses}`);
     if (errors.length) throw new Error('page errors: ' + errors.join('\n'));
-    ok('no requests outside the app; no page errors');
+    ok('no requests outside the app except one to GitHub per press of Check for updates; no page errors');
     console.log('\nAndroid smoke test passed.');
   } catch (err) {
     failed = true;

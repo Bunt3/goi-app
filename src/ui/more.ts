@@ -1,4 +1,5 @@
 import { ImportError, parseExport } from '../data/export';
+import { updateSection } from './update';
 import { isNoop, type MergePlan } from '../data/merge';
 import { PACKS, packCards, type PackInfo } from '../data/packs/index';
 import type { ExportFile, Settings } from '../types';
@@ -529,7 +530,15 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     packRows,
     h('h2', null, 'More'),
     h('div', { class: 'stack' }, h('a', { href: '#/stats' }, 'Stats'), h('a', { href: '#/check', id: 'to-check' }, 'Checker mode (for a native speaker)'), h('a', { href: '#/keigo' }, 'Keigo training'), h('a', { href: '#/capture' }, 'Capture from a photo, screenshot or text'), h('a', { href: '#/bulk' }, 'Paste many cards (TSV / CSV)'), h('a', { href: '#/browse?filter=leech' }, 'Leeches to rewrite')),
-    h('p', { class: 'muted small', style: 'margin-top:24px' }, `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`),
+    // APK only; the website never contacts another site.
+    __NATIVE__ ? updateSection() : null,
+    h(
+      'p',
+      { class: 'muted small', style: 'margin-top:24px' },
+      __NATIVE__
+        ? `Goi ${__APP_VERSION__} · everything stays on this device · contacts GitHub only when you check for updates.`
+        : `Goi ${__APP_VERSION__} · everything stays on this device · no requests to other sites.`,
+    ),
   );
 
   const dict = dictSection();

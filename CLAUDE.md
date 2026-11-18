@@ -8,7 +8,7 @@ Personal Japanese vocabulary PWA for one user. Read `HANDOFF.md` for current sta
 
 - Installable, offline-first PWA. One codebase for Android (Brave/Chrome) and Windows desktop (Firefox, Brave). Also an Android APK (Capacitor) built from the same code; the website is to be left as it is for now.
 - Vite + TypeScript, vanilla DOM. Runtime dependencies are `ts-fsrs`, `dexie`, `tesseract.js` (lazy-loaded; added when the owner asked for image capture) and `@capacitor/core` (Android app only, added when the owner asked for an APK). No framework, no backend, no accounts, no analytics. Do not add others without the owner asking for the feature that needs them.
-- **No requests to any other origin, ever.** No web fonts, CDNs, lookups or uploads. The browser run-through asserts this. The same-origin fetches after install are the OCR engine and model under `ocr/` on first use, and the dictionary under `dict/` when the owner presses Download.
+- **No requests to any other origin, ever.** No web fonts, CDNs, lookups or uploads. The browser run-through asserts this. One approved exception, APK only: the update check (`ui/update.ts`), a single request to GitHub's releases API when the owner presses *Check for updates*; the website bundle must not contain it. The same-origin fetches after install are the OCR engine and model under `ocr/` on first use, and the dictionary under `dict/` when the owner presses Download.
 - Served from `https://bunt3.github.io/goi-app/`. The base path lives in `vite.config.ts` (`WEB_BASE`) and `public/manifest.webmanifest` (`id`, `start_url`, `scope`).
 - Sessions are 5-minute bursts. Never add streaks, guilt wording, or anything that punishes skipped days.
 - Mobile-first, controls within thumb reach, dark by default.
@@ -57,7 +57,8 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/check.ts`, `src/ui/checker.ts` | Checker mode: which cards to check, tallies (pure); the `#/check` screen |
 | `src/data/keigo.ts`, `src/keigo.ts`, `src/ui/keigo.ts` | Keigo training: data, drill items and box schedule (pure), the `#/keigo` screen. Progress lives in `Settings.keigo` |
 | `src/week.ts` | Weekly look-back and where-from groups (pure) |
-| `src/share.ts` | Reading a Web Share Target request (pure); intake in `main.ts`, display in Capture |
+| `src/share.ts` | Reading a Web Share Target request and Android's shared text (pure); intake in `main.ts`, display in Capture |
+| `src/update.ts`, `src/ui/update.ts` | APK update check: version compare and GitHub answer (pure); More → Updates (APK only) |
 | `src/ui/i18n.ts`, `src/i18n/ja.ts` | Interface language: DOM translation layer and the Japanese catalogue |
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
 | `vite.config.ts` | Base path, version constant, service worker generator, Android mode (`--mode android` → `dist-android/`, `__NATIVE__`) |

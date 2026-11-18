@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (Android APK steps A and B released as 1.2.0; next: owner's phone test, then C)
+# Handoff — state as of 2026-11-18 (Android APK steps A, B, E released; C in progress)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -13,8 +13,8 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   5. Decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
   6. An English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
   7. Checker mode (replacing the unverified tag), Share to Goi, the weekly look-back and where-from filter, keigo training, and a visual refresh. See "Seventh block" below.
-  8. The Android APK, steps A and B: Capacitor project, bundled dictionary, saving to Downloads, CI build and signed releases; native speech, the text-selection menu and the share sheet. See "Progress" under NEXT TASK.
-- **Checks:** 246 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline. `e2e/android-smoke.cjs` checks the Android build's web part.
+  8. The Android APK, steps A, B and E: Capacitor project, bundled dictionary, saving to Downloads, CI build and signed releases; native speech, the text-selection menu and the share sheet; the update check. See "Progress" under NEXT TASK.
+- **Checks:** 252 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline. `e2e/android-smoke.cjs` checks the Android build's web part.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK: Android APK (Capacitor), then a transitions proposal
@@ -53,7 +53,11 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 - Unverified on a phone: everything native. Specifically: the selection menu label (some apps put third-party entries under ⋮), whether the referrer names the app for `SEND` (often it doesn't; then the Source is "shared" or the page), Samsung TTS voice names and `isNetworkConnectionRequired` flags, and whether `singleTask` brings Goi forward cleanly from the selection menu.
 - Not built: sharing an image to Goi (would feed Capture's image path; small follow-up if wanted).
 
-**Next:** the owner's phone test of 1.2.0, then C (folder backups through SAF), D (ML Kit: telemetry check and the owner's decision first), E (update-check button). The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
+**Owner's phone test of 1.2.0 (2026-11-18):** all the "tell me straight away" items passed (install, import, dictionary, export to Downloads). The smaller items were not reported yet. The owner then asked for E before C and to carry on unattended until their input is needed.
+
+**Step E (1.3.0):** More → Updates (APK only). `src/update.ts` (pure, tested): version compare, `parseRelease` (only `apk-v…` tags, only github.com links), `readUpdateAnswer` (404 = private repo or no release, rate limit, failures), `plainNotes`. `ui/update.ts` does one `fetch` to the releases API on the button press (GitHub sends `Access-Control-Allow-Origin: *`, checked), and `GoiNative.openUrl` opens only `https://github.com/` links in the browser. No in-app download or install: Android requires its own confirmation anyway, and an in-app download would fail while the repo is private. The smoke test fakes GitHub's answer and asserts the request happens only on a press.
+
+**Next:** C (folder backups through SAF), then D (ML Kit: telemetry check, then the owner decides). The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
 
 ### What the owner wants
 
