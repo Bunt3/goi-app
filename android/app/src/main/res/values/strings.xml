@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Goi</string>
     <string name="title_activity_main">Goi</string>
+    <string name="process_text_label">Goi</string>
     <string name="package_name">io.github.bunt3.goi</string>
     <string name="custom_url_scheme">io.github.bunt3.goi</string>
 </resources>

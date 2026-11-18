@@ -1,4 +1,5 @@
-import { japaneseVoices, speak, stopSpeaking, ttsSupported } from '../tts';
+import { openTtsSettings } from '../native';
+import { japaneseVoices, speak, stopSpeaking, ttsSupported, type TtsVoice } from '../tts';
 import { SrsPhase, isInbox, type Card } from '../types';
 import { store, type View } from './app';
 import { cardBack } from './cardview';
@@ -14,7 +15,39 @@ function shuffle<T>(xs: T[]): T[] {
   return a;
 }
 
+/** APK: Android's own engine, offline voices only. */
+function nativeNoVoiceHelp(retry: () => void): HTMLElement {
+  return h(
+    'div',
+    { id: 'tts-help' },
+    h(
+      'div',
+      { class: 'notice' },
+      'No Japanese voice is installed on this phone. Goi speaks with the phone’s own text-to-speech engine and only uses voices stored on the phone, so speech is made on the phone, not by an online service.',
+    ),
+    h(
+      'ol',
+      null,
+      h('li', null, 'Open the text-to-speech settings (button below).'),
+      h('li', null, 'Choose Google’s engine (“Speech Recognition & Synthesis from Google”) or Samsung TTS as the preferred engine.'),
+      h('li', null, 'Tap the gear icon → Install voice data → 日本語, and download it.'),
+      h('li', null, 'Come back here and press Check again.'),
+    ),
+    h(
+      'button',
+      {
+        class: 'primary block',
+        id: 'tts-settings',
+        onclick: () => void openTtsSettings().catch(() => toast('Couldn’t open the settings. Look for Text-to-speech under Settings → Accessibility.', undefined, 6000)),
+      },
+      'Open text-to-speech settings',
+    ),
+    h('button', { class: 'block', id: 'tts-retry', onclick: retry }, 'Check again'),
+  );
+}
+
 function noVoiceHelp(reason: 'unsupported' | 'no-voice', retry: () => void): HTMLElement {
+  if (__NATIVE__) return nativeNoVoiceHelp(retry);
   return h(
     'div',
     { id: 'tts-help' },
@@ -53,22 +86,22 @@ export function listenView(): View {
   el.append(host);
   let destroyed = false;
 
-  async function init(): Promise<void> {
+  async function init(refresh = false): Promise<void> {
     if (!ttsSupported()) {
-      host.replaceChildren(noVoiceHelp('unsupported', () => void init()));
+      host.replaceChildren(noVoiceHelp('unsupported', () => void init(true)));
       return;
     }
     host.replaceChildren(h('p', { class: 'muted' }, 'Looking for a Japanese voice…'));
-    const voices = await japaneseVoices();
+    const voices = await japaneseVoices(undefined, refresh);
     if (destroyed) return;
     if (voices.length === 0) {
-      host.replaceChildren(noVoiceHelp('no-voice', () => void init()));
+      host.replaceChildren(noVoiceHelp('no-voice', () => void init(true)));
       return;
     }
     player(voices);
   }
 
-  function player(voices: SpeechSynthesisVoice[]): void {
+  function player(voices: TtsVoice[]): void {
     const s = store.settings;
     const studied = store.studying().filter((c) => !isInbox(c) && c.srs.recognition.state !== SrsPhase.New);
     // Prefer words already met in review; fall back to the whole deck while it is young.

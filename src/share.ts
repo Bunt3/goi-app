@@ -35,3 +35,16 @@ export function readShare(params: URLSearchParams): Shared | null {
   const source = [text && title ? title : '', host].filter(Boolean).join(' · ') || 'shared';
   return { text: body, source, url };
 }
+
+/**
+ * Text Android handed to the APK (text-selection menu or share sheet). Same
+ * rules as a Web Share Target request; when nothing else names the source,
+ * the sending app does ("LINE", "Chrome").
+ */
+export function readAppShare(share: { text: string; subject: string; app: string }): Shared | null {
+  const r = readShare(new URLSearchParams({ title: share.subject, text: share.text }));
+  if (!r) return null;
+  const app = share.app.trim();
+  if (app && r.source === 'shared') r.source = app;
+  return r;
+}

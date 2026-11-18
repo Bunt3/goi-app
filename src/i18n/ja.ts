@@ -309,6 +309,17 @@ export const JA: Record<string, string> = {
   'Another round': 'もう1回',
   // ---- Listen
   'Looking for a Japanese voice…': '日本語の音声を探しています…',
+  // Android app: speech through the phone's engine
+  'No Japanese voice is installed on this phone. Goi speaks with the phone’s own text-to-speech engine and only uses voices stored on the phone, so speech is made on the phone, not by an online service.':
+    'この端末には日本語の音声が入っていません。Goiは端末の読み上げエンジンと端末内の音声だけを使うので、音声はオンラインのサービスではなく端末上で作られます。',
+  'Open the text-to-speech settings (button below).': '読み上げ（テキスト読み上げ）の設定を開きます（下のボタン）。',
+  'Choose Google’s engine (“Speech Recognition & Synthesis from Google”) or Samsung TTS as the preferred engine.':
+    '優先するエンジンに Google の「音声認識と合成」または Samsung TTS を選びます。',
+  'Tap the gear icon → Install voice data → 日本語, and download it.': '歯車アイコン → 音声データをインストール → 日本語 を選んでダウンロードします。',
+  'Come back here and press Check again.': 'ここに戻って「再確認」を押します。',
+  'Open text-to-speech settings': '読み上げの設定を開く',
+  'Check again': '再確認',
+  'Couldn’t open the settings. Look for Text-to-speech under Settings → Accessibility.': '設定を開けませんでした。設定 → ユーザー補助 の中の「テキスト読み上げ」を探してください。',
 
   // ---- More
   'Backup & transfer': 'バックアップと移行',

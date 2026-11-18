@@ -1,5 +1,5 @@
 import './styles.css';
-import { applyTheme, ensurePersistence, mountShell, register, store } from './ui/app';
+import { applyTheme, ensurePersistence, mountShell, refresh, register, store } from './ui/app';
 import { installBackupHooks } from './ui/autobackup';
 import { h, toast } from './ui/dom';
 import { homeView } from './ui/home';
@@ -8,7 +8,8 @@ import { addView, editView } from './ui/add';
 import { dictView } from './ui/dictview';
 import { checkerView } from './ui/checker';
 import { keigoView } from './ui/keigo';
-import { readShare } from './share';
+import { readAppShare, readShare } from './share';
+import { onAppShare, takeAppShare } from './native';
 import { setUiLang } from './ui/i18n';
 import { browseView } from './ui/browse';
 import { bulkView } from './ui/bulk';
@@ -17,6 +18,26 @@ import { listenView } from './ui/listen';
 import { statsView } from './ui/stats';
 import { moreView } from './ui/more';
 import { prepareBundledDict } from './ui/dict';
+
+/**
+ * APK: take text Android handed over, if any, and queue it for Capture.
+ * On start the Capture screen replaces the first page; later it is pushed
+ * by the caller, so Back returns to where the owner was. True if there was text.
+ */
+async function takeNativeShare(onStart: boolean): Promise<boolean> {
+  let raw;
+  try {
+    raw = await takeAppShare();
+  } catch (err) {
+    console.warn('Could not read text from another app.', err);
+    return false;
+  }
+  const shared = raw ? readAppShare(raw) : null;
+  if (!shared) return false;
+  setPendingShare(shared);
+  if (onStart) history.replaceState(null, '', location.pathname + '#/capture');
+  return true;
+}
 
 async function start(): Promise<void> {
   const root = document.getElementById('app')!;
@@ -60,13 +81,23 @@ async function start(): Promise<void> {
     history.replaceState(null, '', import.meta.env.BASE_URL + '#/capture');
     if (shared) setPendingShare(shared);
   }
+  // APK: text from Android's text-selection menu ("Goi") or share sheet.
+  if (__NATIVE__) await takeNativeShare(true);
   mountShell(root);
   if (store.settings.uiLang === 'ja') setUiLang('ja');
   if (store.cards.size > 0) void ensurePersistence();
   installBackupHooks();
 
   // The APK has every file on the device already and is updated as a whole.
-  if (__NATIVE__) void prepareBundledDict();
+  if (__NATIVE__) {
+    void prepareBundledDict();
+    // Text sent while the app is already open: show it in Capture.
+    void onAppShare(async () => {
+      if (!(await takeNativeShare(false))) return;
+      if (location.hash === '#/capture') refresh();
+      else location.hash = '#/capture';
+    }).catch((err) => console.warn('Incoming text from other apps is unavailable.', err));
+  }
   else if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {

@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (Android APK step A built; next: owner adds the signing secrets, then step B)
+# Handoff — state as of 2026-11-18 (Android APK steps A and B released as 1.2.0; next: owner's phone test, then C)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -13,8 +13,8 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   5. Decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
   6. An English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
   7. Checker mode (replacing the unverified tag), Share to Goi, the weekly look-back and where-from filter, keigo training, and a visual refresh. See "Seventh block" below.
-  8. The Android APK, step A: Capacitor project, bundled dictionary, saving to Downloads, CI build and signed releases. See "Progress" under NEXT TASK.
-- **Checks:** 245 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline. `e2e/android-smoke.cjs` checks the Android build's web part.
+  8. The Android APK, steps A and B: Capacitor project, bundled dictionary, saving to Downloads, CI build and signed releases; native speech, the text-selection menu and the share sheet. See "Progress" under NEXT TASK.
+- **Checks:** 246 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline. `e2e/android-smoke.cjs` checks the Android build's web part.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK: Android APK (Capacitor), then a transitions proposal
@@ -43,7 +43,17 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 - Capacitor 8 needs Node ≥ 22; Node 22.23 here and in CI. AGP 8.13.0, Gradle 8.14.3, compileSdk/targetSdk 36, minSdk 24.
 - No emulator here, so nothing native has run. Unverified on the phone: the save to Downloads, the back button, edge-to-edge insets (Capacitor's SystemBars `native` handling with `viewport-fit=cover`), the keyboard over the bottom sheet, the camera input, dictionary preparation time on the real 219k-entry file from inside the APK.
 
-**Next:** B (native TTS, `PROCESS_TEXT` and `SEND` intents) in `GoiNativePlugin` (Android `TextToSpeech` needs no library), then C, D (ML Kit telemetry check first), E. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
+**Released:** the secrets were added and `apk-v1.1.0` was published by the workflow on 2026-11-18 (signed, certificate check passed, 20.9 MB with the real dictionary).
+
+**Step B (1.2.0):**
+
+- Speech: `Speech.java` wraps Android `TextToSpeech`; `GoiNativePlugin` exposes `ttsVoices({refresh})`, `speak({text, rate, voice})`, `stopSpeaking`, `openTtsSettings`. Only Japanese voices that are installed and need no network. `tts.ts` branches on `__NATIVE__`; Listen shows Android steps and a settings button when there is no voice. Manifest `<queries>` for `TTS_SERVICE` (Android 11+ package visibility).
+- Incoming text: intent filters for `PROCESS_TEXT` (label "Goi") and `SEND` text/plain on `MainActivity`. The plugin holds the text (`takeShare`) and fires a retained `share` event for warm starts; `readAppShare` (pure, tested) maps it to the existing Capture path, naming the sending app when nothing else does. Source app comes from the activity referrer, else the calling package.
+- `e2e/android-smoke.cjs` now runs against a fake native side with the bridge's real contract and checks every native call's name, options and handling.
+- Unverified on a phone: everything native. Specifically: the selection menu label (some apps put third-party entries under ⋮), whether the referrer names the app for `SEND` (often it doesn't; then the Source is "shared" or the page), Samsung TTS voice names and `isNetworkConnectionRequired` flags, and whether `singleTask` brings Goi forward cleanly from the selection menu.
+- Not built: sharing an image to Goi (would feed Capture's image path; small follow-up if wanted).
+
+**Next:** the owner's phone test of 1.2.0, then C (folder backups through SAF), D (ML Kit: telemetry check and the owner's decision first), E (update-check button). The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
 
 ### What the owner wants
 

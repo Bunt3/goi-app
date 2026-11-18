@@ -123,8 +123,9 @@ The same app, packaged with [Capacitor](https://capacitorjs.com/docs) as an Andr
 | Backups and exports | Browser download | Written to Downloads by the app (Android 10+). Older Android shows the system save screen. A failed save says so |
 | Offline | Service worker cache | All files are in the APK; no service worker |
 | Back button | Browser history | Previous screen; on the first screen, leaves the app |
-| Listening mode | Browser speech | **Not yet**: Android's WebView has no speech. Native speech is planned |
-| Folder backups, Share to Goi | Chromium only / installed PWA | Not yet |
+| Speech (Listen, speaker buttons) | Browser speech (`speechSynthesis`) | Android's own text-to-speech engine, through the app (the WebView has no `speechSynthesis`). Only Japanese voices stored on the phone; network voices are never used. With none installed, Listen has a button to the phone's text-to-speech settings, and *Check again* re-reads the voices |
+| Getting text in | Share to Goi (installed PWA, text only) | **Goi** in the text-selection menu of any app (`PROCESS_TEXT`) and in the share sheet (`SEND`, text). Both open Capture with the text; the Source is the shared page and site, or else the sending app's name. Text that starts the app makes Capture the first screen; text arriving while it is open pushes Capture, so Back returns |
+| Folder backups | Chromium only | Not yet |
 
 **Build:** `.github/workflows/android.yml`. *Actions → Android APK → Run workflow* with *Publish a release* ticked builds the web part in Android mode with the real dictionary, builds the APK with Gradle, signs it, checks the signing certificate against the one pinned in the workflow, and publishes the Release `apk-v<version>` with the APK and its SHA-256. The version comes from `package.json` and must be raised for each release (`1.2.3` becomes versionCode `10203`). Release notes come from `android/RELEASE_NOTES.md`. Pushing a tag `apk-v<version>` does the same. Without the signing secrets a build-only run still works and produces an unsigned APK that cannot be installed.
 
@@ -140,7 +141,7 @@ npm run build:android
 cd android && ./gradlew assembleRelease
 ```
 
-`npm run build:android` builds `dist-android/` (served from the root, no service worker, dictionary and OCR model stored un-gzipped because Android's packaging would otherwise un-gzip them and drop the `.gz` suffix) and copies it into the Android project. Set `GOI_KEYSTORE` (path) and `GOI_KEYSTORE_PASSWORD` to sign; otherwise the APK is unsigned. `npm run build:android:e2e` uses the test dictionary, and `npm run e2e:android` then checks the web part of that build in headless Chromium (root path, no service worker, dictionary prepared offline without a button, text recognition with the plain model, a failed native save reported). The native side can only be tested on a phone.
+`npm run build:android` builds `dist-android/` (served from the root, no service worker, dictionary and OCR model stored un-gzipped because Android's packaging would otherwise un-gzip them and drop the `.gz` suffix) and copies it into the Android project. Set `GOI_KEYSTORE` (path) and `GOI_KEYSTORE_PASSWORD` to sign; otherwise the APK is unsigned. `npm run build:android:e2e` uses the test dictionary, and `npm run e2e:android` then checks the web part of that build in headless Chromium with a stand-in for the native side that follows the same contract as Capacitor's Android bridge: root path, no service worker, dictionary prepared offline without a button, text recognition with the plain model, saving through the native side (and a failed save reported), speech and the settings button, and incoming text on start and while open. The Java side itself can only be tested on a phone.
 
 ## Picking words from sentences
 
@@ -482,7 +483,7 @@ e2e/runthrough.cjs    headless browser run-through
 e2e/android-smoke.cjs headless check of the Android build's web part
 vite.config.ts        base path, service worker generation, Android mode
 capacitor.config.json Android app id and name; webDir dist-android/
-android/              Android project (Gradle). app/src/main/java/…/GoiNativePlugin.java saves files to Downloads
+android/              Android project (Gradle). app/src/main/java/…/GoiNativePlugin.java: save to Downloads, speech (Speech.java), incoming text
 .github/workflows/android.yml  builds, signs and publishes the APK
 ```
 

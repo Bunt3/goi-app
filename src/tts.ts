@@ -1,6 +1,19 @@
-/** Thin wrapper over the Web Speech API (speechSynthesis) for Japanese playback. */
+/**
+ * Japanese playback. The website uses the Web Speech API (speechSynthesis);
+ * the APK uses Android's own engine through `native.ts`, because Android's
+ * WebView has no speechSynthesis.
+ */
+import { nativeSpeak, nativeStopSpeaking, nativeVoices } from './native';
+
+/** What the screens need from a voice. A SpeechSynthesisVoice fits this shape. */
+export interface TtsVoice {
+  voiceURI: string;
+  name: string;
+  localService: boolean;
+}
 
 export function ttsSupported(): boolean {
+  if (__NATIVE__) return true;
   return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
 }
 
@@ -9,8 +22,22 @@ const isJapanese = (v: SpeechSynthesisVoice) => /^ja([-_]|$)/i.test(v.lang);
 /**
  * Japanese voices installed on this device. Voice lists load asynchronously
  * in Chromium and on Android, so this waits briefly for `voiceschanged`.
+ * In the APK, only voices that work offline; `refresh` re-reads the list
+ * after the owner installs voice data.
  */
-export function japaneseVoices(timeoutMs = 2500): Promise<SpeechSynthesisVoice[]> {
+export async function japaneseVoices(timeoutMs = 2500, refresh = false): Promise<TtsVoice[]> {
+  if (__NATIVE__) {
+    try {
+      const { voices } = await nativeVoices(refresh);
+      return voices.map((v) => ({ voiceURI: v.id, name: v.label, localService: true }));
+    } catch {
+      return [];
+    }
+  }
+  return webJapaneseVoices(timeoutMs);
+}
+
+function webJapaneseVoices(timeoutMs: number): Promise<SpeechSynthesisVoice[]> {
   if (!ttsSupported()) return Promise.resolve([]);
   const synth = window.speechSynthesis;
   const now = synth.getVoices().filter(isJapanese);
@@ -42,6 +69,11 @@ export interface SpeakOptions {
 
 /** Speak Japanese text. Resolves when playback ends; rejects with a readable message on failure. */
 export function speak(text: string, options: SpeakOptions): Promise<void> {
+  if (__NATIVE__) {
+    return nativeSpeak(text, options.rate, options.voiceURI).catch((err: unknown) => {
+      throw new Error((err as Error)?.message || 'Speech failed.');
+    });
+  }
   return new Promise((resolve, reject) => {
     if (!ttsSupported()) {
       reject(new Error('This browser has no speech synthesis.'));
@@ -65,5 +97,6 @@ export function speak(text: string, options: SpeakOptions): Promise<void> {
 }
 
 export function stopSpeaking(): void {
-  if (ttsSupported()) window.speechSynthesis.cancel();
+  if (__NATIVE__) void nativeStopSpeaking().catch(() => undefined);
+  else if (ttsSupported()) window.speechSynthesis.cancel();
 }

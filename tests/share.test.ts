@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readShare } from '../src/share';
+import { readAppShare, readShare } from '../src/share';
 
 const p = (o: Record<string, string>) => new URLSearchParams(o);
 
@@ -26,5 +26,19 @@ describe('text shared from another app', () => {
   it('ignores an empty share and survives a bad link', () => {
     expect(readShare(p({}))).toBeNull();
     expect(readShare(p({ text: 'メモ', url: 'not a url' }))!.source).toBe('shared');
+  });
+
+  it('names the sending app when Android hands text to the APK', () => {
+    // Text-selection menu in LINE: just the selection.
+    expect(readAppShare({ text: '了解です、なるはやで対応します', subject: '', app: 'LINE' })).toEqual({
+      text: '了解です、なるはやで対応します',
+      source: 'LINE',
+      url: '',
+    });
+    // A browser sharing a selection with the page link: the page names the source, not the browser.
+    expect(readAppShare({ text: '根回しが欠かせない。 https://www.nikkei.com/a', subject: '日経新聞', app: 'Chrome' })!.source).toBe('日経新聞 · nikkei.com');
+    // Android didn't say who sent it.
+    expect(readAppShare({ text: '少々お待ちください', subject: '', app: '' })!.source).toBe('shared');
+    expect(readAppShare({ text: '', subject: '', app: 'LINE' })).toBeNull();
   });
 });
