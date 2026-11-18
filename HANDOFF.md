@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (Android APK steps A, B, E, C released as 1.4.0; next: D needs the owner's decision)
+# Handoff — state as of 2026-11-18 (Android APK 1.4.0: steps A, B, C, E done; D waits on the owner's decision)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -59,7 +59,14 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
 
 **Step C (1.4.0):** folder backups in the APK. `BackupFolder.java` keeps a persisted SAF tree permission (URI in SharedPreferences, old permission released on change) and lists, reads, writes, deletes files directly in the folder by name. Overwrite uses mode "wt"; if the provider refuses it, the old file is deleted and a new one created (plain "w" can leave the old tail). `native.ts` wraps it as a folder handle, so `backupfs.ts`, `ui/autobackup.ts` and the More screen run unchanged (four `__NATIVE__` branches in `backupfs.ts`: supported, saved, choose, forget). Permission lost shows as "permission needed"; re-granting means Change folder…, because Android can't re-ask without the picker. Unverified on a phone: providers other than local storage (Google Drive's folder provider in particular: "wt" support, reported sizes, `lastModified`), and whether the `visibilitychange` write finishes before Android pauses the WebView (the 20-second debounce covers it if not).
 
-**Next:** D (ML Kit): research whether it sends usage data and whether that can be turned off, report, and wait for the owner's decision. Then the motion demo, for the owner to pick from. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
+**Step D (ML Kit), research done, waiting on the owner:**
+
+- Google's ML Kit Android data-disclosure page (as quoted by search results; the page itself is on a host this environment blocks) says ML Kit collects device information (manufacturer, model, OS version and build, ML accelerators), app package name and version, performance metrics (latency), API configuration (image format and resolution), and event types and error codes, "for diagnostics and usage analytics", sent over HTTPS and not shared with third parties. It does not mention any opt-out. Images and recognised text are not in the list.
+- Checked in the library: `com.google.mlkit:text-recognition-japanese:16.0.1` → `com.google.mlkit:common:18.11.0` → `com.google.android.datatransport:transport-backend-cct:2.3.3`, whose endpoints (stored split in two interleaved strings) decode to `https://firebaselogging.googleapis.com/v0cc/log/batch?format=json_proto3` and `https://firebaselogging-pa.googleapis.com/v1/firelog/legacy/batchlog`. A 2022 Stack Overflow report describes ML Kit posting to the first one every 15 minutes, with no supported switch.
+- Options for the owner: (1) keep tesseract only (no change); (2) ML Kit and accept the usage reports to Google; (3) ML Kit with the reports blocked by the app itself: an Android network security config that pins those two hosts to a certificate that can't match, so the upload's TLS handshake fails (a standard Android mechanism; applies to the platform HTTPS stack the uploader uses; unverified on a device), optionally plus excluding `transport-backend-cct` in Gradle (may break ML Kit at runtime; would need testing). Size: Google documents about 4 MB per script per CPU architecture for bundled models; limiting the APK to arm64 keeps that to one copy.
+- Recommendation given to the owner: (3) with the pinning only, if they want better photo recognition.
+
+**Next:** the owner's D decision; the motion demo (published as an Artifact for the owner to pick from). The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
 
 ### What the owner wants
 
