@@ -70,7 +70,18 @@ async function backup(trigger: BackupTrigger): Promise<BackupOutcome> {
 
   if (trigger === 'silent') return { status: 'skipped' };
   const { file, commit } = await store.prepareBackup('Downloads', now);
-  download(exportFilename('auto', s.deviceLabel, now), serializeExport(file), 'application/json');
+  try {
+    await download(exportFilename('auto', s.deviceLabel, now), serializeExport(file), 'application/json');
+  } catch (err) {
+    // Only the APK can tell; the backup is still due and runs again next time.
+    const reason = (err as Error)?.message ?? String(err);
+    toast(
+      trigger === 'manual' ? `The backup was not saved (${reason}). Try again.` : `The backup was not saved (${reason}). It will be tried again after your next session.`,
+      undefined,
+      8000,
+    );
+    return { status: 'failed', reason };
+  }
   await commit();
   toast('Backup saved to Downloads.');
   return { status: 'saved', where: 'Downloads' };

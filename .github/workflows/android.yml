@@ -1,0 +1,196 @@
+name: Android APK
+
+# Builds the Android app (Capacitor) with the dictionary inside it, signs it
+# with the release key from the repository secrets and, when asked, publishes
+# it as a GitHub Release named apk-v<version from package.json>.
+#
+# Ways to run it:
+# - Actions → Android APK → Run workflow, "Publish a release" ticked: builds
+#   and publishes. Untick it to build only (the APK is kept as a run artifact).
+# - Push a tag apk-vX.Y.Z matching package.json's version.
+#
+# Needs two secrets: ANDROID_KEYSTORE_BASE64 (the keystore file, base64) and
+# ANDROID_KEYSTORE_PASSWORD. The website deploy (deploy.yml) is separate.
+
+on:
+  push:
+    tags: ['apk-v*']
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Publish a release (otherwise build only)
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # SHA-256 of the release signing certificate. Android installs an update
+  # only if it is signed with the same key, so a build signed with any other
+  # key is refused here rather than published.
+  RELEASE_CERT_SHA256: 80adf7a9a1b1a9e4f0d2930b69b84647c2423bb2fdb5542cc93f363e68c43dfc
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Version
+        id: version
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=apk-v$version" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME}" != "apk-v$version" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version $version"
+            exit 1
+          fi
+
+      - name: Check the signing secrets
+        id: signing
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          PUBLISH: ${{ github.ref_type == 'tag' || inputs.release }}
+        run: |
+          if [ -n "$KS" ] && [ -n "$PW" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          elif [ "$PUBLISH" = true ]; then
+            echo "::error::Add the repository secrets ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD (Settings → Secrets and variables → Actions)."
+            exit 1
+          else
+            # A build-only run still checks the pipeline; its APK can't be installed.
+            echo "::warning::No signing secrets: building an unsigned APK that cannot be installed."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm ci
+      - run: npm test
+
+      # The APK carries the dictionary, so unlike the website deploy a missing
+      # dictionary fails the build instead of shipping without one.
+      - name: Find the latest JMdict release
+        id: dictsrc
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          json=$(curl -fsSL --retry 3 -H "Authorization: Bearer $GH_TOKEN" https://api.github.com/repos/scriptin/jmdict-simplified/releases/latest)
+          pick() { echo "$json" | jq -r --arg re "$1" '[.assets[] | select(.name | test($re))][0] | if . then "\(.name)\t\(.browser_download_url)" else empty end'; }
+          found=$(pick '^jmdict-examples-eng-[0-9].*[.]json[.]zip$')
+          [ -n "$found" ] || found=$(pick '^jmdict-eng-[0-9].*[.]json[.]zip$')
+          [ -n "$found" ] || { echo "::error::no English JMdict asset in the latest jmdict-simplified release"; exit 1; }
+          name=$(printf '%s' "$found" | cut -f1)
+          url=$(printf '%s' "$found" | cut -f2)
+          case "$name" in *[!A-Za-z0-9.+_-]*) echo "::error::unexpected asset name"; exit 1;; esac
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Dictionary source: $name"
+
+      - name: Restore cached JMdict file
+        uses: actions/cache@v4
+        with:
+          path: .dict-cache
+          key: jmdict-${{ steps.dictsrc.outputs.name }}
+
+      - name: Download JMdict
+        id: dictdl
+        env:
+          NAME: ${{ steps.dictsrc.outputs.name }}
+          URL: ${{ steps.dictsrc.outputs.url }}
+        run: |
+          set -euo pipefail
+          mkdir -p .dict-cache
+          f=".dict-cache/$NAME"
+          if [ ! -s "$f" ]; then
+            curl -fsSL --retry 3 -o "$f.part" "$URL"
+            mv "$f.part" "$f"
+          fi
+          ls -l "$f"
+          echo "file=$f" >> "$GITHUB_OUTPUT"
+
+      - name: Build the app for Android
+        env:
+          DICT_SOURCE: ${{ steps.dictdl.outputs.file }}
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: |
+          set -euo pipefail
+          npm run build -- --mode android
+          node -e "const m=require('./dist-android/dict/manifest.json'); if (m.fixture) throw new Error('test dictionary in a release build'); console.log('dictionary', m.version, m.entries, 'entries')"
+          npx cap sync android
+
+      - name: Android SDK packages
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;35.0.0" > /dev/null
+
+      - name: Build and sign the APK
+        env:
+          KS: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          GOI_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SIGNED: ${{ steps.signing.outputs.signed }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p out
+          if [ "$SIGNED" != true ]; then
+            (cd android && ./gradlew --no-daemon assembleRelease)
+            cp android/app/build/outputs/apk/release/app-release-unsigned.apk "out/goi-$VERSION-unsigned.apk"
+            ls -l out
+            exit 0
+          fi
+          export GOI_KEYSTORE="$RUNNER_TEMP/goi-release.keystore"
+          printf '%s' "$KS" | base64 -d > "$GOI_KEYSTORE"
+          (cd android && ./gradlew --no-daemon assembleRelease)
+          rm -f "$GOI_KEYSTORE"
+          apk=android/app/build/outputs/apk/release/app-release.apk
+          apksigner="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          "$apksigner" verify "$apk"
+          cert=$("$apksigner" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+          if [ "$cert" != "$RELEASE_CERT_SHA256" ]; then
+            echo "::error::The APK is signed with a different key ($cert). Phones with Goi installed would refuse it as an update."
+            exit 1
+          fi
+          cp "$apk" "out/goi-$VERSION.apk"
+          (cd out && sha256sum "goi-$VERSION.apk" > "goi-$VERSION.apk.sha256")
+          ls -l out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: goi-${{ steps.version.outputs.version }}-apk
+          path: out/
+          retention-days: 30
+
+      - name: Publish the release
+        if: github.ref_type == 'tag' || inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::error::Release $TAG already exists. Raise the version in package.json for a new release."
+            exit 1
+          fi
+          gh release create "$TAG" "out/goi-$VERSION.apk" "out/goi-$VERSION.apk.sha256" \
+            --target "$GITHUB_SHA" \
+            --title "Goi $VERSION (Android)" \
+            --notes-file android/RELEASE_NOTES.md

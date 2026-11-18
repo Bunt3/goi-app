@@ -17,6 +17,7 @@ Live at **https://bunt3.github.io/goi-app/**
 - [Develop](#develop)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [Installing as an app](#installing-as-an-app)
+- [Android app (APK)](#android-app-apk)
 - [Picking words from sentences](#picking-words-from-sentences)
 - [Capture: photos, screenshots, video, text](#capture-photos-screenshots-video-text)
 - [Offline dictionary](#offline-dictionary)
@@ -88,7 +89,7 @@ The site is served from `/goi-app/`. That path appears in three places which mus
 
 | File | Setting |
 | --- | --- |
-| `vite.config.ts` | `BASE = '/goi-app/'` |
+| `vite.config.ts` | `WEB_BASE = '/goi-app/'` |
 | `public/manifest.webmanifest` | `id`, `start_url`, `scope` |
 | `index.html` | nothing to change — Vite rewrites its URLs from `BASE` |
 
@@ -105,6 +106,41 @@ Open https://bunt3.github.io/goi-app/ once while online. Everything is cached on
 **Windows 11, Firefox:** Firefox on desktop does not install PWAs. The site still works offline in a normal tab once it has been loaded: bookmark it or pin the tab. When Firefox asks whether the site may store data in persistent storage, allow it.
 
 After installing, open **More** and check the storage line under *Backup & transfer*. If it says storage is not protected, press *Ask the browser to protect this data*. Chromium browsers grant this silently for installed or frequently used sites; Firefox asks.
+
+## Android app (APK)
+
+The same app, packaged with [Capacitor](https://capacitorjs.com/docs) as an Android app that is installed from a file instead of the browser. The APK carries every file, including the dictionary and the text recogniser, so it needs no connection after it is installed. The website stays as it is.
+
+**Install:** download `goi-<version>.apk` from the repository's [Releases](https://github.com/Bunt3/goi-app/releases) on the phone and open it; Android asks once to allow installs from that browser. While the repository is private, be logged in to GitHub in the phone's browser. An update installs over the previous version and keeps the data, as long as it is signed with the same key.
+
+**Data:** the APK has its own storage, separate from the browser's. Move cards once with a backup: browser app *More → Export backup (JSON)*, then APK *More → Import a backup…*. App data is excluded from Android's cloud backup and device transfer, so nothing leaves the phone that way; the backup files in Downloads are the copy.
+
+**What differs from the website:**
+
+| | Website | APK |
+| --- | --- | --- |
+| Dictionary | Downloaded when you press the button | Inside the APK; prepared automatically on first start (a minute or two, no connection needed). No Remove button |
+| Backups and exports | Browser download | Written to Downloads by the app (Android 10+). Older Android shows the system save screen. A failed save says so |
+| Offline | Service worker cache | All files are in the APK; no service worker |
+| Back button | Browser history | Previous screen; on the first screen, leaves the app |
+| Listening mode | Browser speech | **Not yet**: Android's WebView has no speech. Native speech is planned |
+| Folder backups, Share to Goi | Chromium only / installed PWA | Not yet |
+
+**Build:** `.github/workflows/android.yml`. *Actions → Android APK → Run workflow* with *Publish a release* ticked builds the web part in Android mode with the real dictionary, builds the APK with Gradle, signs it, checks the signing certificate against the one pinned in the workflow, and publishes the Release `apk-v<version>` with the APK and its SHA-256. The version comes from `package.json` and must be raised for each release (`1.2.3` becomes versionCode `10203`). Release notes come from `android/RELEASE_NOTES.md`. Pushing a tag `apk-v<version>` does the same. Without the signing secrets a build-only run still works and produces an unsigned APK that cannot be installed.
+
+**Signing key:** repository secrets `ANDROID_KEYSTORE_BASE64` (the PKCS12 keystore, base64) and `ANDROID_KEYSTORE_PASSWORD` (store and key password; alias `goi`). The key is never in the repository. Keep an offline copy: Android installs an update only if it is signed with the same key, and without it the app would have to be uninstalled, which deletes its data.
+
+**Locally** (needs JDK 21 and the Android SDK with platform 36 and build-tools 35):
+
+```bash
+npm run build:android
+```
+
+```bash
+cd android && ./gradlew assembleRelease
+```
+
+`npm run build:android` builds `dist-android/` (served from the root, no service worker, dictionary and OCR model stored un-gzipped because Android's packaging would otherwise un-gzip them and drop the `.gz` suffix) and copies it into the Android project. Set `GOI_KEYSTORE` (path) and `GOI_KEYSTORE_PASSWORD` to sign; otherwise the APK is unsigned. `npm run build:android:e2e` uses the test dictionary, and `npm run e2e:android` then checks the web part of that build in headless Chromium (root path, no service worker, dictionary prepared offline without a button, text recognition with the plain model, a failed native save reported). The native side can only be tested on a phone.
 
 ## Picking words from sentences
 
@@ -434,6 +470,7 @@ src/
   dict-install.worker.ts  downloads and installs the dictionary off the main thread
   ocr.ts              tesseract.js wrapper, lazy-loaded
   tts.ts              speechSynthesis wrapper
+  native.ts           Android app bridge (Capacitor); the web build drops it
   backupfs.ts         File System Access API: folder handle, write, verify, prune
   ui/                 views (vanilla TS, no framework); ui/autobackup.ts runs the backups;
                       ui/picker.ts is the word picker, ui/capture.ts the capture screen,
@@ -442,10 +479,14 @@ scripts/build-dict.mjs  jmdict-simplified JSON → public/dict/ (manifest + gzip
 tests/                Vitest: scheduling, round trip, merge, auto-backup, text picking, TSV, furigana, seed, dictionary
 tests/fixtures/       dict-sample.json (49 hand-written entries in jmdict-simplified's shape) and its generator
 e2e/runthrough.cjs    headless browser run-through
-vite.config.ts        base path, service worker generation
+e2e/android-smoke.cjs headless check of the Android build's web part
+vite.config.ts        base path, service worker generation, Android mode
+capacitor.config.json Android app id and name; webDir dist-android/
+android/              Android project (Gradle). app/src/main/java/…/GoiNativePlugin.java saves files to Downloads
+.github/workflows/android.yml  builds, signs and publishes the APK
 ```
 
-Runtime dependencies: `ts-fsrs`, `dexie`, and `tesseract.js` (loaded only when an image is read). `scripts/copy-ocr.cjs` copies the OCR engine and Japanese model from `node_modules` into `public/ocr/` before `dev` and `build`; that folder is generated and not committed. The dictionary is data, not a dependency: `scripts/build-dict.mjs` writes `public/dict/` (also generated) when `DICT_SOURCE` points at a jmdict-simplified file, plain or zipped; without it the build has no dictionary.
+Runtime dependencies: `ts-fsrs`, `dexie`, `tesseract.js` (loaded only when an image is read), and `@capacitor/core` (Android app only; the website build leaves it out). `@capacitor/cli` and `@capacitor/android` are build tools. `scripts/copy-ocr.cjs` copies the OCR engine and Japanese model from `node_modules` into `public/ocr/` before `dev` and `build`; that folder is generated and not committed. The dictionary is data, not a dependency: `scripts/build-dict.mjs` writes `public/dict/` (also generated) when `DICT_SOURCE` points at a jmdict-simplified file, plain or zipped; without it the build has no dictionary.
 
 ## Known limits
 

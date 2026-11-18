@@ -8,7 +8,12 @@ import { download, toast } from './dom';
 export async function exportBackup(): Promise<void> {
   const now = Date.now();
   const file = await store.export(now, 'manual export');
-  download(exportFilename('backup', store.settings.deviceLabel, now), serializeExport(file), 'application/json');
+  try {
+    await download(exportFilename('backup', store.settings.deviceLabel, now), serializeExport(file), 'application/json');
+  } catch (err) {
+    toast(`The backup was not saved (${(err as Error)?.message ?? err}). Try again.`, undefined, 8000);
+    return;
+  }
   toast(`Backup saved: ${file.cards.filter((c) => !c.deleted).length} cards, ${file.reviewLogs.length} reviews.`);
 }
 
@@ -35,10 +40,15 @@ export function canShareFiles(): boolean {
   }
 }
 
-export function exportAnki(): void {
+export async function exportAnki(): Promise<void> {
   const now = Date.now();
   const cards = store.live();
-  download(exportFilename('anki', store.settings.deviceLabel, now), buildAnkiTsv(cards), 'text/tab-separated-values');
+  try {
+    await download(exportFilename('anki', store.settings.deviceLabel, now), buildAnkiTsv(cards), 'text/tab-separated-values');
+  } catch (err) {
+    toast(`The Anki file was not saved (${(err as Error)?.message ?? err}). Try again.`, undefined, 8000);
+    return;
+  }
   toast(`Anki file saved: ${cards.length} notes.`);
 }
 

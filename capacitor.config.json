@@ -1,0 +1,10 @@
+{
+  "appId": "io.github.bunt3.goi",
+  "appName": "Goi",
+  "webDir": "dist-android",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

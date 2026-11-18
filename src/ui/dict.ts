@@ -7,7 +7,7 @@ import type { DictManifest } from '../dict/entry';
 import { cardFields, labelsFor, lookupWord, type DictFields, type DictMatch } from '../dict/lookup';
 import { DictDB, DICT_DB_NAME, findEntries, installState, type InstalledDict } from '../dictdb';
 import type { InstallMessage, InstallRequest } from '../dict-install.worker';
-import { h } from './dom';
+import { h, toast } from './dom';
 
 export type DictStatus =
   | { state: 'checking' }
@@ -52,7 +52,8 @@ export function onDictStatus(fn: (s: DictStatus) => void): () => void {
 
 async function fetchManifest(): Promise<DictManifest | 'missing' | 'offline'> {
   // Skip the request when the browser knows it is offline (a failed fetch is logged as an error).
-  if (navigator.onLine === false) return 'offline';
+  // The APK carries the file, so being offline doesn't matter there.
+  if (!__NATIVE__ && navigator.onLine === false) return 'offline';
   let res: Response;
   try {
     res = await fetch(BASE + 'manifest.json', { cache: 'no-store' });
@@ -133,6 +134,28 @@ export function installDict(manifest: DictManifest): void {
   worker.onerror = (e) => void finish(e.message || 'the installer stopped');
   const req: InstallRequest = { url: BASE + manifest.file, manifest };
   worker.postMessage(req);
+}
+
+/**
+ * APK only: the dictionary file ships inside the app, so it is installed
+ * (or replaced by a newer bundled version) on start without asking.
+ */
+export async function prepareBundledDict(): Promise<void> {
+  await checkDict();
+  const s = status;
+  const manifest = s.state === 'available' ? s.manifest : s.state === 'installed' ? s.update : null;
+  if (!manifest) return;
+  toast('Preparing the dictionary. This happens once and takes a minute or two; the app works meanwhile.', undefined, 6000);
+  const off = onDictStatus((next) => {
+    if (next.state === 'installed') {
+      off();
+      toast('Dictionary ready.');
+    } else if (next.state === 'failed') {
+      off();
+      toast(`Preparing the dictionary stopped: ${next.message}. More → Dictionary can try again.`, undefined, 8000);
+    }
+  });
+  installDict(manifest);
 }
 
 /** Delete the dictionary database. Cards are untouched. */

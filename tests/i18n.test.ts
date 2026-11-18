@@ -26,6 +26,9 @@ describe('Japanese interface text', () => {
     ['Last backed up 3 days ago (Downloads).', '最終バックアップ：3日前（Downloads）。'],
     ['Installed: 219,127 entries, 11/17/2026. Works offline.', 'インストール済み：219127語、11/17/2026。オフラインで使えます。'],
     ['3 entries labelled Slang, common words first.', '「スラング」のラベル付き 3件（常用語から）。'],
+    ['Not prepared yet. It comes with the app (219,127 entries); preparing it needs no connection.', '未準備。辞書はアプリに含まれています（219127語）。準備に通信は不要です。'],
+    ['Preparing… 2,000 entries of 219,127.', '準備中… 219127語中2000語。'],
+    ['The backup was not saved (Saving was cancelled). Try again.', 'バックアップは保存されませんでした（Saving was cancelled）。もう一度お試しください。'],
     ['Inbox: 2 cards need a reading or meaning before they can be studied.', '受信箱：読みか意味が未入力のカードが2枚あります。入力すると学習できます。'],
   ])('%s → %s', (en, ja) => {
     expect(translate(en)).toBe(ja);

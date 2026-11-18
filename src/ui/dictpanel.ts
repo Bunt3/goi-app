@@ -20,21 +20,43 @@ export function dictSection(): { el: HTMLElement; destroy: () => void } {
           h(
             'p',
             { class: 'small', id: 'dict-status' },
-            s.state === 'failed'
-              ? `The download stopped: ${s.message}. Nothing else was affected; try again when the connection is steady.`
-              : s.interrupted
-                ? 'An earlier download did not finish. Download again to complete it.'
-                : `Not downloaded. About ${mb(s.manifest.bytes)} to download, ${plural(s.manifest.entries, 'entry', 'entries')}. Use Wi-Fi if mobile data is limited.`,
+            __NATIVE__
+              ? s.state === 'failed'
+                ? `Preparing the dictionary stopped: ${s.message}. Nothing else was affected; try again.`
+                : s.interrupted
+                  ? 'Preparing the dictionary did not finish. Try again to complete it.'
+                  : `Not prepared yet. It comes with the app (${plural(s.manifest.entries, 'entry', 'entries')}); preparing it needs no connection.`
+              : s.state === 'failed'
+                ? `The download stopped: ${s.message}. Nothing else was affected; try again when the connection is steady.`
+                : s.interrupted
+                  ? 'An earlier download did not finish. Download again to complete it.'
+                  : `Not downloaded. About ${mb(s.manifest.bytes)} to download, ${plural(s.manifest.entries, 'entry', 'entries')}. Use Wi-Fi if mobile data is limited.`,
           ),
-          h('button', { class: 'primary block', id: 'dict-install', onclick: () => installDict(s.manifest) }, `Download dictionary (about ${mb(s.manifest.bytes)})`),
+          h(
+            'button',
+            { class: 'primary block', id: 'dict-install', onclick: () => installDict(s.manifest) },
+            __NATIVE__ ? 'Prepare dictionary' : `Download dictionary (about ${mb(s.manifest.bytes)})`,
+          ),
         );
         break;
       case 'installing': {
         const total = s.manifest.entries || 1;
         parts.push(
-          h('p', { class: 'small', id: 'dict-status' }, `Installing… ${plural(s.entries, 'entry', 'entries')} of ${s.manifest.entries.toLocaleString()} (${mb(s.bytes)} downloaded).`),
+          h(
+            'p',
+            { class: 'small', id: 'dict-status' },
+            __NATIVE__
+              ? `Preparing… ${plural(s.entries, 'entry', 'entries')} of ${s.manifest.entries.toLocaleString()}.`
+              : `Installing… ${plural(s.entries, 'entry', 'entries')} of ${s.manifest.entries.toLocaleString()} (${mb(s.bytes)} downloaded).`,
+          ),
           h('progress', { class: 'dict-progress', id: 'dict-progress', max: total, value: Math.min(s.entries, total) }),
-          h('p', { class: 'muted small' }, 'You can keep using the app. Leaving this screen is fine; closing the app stops the download.'),
+          h(
+            'p',
+            { class: 'muted small' },
+            __NATIVE__
+              ? 'You can keep using the app. If you close it, this starts again next time.'
+              : 'You can keep using the app. Leaving this screen is fine; closing the app stops the download.',
+          ),
         );
         break;
       }
@@ -48,20 +70,27 @@ export function dictSection(): { el: HTMLElement; destroy: () => void } {
           h('a', { href: '#/dict', class: 'chip linkchip', id: 'dict-browse', style: 'margin-bottom:8px' }, '📖 Browse and search the dictionary'),
           s.info.fixture ? h('p', { class: 'notice small' }, 'This build carries a small test dictionary, not the real one.') : '',
           s.update
-            ? h('button', { class: 'block', id: 'dict-update', onclick: () => installDict(s.update!) }, `Download the newer version (about ${mb(s.update.bytes)})`)
+            ? h(
+                'button',
+                { class: 'block', id: 'dict-update', onclick: () => installDict(s.update!) },
+                __NATIVE__ ? 'Prepare the newer version' : `Download the newer version (about ${mb(s.update.bytes)})`,
+              )
             : '',
-          h(
-            'button',
-            {
-              class: 'link small',
-              id: 'dict-remove',
-              onclick: async () => {
-                await removeDict();
-                toast('Dictionary removed. Your cards are unchanged.');
-              },
-            },
-            'Remove dictionary',
-          ),
+          // In the APK the dictionary comes with the app and is prepared again on start, so removing it would not stick.
+          __NATIVE__
+            ? ''
+            : h(
+                'button',
+                {
+                  class: 'link small',
+                  id: 'dict-remove',
+                  onclick: async () => {
+                    await removeDict();
+                    toast('Dictionary removed. Your cards are unchanged.');
+                  },
+                },
+                'Remove dictionary',
+              ),
         );
         break;
     }

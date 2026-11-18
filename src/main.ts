@@ -16,6 +16,7 @@ import { captureView, setPendingShare } from './ui/capture';
 import { listenView } from './ui/listen';
 import { statsView } from './ui/stats';
 import { moreView } from './ui/more';
+import { prepareBundledDict } from './ui/dict';
 
 async function start(): Promise<void> {
   const root = document.getElementById('app')!;
@@ -64,7 +65,9 @@ async function start(): Promise<void> {
   if (store.cards.size > 0) void ensurePersistence();
   installBackupHooks();
 
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  // The APK has every file on the device already and is updated as a whole.
+  if (__NATIVE__) void prepareBundledDict();
+  else if (import.meta.env.PROD && 'serviceWorker' in navigator) {
     const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       // A newer build took over. Never reload on our own: a review may be in progress.

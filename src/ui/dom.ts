@@ -1,3 +1,4 @@
+import { nativeSave } from '../native';
 type Child = Node | string | number | null | undefined | false;
 type Props = Record<string, unknown>;
 
@@ -67,13 +68,20 @@ export function toast(message: string, action?: { label: string; run: () => void
   toastTimer = setTimeout(() => host.classList.remove('show'), ms);
 }
 
-export function download(filename: string, text: string, mime: string): void {
+/**
+ * Save a text file for the owner: a browser download on the website, a file
+ * in Downloads in the APK. Resolves to where it went; rejects if the APK
+ * could not save it (a browser download can't report failure).
+ */
+export async function download(filename: string, text: string, mime: string): Promise<string> {
+  if (__NATIVE__) return nativeSave(filename, text, mime);
   const url = URL.createObjectURL(new Blob([text], { type: mime }));
   const a = h('a', { href: url, download: filename, style: 'display:none' });
   document.body.append(a);
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  return 'Downloads';
 }
 
 export function plural(n: number, one: string, many = one + 's'): string {

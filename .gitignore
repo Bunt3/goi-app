@@ -6,3 +6,4 @@ e2e/out
 public/ocr
 public/dict
 .dict-cache
+dist-android

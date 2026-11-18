@@ -29,7 +29,8 @@ async function getWorker(): Promise<Worker> {
         corePath: base + 'core',
         langPath: base + 'lang',
         workerBlobURL: false,
-        gzip: true,
+        // The APK stores the model un-gzipped (see vite.config.ts).
+        gzip: !__NATIVE__,
         // The service worker keeps these files; a second copy in IndexedDB would only cost space.
         cacheMethod: 'none',
         logger: (m: { status: string; progress: number }) => progress(STAGE[m.status] ?? m.status, m.progress),

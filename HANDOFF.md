@@ -1,4 +1,4 @@
-# Handoff — state as of 2026-11-18 (next: Android APK; seventh block done)
+# Handoff — state as of 2026-11-18 (Android APK step A built; next: owner adds the signing secrets, then step B)
 
 For whoever picks this project up next. `CLAUDE.md` has the constraints and the invariants that are easy to break; `README.md` has user-facing behaviour and the JSON schema. This file is the status, the reasoning behind decisions that aren't obvious from the code, what is unverified, and what to do next.
 
@@ -12,13 +12,38 @@ For whoever picks this project up next. `CLAUDE.md` has the constraints and the 
   4. An offline dictionary (JMdict) that fills readings, meanings, tags and examples.
   5. Decks (schema 2), a dictionary browser, and three new starter decks. See "Fifth block" below.
   6. An English / 日本語 interface toggle, so a Japanese speaker can review the app. See "Sixth block" below.
-  7. This block: checker mode (replacing the unverified tag), Share to Goi, the weekly look-back and where-from filter, keigo training, and a visual refresh. See "Seventh block" below.
-- **Checks:** 242 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline.
+  7. Checker mode (replacing the unverified tag), Share to Goi, the weekly look-back and where-from filter, keigo training, and a visual refresh. See "Seventh block" below.
+  8. The Android APK, step A: Capacitor project, bundled dictionary, saving to Downloads, CI build and signed releases. See "Progress" under NEXT TASK.
+- **Checks:** 245 Vitest tests. `e2e/runthrough.cjs` drives the production build through every feature, including on-device text recognition of rendered images, online and offline. `e2e/android-smoke.cjs` checks the Android build's web part.
 - **Nothing has been run on a real device by anyone.** This is the largest open risk and it has grown with each block. See "Unverified".
 
 ## NEXT TASK: Android APK (Capacitor), then a transitions proposal
 
-**Read this section first. It is the active assignment.** Decided with the owner on 2026-11-18. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
+**Read this section first. It is the active assignment.** Decided with the owner on 2026-11-18.
+
+### Progress (2026-11-18, eighth block)
+
+**Step A is built; it ships once the owner adds two secrets.** What exists:
+
+- Capacitor 8.6.2 (`@capacitor/core` runtime, `cli`/`android` dev). `capacitor.config.json`, app id `io.github.bunt3.goi`, project in `android/` (Java, not Kotlin: no extra Gradle plugin).
+- `vite build --mode android` → `dist-android/`: base `/`, no service worker, `__NATIVE__` true. The web build is unchanged in behaviour and its bundle contains no Capacitor code (checked by grep).
+- Dictionary bundled: `prepareBundledDict()` (in `ui/dict.ts`, called from `main.ts`) installs it on start with a toast, also a newer bundled version after an update. More → Dictionary says "Prepare", hides Remove.
+- **Found and fixed before any device run:** (1) Android packaging un-gzips `.gz` assets and drops the suffix, so the dictionary and OCR model would 404; the Android build now stores them plain. (2) `await`-ing a promise that resolves to a Capacitor plugin proxy calls a native `then` and hangs; `native.ts` avoids it. (3) Android's WebView ignores `<a download>`, so every backup and export would have silently done nothing; `GoiNativePlugin.saveDownload` writes to Downloads via MediaStore (Android 10+, no permission) or the system save screen (older). Callers now await the save and report failure; an automatic backup is committed only after the file is written.
+- Back button handled in `MainActivity` (WebView history, then leave). App icons from the PWA's icon; plain dark splash; `allowBackup=false` plus data-extraction rules so Android doesn't upload app data to Google's cloud backup.
+- `.github/workflows/android.yml` (manual run or `apk-v*` tag): tests, real dictionary (fails rather than ship without one), Android build, `assembleRelease`, signs with the secrets, **checks the certificate SHA-256 against the pinned value**, uploads the artifact, publishes Release `apk-v<version>` with notes from `android/RELEASE_NOTES.md`. Without secrets a build-only run produces an unsigned APK (pipeline check).
+- `e2e/android-smoke.cjs` (`npm run e2e:android`) checks the Android build's web part in Chromium, including OCR with the plain model.
+- Locally verified: signed release APK builds (9.7 MB with the test dictionary; expect about 20 MB with the real one), `apksigner verify` passes, assets are where the app requests them.
+- Version raised to 1.1.0 (versionCode 10100).
+
+**Owner action needed:** add repository secrets `ANDROID_KEYSTORE_BASE64` and `ANDROID_KEYSTORE_PASSWORD` (the keystore was generated in the session and handed to the owner, never committed; alias `goi`; certificate SHA-256 `80adf7a9…3dfc`, pinned in the workflow). Then Actions → Android APK → Run workflow. If the key is lost, generate a new one and change `RELEASE_CERT_SHA256`, but installed copies must then be uninstalled first (data loss without a backup).
+
+**Facts checked this block** (were in "Not verified"):
+
+- `dl.google.com` was blocked in the default cloud environment (proxy 403). The session moved to a personal environment `goi-app` that allows it; `maven.google.com`, Maven Central and `services.gradle.org` were already reachable (Maven Central sometimes answers 429; retry). SDK installed at `/opt/android-sdk` (cmdline-tools 16111833, platform 36, build-tools 35.0.0), JDK 21 is on the image. A fresh container needs the SDK again: `sdkmanager "platforms;android-36" "build-tools;35.0.0"` after unpacking cmdline-tools, and `android/local.properties` with `sdk.dir=/opt/android-sdk`.
+- Capacitor 8 needs Node ≥ 22; Node 22.23 here and in CI. AGP 8.13.0, Gradle 8.14.3, compileSdk/targetSdk 36, minSdk 24.
+- No emulator here, so nothing native has run. Unverified on the phone: the save to Downloads, the back button, edge-to-edge insets (Capacitor's SystemBars `native` handling with `viewport-fit=cover`), the keyboard over the bottom sheet, the camera input, dictionary preparation time on the real 219k-entry file from inside the APK.
+
+**Next:** B (native TTS, `PROCESS_TEXT` and `SEND` intents) in `GoiNativePlugin` (Android `TextToSpeech` needs no library), then C, D (ML Kit telemetry check first), E. The web app / Windows version is to be **left alone for now**: keep it building and deployable, but add nothing web-only and don't change its behaviour. Windows may get attention later.
 
 ### What the owner wants
 

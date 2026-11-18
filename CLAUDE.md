@@ -6,10 +6,10 @@ Personal Japanese vocabulary PWA for one user. Read `HANDOFF.md` for current sta
 
 ## Hard constraints (from the owner; do not relax without asking)
 
-- Installable, offline-first PWA. One codebase for Android (Brave/Chrome) and Windows desktop (Firefox, Brave).
-- Vite + TypeScript, vanilla DOM. Runtime dependencies are `ts-fsrs`, `dexie`, and `tesseract.js` (lazy-loaded; added when the owner asked for image capture). No framework, no backend, no accounts, no analytics. Do not add others without the owner asking for the feature that needs them.
+- Installable, offline-first PWA. One codebase for Android (Brave/Chrome) and Windows desktop (Firefox, Brave). Also an Android APK (Capacitor) built from the same code; the website is to be left as it is for now.
+- Vite + TypeScript, vanilla DOM. Runtime dependencies are `ts-fsrs`, `dexie`, `tesseract.js` (lazy-loaded; added when the owner asked for image capture) and `@capacitor/core` (Android app only, added when the owner asked for an APK). No framework, no backend, no accounts, no analytics. Do not add others without the owner asking for the feature that needs them.
 - **No requests to any other origin, ever.** No web fonts, CDNs, lookups or uploads. The browser run-through asserts this. The same-origin fetches after install are the OCR engine and model under `ocr/` on first use, and the dictionary under `dict/` when the owner presses Download.
-- Served from `https://bunt3.github.io/goi-app/`. The base path lives in `vite.config.ts` (`BASE`) and `public/manifest.webmanifest` (`id`, `start_url`, `scope`).
+- Served from `https://bunt3.github.io/goi-app/`. The base path lives in `vite.config.ts` (`WEB_BASE`) and `public/manifest.webmanifest` (`id`, `start_url`, `scope`).
 - Sessions are 5-minute bursts. Never add streaks, guilt wording, or anything that punishes skipped days.
 - Mobile-first, controls within thumb reach, dark by default.
 
@@ -21,6 +21,8 @@ npm run build       # copies OCR assets to public/ocr, builds public/dict if DIC
 npm run build:e2e   # the same, with the 51-entry test dictionary (tests/fixtures/dict-sample.json)
 npm run e2e         # headless run-through of dist/; needs build:e2e first
 npm run dev         # no service worker in dev
+npm run build:android:e2e && npm run e2e:android   # Android build's web part, with the test dictionary
+cd android && ./gradlew assembleRelease           # needs the Android SDK (see HANDOFF environment notes)
 ```
 
 Playwright is not a dependency. `e2e/runthrough.cjs` uses `require('playwright')` from the environment.
@@ -58,7 +60,10 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/share.ts` | Reading a Web Share Target request (pure); intake in `main.ts`, display in Capture |
 | `src/ui/i18n.ts`, `src/i18n/ja.ts` | Interface language: DOM translation layer and the Japanese catalogue |
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
-| `vite.config.ts` | Base path, version constant, service worker generator |
+| `vite.config.ts` | Base path, version constant, service worker generator, Android mode (`--mode android` → `dist-android/`, `__NATIVE__`) |
+| `src/native.ts` | Android bridge (Capacitor plugin `GoiNative`); web fallbacks live with the callers |
+| `android/` | Capacitor Android project. `GoiNativePlugin.java` (save to Downloads), `MainActivity.java` (back button). Version and signing come from `package.json` and env vars in `app/build.gradle` |
+| `.github/workflows/android.yml` | Builds, signs (key from secrets, certificate pinned) and publishes `apk-v<version>` Releases |
 
 ## Invariants that are easy to break
 
@@ -86,6 +91,11 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 - **Interface language is a translation layer over rendered English** (`src/ui/i18n.ts` + `src/i18n/ja.ts`). New UI text needs a catalogue entry (exact string, or a pattern for text with numbers or names) or it shows in English in Japanese mode. Anything showing the owner's content (meanings, examples, tags, sources, glosses) must carry `data-content` so it is never translated. Don't use `[translate="no"]` for this: `<html>` already carries it to stop browser auto-translation. Never map a string to itself (the observer would loop); a test checks this.
 - **Share target:** the manifest's `share_target` points at `/goi-app/share`; `main.ts` reads it before mounting and replaces the URL with `#/capture`. The service worker serves that path from the cached shell (navigation fallback), so it works offline.
 - **Keigo drill ids are `v:<id>:son|ken`, `w:<casual>`, `p:<casual>`, `f:<form>`, `u:<text>`.** Changing one orphans that item's progress (harmless: it is just practised again).
+- **Native code is behind `__NATIVE__`** (a build-time constant). Never branch on it at runtime in a way the web build can't drop, and import `@capacitor/core` only dynamically inside native branches: the website bundle must not contain it (check with `grep -l GoiNative dist/assets/*.js`).
+- **Never resolve a promise with a Capacitor plugin proxy.** The proxy answers every property, `then` included, so `await` would call a native method named `then` and hang. `src/native.ts` keeps it in a variable.
+- **Android packaging un-gzips `.gz` assets and drops the suffix.** The Android build stores the dictionary and OCR model plain (`plainAssetsForAndroid` in `vite.config.ts`) and `ocr.ts` sets `gzip: !__NATIVE__`. Don't add new `.gz` assets without handling this.
+- **APK versions:** `package.json`'s version becomes versionName and versionCode (`major*10000 + minor*100 + patch`). Raise it for every APK release; Android refuses a lower versionCode as an update.
+- **The release signing key is never committed.** The workflow pins its certificate SHA-256; a different key fails the build.
 - **The deinflection table is the app's own.** Don't paste in Yomitan's or another GPL project's rules.
 
 ## Conventions

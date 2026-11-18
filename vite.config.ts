@@ -1,9 +1,12 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { gunzipSync } from 'node:zlib';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 
-const BASE = '/goi-app/';
+/** Where the website is served. The Android build (mode "android") is served from the APK's root. */
+const WEB_BASE = '/goi-app/';
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 const ocrVersion = (JSON.parse(readFileSync(new URL('./node_modules/tesseract.js/package.json', import.meta.url), 'utf8')) as { version: string }).version;
 
@@ -12,7 +15,7 @@ const ocrVersion = (JSON.parse(readFileSync(new URL('./node_modules/tesseract.js
  * precached on first visit and works offline afterwards. Hand-rolled to avoid
  * a PWA-plugin dependency.
  */
-function serviceWorker(): Plugin {
+function serviceWorker(BASE: string): Plugin {
   return {
     name: 'goi-service-worker',
     apply: 'build',
@@ -105,14 +108,61 @@ self.addEventListener('fetch', (event) => {
   };
 }
 
-export default defineConfig({
-  base: BASE,
-  plugins: [serviceWorker()],
-  define: { __APP_VERSION__: JSON.stringify(`v${pkg.version} (${new Date().toISOString().slice(0, 10)})`) },
-  build: { target: 'es2022', sourcemap: false },
-  test: {
-    environment: 'node',
-    include: ['tests/**/*.test.ts'],
-    env: { TZ: 'Asia/Tokyo' },
-  },
+/**
+ * Android packaging un-gzips every asset ending in .gz and drops the suffix,
+ * so the app's requests for those names would fail inside the APK. Do it
+ * here instead, where it is visible: store the dictionary and OCR model
+ * plain (the APK's zip compresses them) and point the dictionary manifest at
+ * the plain name. The dictionary installer accepts either form.
+ */
+function plainAssetsForAndroid(): Plugin {
+  let outDir = 'dist-android';
+  return {
+    name: 'goi-android-plain-assets',
+    apply: 'build',
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    closeBundle() {
+      const manifestPath = join(outDir, 'dict', 'manifest.json');
+      if (existsSync(manifestPath)) {
+        const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { file: string };
+        if (manifest.file.endsWith('.gz')) {
+          const gz = join(outDir, 'dict', manifest.file);
+          manifest.file = manifest.file.slice(0, -3);
+          writeFileSync(join(outDir, 'dict', manifest.file), gunzipSync(readFileSync(gz)));
+          rmSync(gz);
+          writeFileSync(manifestPath, JSON.stringify(manifest, null, 1));
+        }
+      }
+      const lang = join(outDir, 'ocr', 'lang');
+      if (existsSync(lang)) {
+        for (const f of readdirSync(lang).filter((n) => n.endsWith('.gz'))) {
+          writeFileSync(join(lang, f.slice(0, -3)), gunzipSync(readFileSync(join(lang, f))));
+          rmSync(join(lang, f));
+        }
+      }
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  // The APK (Capacitor) loads the build from its own assets: no base path and
+  // no service worker, since every file is already on the device.
+  const native = mode === 'android';
+  const base = native ? '/' : WEB_BASE;
+  return {
+    base,
+    plugins: native ? [plainAssetsForAndroid()] : [serviceWorker(base)],
+    define: {
+      __APP_VERSION__: JSON.stringify(`v${pkg.version} (${new Date().toISOString().slice(0, 10)})`),
+      __NATIVE__: JSON.stringify(native),
+    },
+    build: { target: 'es2022', sourcemap: false, outDir: native ? 'dist-android' : 'dist' },
+    test: {
+      environment: 'node',
+      include: ['tests/**/*.test.ts'],
+      env: { TZ: 'Asia/Tokyo' },
+    },
+  };
 });
