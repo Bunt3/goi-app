@@ -261,7 +261,13 @@ export function moreView(_arg: string, params: URLSearchParams): View {
     if (cur.autoBackup === 'download') {
       detail.push(
         h('label', { class: 'field', style: 'margin-top:10px' }, h('span', null, 'How often'), days),
-        h('p', { class: 'muted small' }, 'When a session ends and there is something new, a file named goi-auto_DATE_LABEL.json is saved to your browser’s download folder. Old files are yours to tidy: a web page can’t delete downloads.'),
+        h(
+          'p',
+          { class: 'muted small' },
+          __NATIVE__
+            ? 'When a session ends and there is something new, a file named goi-auto_DATE_LABEL.json is saved to Downloads. Old files are yours to tidy; a folder you choose keeps only the newest ones.'
+            : 'When a session ends and there is something new, a file named goi-auto_DATE_LABEL.json is saved to your browser’s download folder. Old files are yours to tidy: a web page can’t delete downloads.',
+        ),
       );
     } else if (cur.autoBackup === 'folder') {
       detail.push(

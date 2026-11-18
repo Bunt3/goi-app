@@ -42,8 +42,20 @@ function startServer() {
  */
 function fakeNative() {
   const st = (window.__native = { calls: [], voices: [], failSave: false, share: null, listeners: [], nextId: 1 });
+  // The backup folder, as BackupFolder.java presents it. Survives reloads within a page via sessionStorage.
+  const saved = (() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('__folder') || 'null');
+    } catch {
+      return null;
+    }
+  })();
+  st.folder = saved ?? window.__initialFolder ?? { chosen: false, granted: false, name: '', files: {}, nextPick: null, noTruncate: false, noSize: false };
+  const persist = () => sessionStorage.setItem('__folder', JSON.stringify(st.folder));
+  const bytes = (t) => new TextEncoder().encode(t).length;
   window.androidBridge = { postMessage() {} };
-  const methods = ['saveDownload', 'ttsVoices', 'speak', 'stopSpeaking', 'openTtsSettings', 'takeShare', 'openUrl', 'removeListener'].map((name) => ({ name, rtype: 'promise' }));
+  const methods = ['saveDownload', 'ttsVoices', 'speak', 'stopSpeaking', 'openTtsSettings', 'takeShare', 'openUrl', 'removeListener',
+    'pickBackupFolder', 'backupFolderInfo', 'forgetBackupFolder', 'folderList', 'folderRead', 'folderWrite', 'folderDelete'].map((name) => ({ name, rtype: 'promise' }));
   methods.push({ name: 'addListener', rtype: 'callback' });
   window.Capacitor = {
     PluginHeaders: [{ name: 'GoiNative', methods }],
@@ -62,6 +74,40 @@ function fakeNative() {
           window.__initialShare = null;
           return Promise.resolve(share ? { share } : {});
         }
+        case 'pickBackupFolder': {
+          const f = st.folder;
+          if (!f.nextPick) return Promise.resolve({ picked: false });
+          Object.assign(f, { chosen: true, granted: true, name: f.nextPick, nextPick: null });
+          persist();
+          return Promise.resolve({ picked: true, name: f.name });
+        }
+        case 'backupFolderInfo':
+          return Promise.resolve({ chosen: st.folder.chosen, granted: st.folder.granted, name: st.folder.name });
+        case 'forgetBackupFolder':
+          Object.assign(st.folder, { chosen: false, granted: false, name: '' });
+          persist();
+          return Promise.resolve({});
+        case 'folderList':
+          if (!st.folder.granted) return Promise.reject(new Error('Permission Denial'));
+          return Promise.resolve({
+            files: Object.entries(st.folder.files).map(([name, f]) => ({ name, size: st.folder.noSize ? -1 : bytes(f.text), modified: f.modified })),
+          });
+        case 'folderRead': {
+          const f = st.folder.files[options.name];
+          return f ? Promise.resolve({ text: f.text }) : Promise.reject(new Error(options.name + ' is not in the folder'));
+        }
+        case 'folderWrite': {
+          const old = st.folder.files[options.name]?.text ?? '';
+          // A provider that ignores truncation leaves the old file's tail behind.
+          const text = st.folder.noTruncate && old.length > options.text.length ? options.text + old.slice(options.text.length) : options.text;
+          st.folder.files[options.name] = { text, modified: Date.now() };
+          persist();
+          return Promise.resolve({});
+        }
+        case 'folderDelete':
+          delete st.folder.files[options.name];
+          persist();
+          return Promise.resolve({});
         default:
           return Promise.resolve({});
       }
@@ -195,6 +241,81 @@ async function main() {
     if ((await cold.inputValue('#capture-source')) !== '日経新聞 · nikkei.com') throw new Error('cold-start source: ' + (await cold.inputValue('#capture-source')));
     await cold.close();
     ok('text that starts the app opens straight into Capture, link removed, page as the source');
+
+    // ---- Folder backups (Android's folder picker) ----
+    const folder = () => page.evaluate(() => window.__native.folder);
+    // Old files: 20 of this device's automatic backups, one from another device, one manual export.
+    await page.evaluate(() => {
+      const files = {};
+      for (let i = 1; i <= 20; i++) files[`goi-auto_2026-10-${String(i).padStart(2, '0')}_device.json`] = { text: '{"old":true}', modified: 1 };
+      files['goi-auto_2026-10-05_pc.json'] = { text: '{"other device":true}', modified: 1 };
+      files['goi-backup_2026-10-01_device.json'] = { text: '{"manual":true}', modified: 1 };
+      Object.assign(window.__native.folder, { files, nextPick: 'Goi backups' });
+    });
+    await page.goto(ORIGIN + '/#/more');
+    await page.selectOption('#set-autoBackup', 'folder');
+    await page.waitForSelector('#auto-folder:has-text("Goi backups")');
+    await page.waitForFunction(() => /Backed up to folder/.test(document.getElementById('toast')?.textContent ?? '') || Object.keys(window.__native.folder.files).some((n) => n.includes(new Date().getFullYear() + '-') && !n.includes('2026-10')));
+    let f = await folder();
+    const names = Object.keys(f.files).sort();
+    const autos = names.filter((n) => /^goi-auto_.*_device\.json$/.test(n));
+    if (autos.length !== 14) throw new Error(`expected 14 automatic backups for this device, found ${autos.length}: ${names.join(', ')}`);
+    if (!names.includes('goi-auto_2026-10-05_pc.json') || !names.includes('goi-backup_2026-10-01_device.json')) throw new Error('another device’s file or a manual export was deleted');
+    const fresh = autos.find((n) => !n.startsWith('goi-auto_2026-10-'));
+    const parsed = JSON.parse(f.files[fresh].text);
+    if (parsed.app !== 'goi-app' || !(parsed.cards.length > 50)) throw new Error('the folder backup is not a full backup');
+    ok(`choosing a folder writes a backup at once (${fresh}, ${parsed.cards.length} cards) and keeps only the newest 14 of this device’s automatic files; other files untouched`);
+
+    // A backup is written again after a change, silently (debounced) — check the manual button instead of waiting 20 s.
+    await page.evaluate(() => (window.__native.folder.noTruncate = true));
+    await page.evaluate((name) => (window.__native.folder.files[name].text += ' '.repeat(5000)), fresh);
+    const downloadsBefore = (await calls(page, 'saveDownload')).length;
+    await page.click('#backup-now');
+    await page.waitForFunction((n) => window.__native.calls.filter((c) => c.method === 'saveDownload').length > n, downloadsBefore, { timeout: 15000 });
+    const fallback = (await calls(page, 'saveDownload')).at(-1).options.name;
+    if (!fallback.startsWith('goi-auto_')) throw new Error('fallback saved ' + fallback);
+    ok('a folder that doesn’t truncate on overwrite is caught by the size check, and the backup goes to Downloads instead');
+    await page.evaluate(() => (window.__native.folder.noTruncate = false));
+
+    await page.evaluate(() => (window.__native.folder.noSize = true));
+    await page.click('#backup-now');
+    await page.waitForFunction(() => /Backed up to folder “Goi backups”/.test(document.getElementById('toast')?.textContent ?? ''), null, { timeout: 15000 });
+    f = await folder();
+    if (JSON.parse(f.files[fresh].text).app !== 'goi-app') throw new Error('the overwritten backup is not valid JSON');
+    ok('a folder that reports no file sizes is checked by reading the file back');
+    await page.evaluate(() => (window.__native.folder.noSize = false));
+
+    await page.evaluate(() => {
+      window.__native.folder.granted = false;
+      sessionStorage.setItem('__folder', JSON.stringify(window.__native.folder));
+    });
+    await page.reload();
+    await page.waitForSelector('#auto-folder:has-text("permission needed")');
+    ok('a folder Android no longer lets the app write to is shown as needing permission');
+    await page.evaluate(() => {
+      window.__native.folder.granted = true;
+      sessionStorage.setItem('__folder', JSON.stringify(window.__native.folder));
+    });
+
+    // A different phone choosing a folder that already holds more data: review first, write nothing.
+    const backupText = f.files[fresh].text;
+    const other = await browser.newContext({ viewport: { width: 400, height: 800 } });
+    // Init scripts run in the order added: the folder's contents must exist before the fake reads them.
+    await other.addInitScript((text) => {
+      window.__initialFolder = { chosen: false, granted: false, name: '', files: { 'goi-auto_2026-11-01_phone.json': { text, modified: 2 } }, nextPick: 'Shared drive', noTruncate: false, noSize: false };
+    }, backupText);
+    await other.addInitScript(fakeNative);
+    const p2 = await other.newPage();
+    p2.on('pageerror', (e) => errors.push(String(e)));
+    await p2.goto(ORIGIN + '/#/more');
+    await p2.waitForSelector('#set-autoBackup');
+    await p2.selectOption('#set-autoBackup', 'folder');
+    // (A toast says so too, but the dictionary's own toasts can replace it in a fresh install.)
+    await p2.waitForSelector('#import-summary:has-text("Shared drive")', { timeout: 15000 });
+    const f2 = await p2.evaluate(() => window.__native.folder);
+    if (Object.keys(f2.files).length !== 1) throw new Error('wrote into a folder holding data this device lacks: ' + Object.keys(f2.files).join(', '));
+    await other.close();
+    ok('a folder holding data this device lacks is offered for import first, and nothing is written');
 
     // Update check: GitHub's answer is faked here; the request must happen only on a press.
     const API = 'https://api.github.com/repos/Bunt3/goi-app/releases/latest';

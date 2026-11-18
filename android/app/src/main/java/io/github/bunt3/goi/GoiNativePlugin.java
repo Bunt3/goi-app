@@ -38,16 +38,23 @@ import java.util.List;
  * text-selection menu ("Goi", ACTION_PROCESS_TEXT) or sent from the share
  * sheet (ACTION_SEND, text/plain). Held until the page takes it, so it isn't
  * lost while the page is still loading.
+ *
+ * Backup folder (pickBackupFolder, backupFolderInfo, forgetBackupFolder,
+ * folderList/Read/Write/Delete): automatic backups into a folder the owner
+ * picks once; see BackupFolder.java. src/native.ts wraps these as a folder
+ * handle so src/backupfs.ts works unchanged.
  */
 @CapacitorPlugin(name = "GoiNative")
 public class GoiNativePlugin extends Plugin {
 
     private Speech speech;
+    private BackupFolder folder;
     private JSObject pendingShare;
 
     @Override
     public void load() {
         speech = new Speech(getContext());
+        folder = new BackupFolder(getContext());
         if (readShare(getActivity().getIntent())) {
             // Consumed: don't hand the same text over again if the page reloads.
             getActivity().setIntent(new Intent(Intent.ACTION_MAIN));
@@ -216,6 +223,106 @@ public class GoiNativePlugin extends Plugin {
         } catch (ActivityNotFoundException e) {
             call.reject("No browser is installed.");
         }
+    }
+
+    // ---- Backup folder
+
+    @PluginMethod
+    public void pickBackupFolder(PluginCall call) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+        intent.addFlags(
+            Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
+        );
+        startActivityForResult(call, intent, "folderPicked");
+    }
+
+    @ActivityCallback
+    private void folderPicked(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        Intent data = result.getData();
+        JSObject ret = new JSObject();
+        if (data == null || data.getData() == null) {
+            ret.put("picked", false);
+            call.resolve(ret);
+            return;
+        }
+        try {
+            folder.remember(data.getData());
+            ret.put("picked", true);
+            ret.put("name", folder.name());
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject("Android didn't allow keeping access to that folder (" + e.getMessage() + ")");
+        }
+    }
+
+    @PluginMethod
+    public void backupFolderInfo(PluginCall call) {
+        JSObject ret = new JSObject();
+        ret.put("chosen", folder.tree() != null);
+        ret.put("granted", folder.granted());
+        ret.put("name", folder.name());
+        call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void forgetBackupFolder(PluginCall call) {
+        folder.forget();
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void folderList(PluginCall call) {
+        try {
+            JSArray files = new JSArray();
+            for (BackupFolder.Entry e : folder.list()) {
+                JSObject f = new JSObject();
+                f.put("name", e.name);
+                f.put("size", e.size);
+                f.put("modified", e.modified);
+                files.put(f);
+            }
+            JSObject ret = new JSObject();
+            ret.put("files", files);
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject(message(e));
+        }
+    }
+
+    @PluginMethod
+    public void folderRead(PluginCall call) {
+        try {
+            JSObject ret = new JSObject();
+            ret.put("text", folder.read(call.getString("name", "")));
+            call.resolve(ret);
+        } catch (Exception e) {
+            call.reject(message(e));
+        }
+    }
+
+    @PluginMethod
+    public void folderWrite(PluginCall call) {
+        try {
+            folder.write(call.getString("name", ""), call.getString("text", ""));
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(message(e));
+        }
+    }
+
+    @PluginMethod
+    public void folderDelete(PluginCall call) {
+        try {
+            folder.delete(call.getString("name", ""));
+            call.resolve();
+        } catch (Exception e) {
+            call.reject(message(e));
+        }
+    }
+
+    private static String message(Exception e) {
+        return e.getMessage() != null ? e.getMessage() : e.toString();
     }
 
     // ---- Files

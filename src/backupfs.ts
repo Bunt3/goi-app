@@ -5,9 +5,13 @@
  * Chrome on Android). Firefox does not implement it and Brave disables it,
  * so everything here is feature-detected and the caller falls back to
  * ordinary downloads.
+ *
+ * In the APK the folder comes from Android's folder picker instead
+ * (native.ts gives it the same shape), so the rest is shared.
  */
 import { filesToPrune, isBackupName } from './data/autobackup';
 import { db } from './db';
+import { forgetNativeFolder, nativeFolderHandle, nativeFolderInfo, pickNativeFolder } from './native';
 
 type Access = 'granted' | 'denied' | 'prompt';
 
@@ -35,6 +39,7 @@ type Picker = (options?: { mode?: 'readwrite'; id?: string }) => Promise<DirHand
 const picker = (): Picker | undefined => (window as unknown as { showDirectoryPicker?: Picker }).showDirectoryPicker;
 
 export function folderSupported(): boolean {
+  if (__NATIVE__) return true;
   return typeof window !== 'undefined' && typeof picker() === 'function';
 }
 
@@ -42,16 +47,22 @@ const KEY = 'backupDir';
 
 /** The folder chosen earlier, if any. Handles survive in IndexedDB; the permission may need renewing. */
 export async function savedFolder(): Promise<DirHandleLike | null> {
+  if (__NATIVE__) {
+    const info = await nativeFolderInfo().catch(() => null);
+    return info?.chosen ? nativeFolderHandle(info.name || 'backup folder') : null;
+  }
   const row = await db.meta.get(KEY);
   return (row?.value as DirHandleLike | undefined) ?? null;
 }
 
 export async function forgetFolder(): Promise<void> {
+  if (__NATIVE__) return forgetNativeFolder();
   await db.meta.delete(KEY);
 }
 
 /** Show the folder picker and remember the choice. Returns null if the user cancels. */
 export async function chooseFolder(): Promise<DirHandleLike | null> {
+  if (__NATIVE__) return pickNativeFolder();
   const pick = picker();
   if (!pick) return null;
   try {

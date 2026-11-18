@@ -320,6 +320,8 @@ export const JA: Record<string, string> = {
   'Open text-to-speech settings': '読み上げの設定を開く',
   'Check again': '再確認',
   Updates: '更新',
+  'When a session ends and there is something new, a file named goi-auto_DATE_LABEL.json is saved to Downloads. Old files are yours to tidy; a folder you choose keeps only the newest ones.':
+    '学習の終わりに新しい内容があれば、goi-auto_日付_ラベル.json というファイルをダウンロードフォルダに保存します。古いファイルは手動で整理してください。フォルダを選んだ場合は新しいものだけが残ります。',
   'Check for updates': '更新を確認',
   'Asking GitHub…': 'GitHubに問い合わせ中…',
   'What’s new': '新しい点',

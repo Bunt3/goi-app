@@ -1,5 +1,9 @@
 Goi for Android: the same app as the website, installed from this file instead of the browser. It works with no connection at all: the dictionary and the text recogniser are inside the APK.
 
+## New in 1.4.0
+
+- **Automatic backups into a folder you choose.** More → Automatic backup → "Save into a folder I choose", then pick a folder in Android's folder picker (for example a "Goi backups" folder you create in Documents). Goi then saves quietly whenever something changes, one file per day, keeping the newest 14 of this phone's automatic backups. It never touches other files in the folder. If the folder already holds a backup with cards this phone doesn't have, Goi shows what it would import and writes nothing until you've seen it. If a write fails or the file doesn't come out the right size, that backup goes to Downloads instead and you're told.
+
 ## New in 1.3.0
 
 - **Check for updates** (More → Updates). It asks GitHub for the newest release only when you press it; that is the only time the app contacts another site. If there is a newer version it shows what's new and a Download button that opens the APK in your browser; open the downloaded file and Android asks to confirm the update. While the repository is private, GitHub won't answer the app, so it says so and offers the releases page instead (works when you're logged in to GitHub in the browser).
@@ -38,10 +42,10 @@ The Android app has its own storage, separate from Brave's. Your cards don't mov
 - Long-press a Japanese word in a browser or chat app: is Goi in the menu, and does Capture open with the text? Then Back: does it return to where you were in Goi?
 - Share a selection or a web page to Goi from the share sheet.
 - More → Updates → Check for updates: it should say you have the latest version.
+- Folder backups: choose a folder, make a change (add a card), wait half a minute, then look in the folder with the Files app. Leaving the app also triggers a backup.
 
 ## Known gaps in this build
 
-- **Folder backups** are not available yet; automatic backups go to Downloads.
 - Sharing an **image** (a screenshot) to Goi isn't supported yet; open it from Capture instead.
 
 ## Keep the signing key safe

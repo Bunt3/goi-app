@@ -4,6 +4,8 @@
  * build drops every native branch and never loads `@capacitor/core`.
  */
 
+import type { DirHandleLike } from './backupfs';
+
 /** Text handed to the app by Android: the text-selection menu or the share sheet. */
 export interface AppShare {
   text: string;
@@ -11,6 +13,20 @@ export interface AppShare {
   subject: string;
   /** The sending app's name, '' if Android didn't say. */
   app: string;
+}
+
+export interface NativeFolderInfo {
+  chosen: boolean;
+  /** Android still lets the app write there (false after the folder was deleted or access revoked). */
+  granted: boolean;
+  name: string;
+}
+
+interface NativeFolderFile {
+  name: string;
+  /** Bytes; -1 if the folder's provider doesn't say. */
+  size: number;
+  modified: number;
 }
 
 export interface NativeVoice {
@@ -26,6 +42,13 @@ interface GoiNativePlugin {
   openTtsSettings(): Promise<void>;
   takeShare(): Promise<{ share?: AppShare }>;
   openUrl(options: { url: string }): Promise<void>;
+  pickBackupFolder(): Promise<{ picked: boolean; name?: string }>;
+  backupFolderInfo(): Promise<NativeFolderInfo>;
+  forgetBackupFolder(): Promise<void>;
+  folderList(): Promise<{ files: NativeFolderFile[] }>;
+  folderRead(options: { name: string }): Promise<{ text: string }>;
+  folderWrite(options: { name: string; text: string }): Promise<void>;
+  folderDelete(options: { name: string }): Promise<void>;
   addListener(event: 'share', fn: () => void): Promise<{ remove: () => Promise<void> }>;
 }
 
@@ -94,4 +117,81 @@ export async function onAppShare(fn: () => void): Promise<void> {
 export async function openInBrowser(url: string): Promise<void> {
   await goiNative();
   await plugin!.openUrl({ url });
+}
+
+// ---- Backup folder (Android's folder picker). Shaped like the website's
+// folder handle so backupfs.ts runs unchanged on top of it.
+
+export async function nativeFolderInfo(): Promise<NativeFolderInfo> {
+  await goiNative();
+  return plugin!.backupFolderInfo();
+}
+
+/** Show Android's folder picker. Resolves to the folder, or null if cancelled. */
+export async function pickNativeFolder(): Promise<DirHandleLike | null> {
+  await goiNative();
+  const r = await plugin!.pickBackupFolder();
+  return r.picked ? nativeFolderHandle(r.name || 'backup folder') : null;
+}
+
+export async function forgetNativeFolder(): Promise<void> {
+  await goiNative();
+  await plugin!.forgetBackupFolder();
+}
+
+function notFound(name: string): DOMException {
+  return new DOMException(`${name} is not in the folder`, 'NotFoundError');
+}
+
+export function nativeFolderHandle(folderName: string): DirHandleLike {
+  const list = async () => {
+    await goiNative();
+    return (await plugin!.folderList()).files;
+  };
+  const read = async (name: string) => (await plugin!.folderRead({ name })).text;
+  const fileHandle = (name: string) => ({
+    kind: 'file' as const,
+    name,
+    async getFile(): Promise<File> {
+      const entry = (await list()).find((f) => f.name === name);
+      if (!entry) throw notFound(name);
+      // Only what backupfs.ts uses: size, lastModified, text().
+      let size = entry.size;
+      if (size < 0) size = new Blob([await read(name)]).size; // provider gave no size: measure
+      return { name, size, lastModified: entry.modified, text: () => read(name) } as unknown as File;
+    },
+    async createWritable() {
+      const parts: Blob[] = [];
+      return {
+        async write(data: Blob) {
+          parts.push(data);
+        },
+        async close() {
+          await plugin!.folderWrite({ name, text: await new Blob(parts).text() });
+        },
+      };
+    },
+  });
+  return {
+    kind: 'directory',
+    name: folderName,
+    async getFileHandle(name, options) {
+      if (!options?.create && !(await list()).some((f) => f.name === name)) throw notFound(name);
+      return fileHandle(name);
+    },
+    async removeEntry(name) {
+      await goiNative();
+      await plugin!.folderDelete({ name });
+    },
+    async *values() {
+      for (const f of await list()) yield fileHandle(f.name);
+    },
+    async queryPermission() {
+      return (await nativeFolderInfo()).granted ? 'granted' : 'prompt';
+    },
+    // Android can't re-grant without the picker; "Change folder…" does that.
+    async requestPermission() {
+      return (await nativeFolderInfo()).granted ? 'granted' : 'prompt';
+    },
+  };
 }

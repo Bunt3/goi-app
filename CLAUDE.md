@@ -40,7 +40,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/data/merge.ts` | `planMerge`: pure merge planning |
 | `src/data/export.ts` | Backup build, parse, validate |
 | `src/data/autobackup.ts` | `deckMark`, `backupDue`, `filesToPrune` (pure) |
-| `src/backupfs.ts` | File System Access API wrapper |
+| `src/backupfs.ts` | File System Access API wrapper; in the APK the folder handle comes from `native.ts` (Android folder picker) and the rest is shared |
 | `src/textpick.ts` | `segment`, `lookup`, `sentenceAround`, `cleanCapturedText` (pure) |
 | `src/dict/deinflect.ts`, `src/dict/lookup.ts` | Dictionary: deinflection rules, ranking, tag/register mapping, card fields (pure) |
 | `src/dictdb.ts`, `src/dict-install.worker.ts` | The separate `goi-dict` database; install runs in a worker |
@@ -63,7 +63,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 | `src/ui/*.ts` | One file per screen; `app.ts` is the hash router and shell |
 | `vite.config.ts` | Base path, version constant, service worker generator, Android mode (`--mode android` → `dist-android/`, `__NATIVE__`) |
 | `src/native.ts` | Android bridge (Capacitor plugin `GoiNative`: save, speech, incoming text); web fallbacks live with the callers (`dom.ts` download, `tts.ts`, `main.ts`) |
-| `android/` | Capacitor Android project. `GoiNativePlugin.java` (save to Downloads, speech, `PROCESS_TEXT`/`SEND` intake), `Speech.java` (TextToSpeech, offline Japanese voices only), `MainActivity.java` (back button). Version and signing come from `package.json` and env vars in `app/build.gradle` |
+| `android/` | Capacitor Android project. `GoiNativePlugin.java` (save to Downloads, speech, `PROCESS_TEXT`/`SEND` intake), `Speech.java` (TextToSpeech, offline Japanese voices only), `BackupFolder.java` (SAF backup folder), `MainActivity.java` (back button). Version and signing come from `package.json` and env vars in `app/build.gradle` |
 | `.github/workflows/android.yml` | Builds, signs (key from secrets, certificate pinned) and publishes `apk-v<version>` Releases |
 
 ## Invariants that are easy to break
@@ -96,6 +96,7 @@ Before calling work done: `npm test`, `npm run build:e2e`, `npm run e2e` all gre
 - **Never resolve a promise with a Capacitor plugin proxy.** The proxy answers every property, `then` included, so `await` would call a native method named `then` and hang. `src/native.ts` keeps it in a variable.
 - **Android packaging un-gzips `.gz` assets and drops the suffix.** The Android build stores the dictionary and OCR model plain (`plainAssetsForAndroid` in `vite.config.ts`) and `ocr.ts` sets `gzip: !__NATIVE__`. Don't add new `.gz` assets without handling this.
 - **The fake native side in `e2e/android-smoke.cjs` mirrors `GoiNativePlugin.java`.** Change a method's name, options or result shape on one side and change the other, or the smoke test passes while the phone breaks.
+- **APK folder backups go through `backupfs.ts` unchanged.** `nativeFolderHandle` in `native.ts` imitates a browser folder handle (only what `backupfs.ts` uses: `getFileHandle`, `createWritable`, `getFile` with `size`/`lastModified`/`text()`, `values`, `removeEntry`, permissions). If `backupfs.ts` starts using another handle feature, add it there. The size check after writing is load-bearing: some Android folders don't truncate on overwrite.
 - **APK speech uses offline voices only** (`Speech.offlineJapanese`: Japanese, not network-required, installed). Don't fall back to a network voice.
 - **APK versions:** `package.json`'s version becomes versionName and versionCode (`major*10000 + minor*100 + patch`). Raise it for every APK release; Android refuses a lower versionCode as an update.
 - **The release signing key is never committed.** The workflow pins its certificate SHA-256; a different key fails the build.
